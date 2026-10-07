@@ -1,0 +1,107 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net462</TargetFramework>
+    <AssemblyName>Fysik</AssemblyName>
+    <RootNamespace>Fysik</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Deterministic>true</Deterministic>
+    <DebugType>portable</DebugType>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <ImplicitlyExpandNETStandardFacades>false</ImplicitlyExpandNETStandardFacades>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Product>Fysik</Product>
+    <Version>0.1.0</Version>
+    <Authors>menezesbruno</Authors>
+    <Copyright>Copyright (c) 2026 Bruno Menezes</Copyright>
+    <RepositoryUrl>https://github.com/menezesbruno/Fysik</RepositoryUrl>
+    <BepInExPluginGuid>menezesbruno.fysik</BepInExPluginGuid>
+    <Description>Structural physics for building. Shape matters: arches carry load in compression, triangulated trusses stay rigid, cantilevers bend. Replaces vanilla support with a frame solver; overloaded pieces crack before they fall. Work in progress.</Description>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ValheimManagedDir>$(ValheimDir)\valheim_Data\Managed</ValheimManagedDir>
+    <BepInExCoreDir>$(DevProfileDir)\BepInEx\core</BepInExCoreDir>
+    <JotunnDir>$(DevProfileDir)\BepInEx\plugins\ValheimModding-Jotunn</JotunnDir>
+    <DevPluginDir>$(DevProfileDir)\BepInEx\plugins\Fysik</DevPluginDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.1.0" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="BepInEx" HintPath="$(BepInExCoreDir)\BepInEx.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(BepInExCoreDir)\0Harmony.dll" Private="false" />
+    <Reference Include="Jotunn" HintPath="$(JotunnDir)\Jotunn.dll" Private="false" />
+    <Reference Include="assembly_valheim" HintPath="$(ValheimManagedDir)\assembly_valheim.dll" Private="false" Publicize="true" />
+    <Reference Include="assembly_utils" HintPath="$(ValheimManagedDir)\assembly_utils.dll" Private="false" />
+    <Reference Include="assembly_guiutils" HintPath="$(ValheimManagedDir)\assembly_guiutils.dll" Private="false" />
+    <Reference Include="Unity.TextMeshPro" HintPath="$(ValheimManagedDir)\Unity.TextMeshPro.dll" Private="false" />
+    <Reference Include="$(ValheimManagedDir)\UnityEngine.dll" Private="false" />
+    <Reference Include="$(ValheimManagedDir)\UnityEngine.*Module.dll" Private="false" />
+    <Reference Include="$(ValheimManagedDir)\UnityEngine.UI.dll" Private="false" />
+    <Reference Include="$(ValheimManagedDir)\netstandard.dll" Private="false" />
+  </ItemGroup>
+  <Target Name="CheckEnvironment" BeforeTargets="ResolveAssemblyReferences;PrepareForBuild">
+    <Error Condition="!Exists('$(RepoRoot)Environment.props')"
+           Text="Environment.props not found. Copy Environment.props.example to Environment.props and set your local paths." />
+    <Error Condition="!Exists('$(ValheimManagedDir)\assembly_valheim.dll')"
+           Text="assembly_valheim.dll not found in '$(ValheimManagedDir)'. Check ValheimDir in Environment.props." />
+    <Error Condition="!Exists('$(BepInExCoreDir)\BepInEx.dll') Or !Exists('$(JotunnDir)\Jotunn.dll')"
+           Text="BepInEx or Jotunn not found under '$(DevProfileDir)'. Check DevProfileDir in Environment.props." />
+  </Target>
+  <UsingTask TaskName="CheckGameReferences" TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <AssemblyPath ParameterType="System.String" Required="true" />
+      <SearchDirs ParameterType="System.String[]" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Reflection" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        Assembly assembly = Assembly.Load(File.ReadAllBytes(AssemblyPath));
+        foreach (AssemblyName reference in assembly.GetReferencedAssemblies())
+        {
+            bool found = false;
+            foreach (string dir in SearchDirs)
+                found |= File.Exists(Path.Combine(dir, reference.Name + ".dll"));
+            if (!found)
+                Log.LogError("Fysik.dll references '" + reference.Name + "', which Valheim/BepInEx do not ship: the plugin would fail to load in game.");
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+  <Target Name="CheckGameReferences" AfterTargets="CoreCompile" Condition="Exists('@(IntermediateAssembly)')">
+    <CheckGameReferences AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
+                         SearchDirs="$(ValheimManagedDir);$(BepInExCoreDir);$(JotunnDir)" />
+  </Target>
+  <Target Name="DeployToDevProfile" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+    <Error Condition="$(DevProfileDir.TrimEnd('\').EndsWith('\Default'))"
+           Text="Refusing to deploy into the r2modman 'Default' profile ($(DevProfileDir)). Point DevProfileDir at a test profile." />
+    <Copy SourceFiles="$(TargetPath);$(TargetDir)$(TargetName).pdb" DestinationFolder="$(DevPluginDir)" SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="$(AssemblyName) $(Version) -> $(DevPluginDir)" />
+  </Target>
+  <Target Name="Package" DependsOnTargets="Build">
+    <Error Condition="'$(Configuration)' != 'Release'" Text="Build the package with -c Release." />
+    <Error Condition="$(Description.Length) &gt; 250"
+           Text="Description is $(Description.Length) characters; Thunderstore allows at most 250." />
+    <PropertyGroup>
+      <PackageStageDir>$(BaseIntermediateOutputPath)thunderstore\</PackageStageDir>
+      <PackageZip>$(RepoRoot)dist\$(Product)-$(Version).zip</PackageZip>
+      <ManifestText>$([System.IO.File]::ReadAllText('$(RepoRoot)package\manifest.json'))</ManifestText>
+      <ManifestText>$(ManifestText.Replace('@VERSION@', '$(Version)'))</ManifestText>
+      <ManifestText>$(ManifestText.Replace('@DESCRIPTION@', '$(Description)'))</ManifestText>
+      <ManifestText>$(ManifestText.Replace('@WEBSITE@', '$(RepositoryUrl)'))</ManifestText>
+    </PropertyGroup>
+    <RemoveDir Directories="$(PackageStageDir)" />
+    <MakeDir Directories="$(PackageStageDir)plugins;$(RepoRoot)dist" />
+    <WriteLinesToFile File="$(PackageStageDir)manifest.json" Lines="$([MSBuild]::Escape($(ManifestText)))" Overwrite="true" />
+    <Copy SourceFiles="$(RepoRoot)art\icon.png;$(RepoRoot)package\README.md;$(RepoRoot)CHANGELOG.md" DestinationFolder="$(PackageStageDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PackageStageDir)plugins" />
+    <ZipDirectory SourceDirectory="$(PackageStageDir)" DestinationFile="$(PackageZip)" Overwrite="true" />
+    <Message Importance="high" Text="Thunderstore package -> $(PackageZip)" />
+  </Target>
+</Project>

@@ -1,0 +1,13 @@
+bin/
+obj/
+dist/
+Environment.props
+*.dll
+*.pdb
+*.mdb
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+__pycache__/

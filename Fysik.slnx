@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Fysik/Fysik.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Fysik.Tests/Fysik.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,10 @@
+{
+  "name": "Fysik",
+  "version_number": "@VERSION@",
+  "website_url": "@WEBSITE@",
+  "description": "@DESCRIPTION@",
+  "dependencies": [
+    "denikson-BepInExPack_Valheim-5.4.2351",
+    "ValheimModding-Jotunn-2.30.2"
+  ]
+}
