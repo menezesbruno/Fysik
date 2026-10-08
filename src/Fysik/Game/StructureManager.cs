@@ -14,6 +14,8 @@ namespace Fysik.Game
         public readonly PieceGeometry Geometry;
         public readonly bool Structural;
 
+        public readonly bool WorldBuilt;
+
         public readonly bool Attachment;
 
         public readonly List<Obb> SupportBoxes;
@@ -26,6 +28,8 @@ namespace Fysik.Game
 
         public readonly List<PieceNode> Attached = new List<PieceNode>();
 
+        public readonly List<PieceNode> Dependents = new List<PieceNode>();
+
         public bool ContactsValid;
 
         public bool ScanTrusted;
@@ -33,7 +37,18 @@ namespace Fysik.Game
         public readonly List<Contact> Contacts = new List<Contact>();
         public readonly List<Vector3> GroundPoints = new List<Vector3>();
 
-        public bool Grounded => GroundPoints.Count > 0;
+        public bool Grounded
+        {
+            get
+            {
+                if (GroundPoints.Count > 0)
+                    return true;
+                foreach (Contact c in Contacts)
+                    if (c.Other.Anchored && c.Other.Alive)
+                        return true;
+                return false;
+            }
+        }
 
         public Island Island;
         public bool HasResult;
@@ -56,6 +71,7 @@ namespace Fysik.Game
             Name = wnt.gameObject.name.Replace("(Clone)", "");
             Geometry = PieceGeometry.Of(wnt);
             Structural = wnt.m_supports && Geometry.IsValid;
+            WorldBuilt = IsWorldBuilt(wnt);
             if (!wnt.m_supports && wnt.m_noSupportWear)
             {
                 OwnColliders = wnt.GetComponentsInChildren<Collider>(true);
@@ -65,6 +81,13 @@ namespace Fysik.Game
         }
 
         public bool Alive => Wnt != null;
+
+        public bool Anchored => WorldBuilt && FysikConfig.WorldBuildings.Value == WorldBuildingMode.Vanilla;
+
+        public static bool IsWorldBuilt(WearNTear wnt) => wnt.m_piece == null || wnt.m_piece.GetCreator() == 0;
+
+        public static bool KeepsVanilla(WearNTear wnt) =>
+            FysikConfig.WorldBuildings.Value == WorldBuildingMode.Vanilla && IsWorldBuilt(wnt);
 
         public bool Standing => Wnt != null && Wnt.m_nview != null && Wnt.m_nview.IsValid();
 
@@ -220,12 +243,23 @@ namespace Fysik.Game
                 node.Island.CascadeUntil = Time.time + CascadeSeconds;
             }
             foreach (Contact c in node.Contacts)
+            {
                 Invalidate(c.Other);
+                if (c.Other.WorldBuilt)
+                    c.Other.Dependents.Remove(node);
+            }
+            foreach (PieceNode dependent in node.Dependents)
+                if (dependent.Alive)
+                    Invalidate(dependent);
             Invalidate(node);
             _nodes.Remove(wnt);
             foreach (Contact c in node.Contacts)
                 if (c.Other.Alive)
                     Request(c.Other.Wnt);
+            foreach (PieceNode dependent in node.Dependents)
+                if (dependent.Alive)
+                    Request(dependent.Wnt);
+            node.Dependents.Clear();
         }
 
         public void OnPieceHealthChanged(WearNTear wnt)
@@ -316,7 +350,7 @@ namespace Fysik.Game
             PieceNode node = GetNode(wnt);
             if (node != null && node.Attachment && !node.ContactsValid)
                 QueueAttachment(node);
-            if (node == null || !node.Structural)
+            if (node == null || !node.Structural || node.Anchored)
                 return node;
             bool current = node.HasResult && node.Island != null && !node.Island.Stale;
             if (!current && _requested.Add(node))
@@ -374,7 +408,7 @@ namespace Fysik.Game
             {
                 PieceNode seed = _requests.Dequeue();
                 _requested.Remove(seed);
-                if (!seed.Alive || !_nodes.ContainsKey(seed.Wnt))
+                if (!seed.Alive || !_nodes.ContainsKey(seed.Wnt) || seed.Anchored)
                     continue;
                 if (seed.HasResult && seed.Island != null && !seed.Island.Stale)
                     continue;
@@ -522,6 +556,11 @@ namespace Fysik.Game
             node.ScanTrusted = Readiness.Settled(node.Wnt);
             FindContacts(node.Geometry, node.Wnt, node.Contacts, node.GroundPoints);
             node.ContactsValid = true;
+            if (node.WorldBuilt)
+                return;
+            foreach (Contact c in node.Contacts)
+                if (c.Other.WorldBuilt && !c.Other.Dependents.Contains(node))
+                    c.Other.Dependents.Add(node);
         }
 
         private void QueueAttachment(PieceNode node)
@@ -797,7 +836,7 @@ namespace Fysik.Game
             {
                 _ghost = ghost;
                 foreach (PieceNode s in seeds)
-                    if (Visited.Add(s))
+                    if (!s.Anchored && Visited.Add(s))
                         _frontier.Enqueue(s);
             }
 
@@ -814,7 +853,7 @@ namespace Fysik.Game
                     if (!node.ContactsValid)
                         manager.ScanContacts(node);
                     foreach (Contact c in node.Contacts)
-                        if (c.Other.Alive && Visited.Count < MaxIslandScan && Visited.Add(c.Other))
+                        if (c.Other.Alive && !c.Other.Anchored && Visited.Count < MaxIslandScan && Visited.Add(c.Other))
                             _frontier.Enqueue(c.Other);
                 }
 
@@ -877,15 +916,24 @@ namespace Fysik.Game
                     Model.Connect(a, b, PieceGeometry.ToVec(kv.Value));
                 }
                 for (int i = 0; i < Members.Count; i++)
+                {
                     foreach (Vector3 p in Members[i].GroundPoints)
                         Model.Ground(i, PieceGeometry.ToVec(p));
+                    foreach (Contact c in Members[i].Contacts)
+                        if (c.Other.Anchored && c.Other.Alive)
+                            Model.Ground(i, PieceGeometry.ToVec(c.Point));
+                }
 
                 if (_ghost != null)
                 {
                     int g = Model.AddBody(_ghost.Geometry.ToBody(_ghost.Material));
                     foreach (Contact c in _ghost.Contacts)
+                    {
                         if (index.TryGetValue(c.Other, out int j))
                             Model.Connect(g, j, PieceGeometry.ToVec(c.Point));
+                        else if (c.Other.Anchored && c.Other.Alive)
+                            Model.Ground(g, PieceGeometry.ToVec(c.Point));
+                    }
                     foreach (Vector3 p in _ghost.GroundPoints)
                         Model.Ground(g, PieceGeometry.ToVec(p));
                 }
