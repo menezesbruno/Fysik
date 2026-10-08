@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.2: joints that bend like beams
+
+- The stiffness between a piece's centre and each joint now follows beam theory: it bends, not only
+  shears. Thin pieces such as floors are no longer as stiff as logs, so a floor laid on beams leaves
+  the load to the beams instead of turning yellow, and beams, posts and braces carry what they really
+  carry.
+- A joint now sits at the middle of the area where two pieces touch, instead of the point nearest to
+  one piece's centre: a floor resting on a beam is held along its edge, not by one corner, and the
+  result no longer depends on which piece was placed first.
+- Numbers change: floors read lower, beams and posts higher. In the building guide, a balcony 12 m out
+  is now just past the limit (101%) and the tied-arch bridge has two posts at each corner.
+- New bridges in the building guide: the tied arch with braced ends (no scaffolding), a truss between
+  stone abutments, a wooden arch leaving 40 m of water clear for boats, and a 100 m crossing on stone
+  piers. Temporary props are drawn dashed, and each picture says whether the bridge needs them.
+
 ## 0.1.1: world buildings
 
 - Buildings that come with the world (stone towers, abandoned houses, villages, ruins) no longer

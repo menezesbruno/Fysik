@@ -17,7 +17,7 @@ namespace Fysik.Structure
         private const double PlateAspect = 4.0;
         private const double MinSegmentLength = 0.05;
 
-        public static void SegmentStiffness(Body body, Vec3 point, out Mat3 translational, out Mat3 rotational)
+        public static void AddSegmentCompliance(Body body, Vec3 point, double[] compliance)
         {
             Vec3 d = point - body.Center;
             int axial = 0;
@@ -37,25 +37,36 @@ namespace Fysik.Structure
             double length = Math.Max(best, MinSegmentLength);
             int i1 = (axial + 1) % 3, i2 = (axial + 2) % 3;
             double s1 = body.Size[i1], s2 = body.Size[i2];
-            Vec3 a = body.Axis(axial), e1 = body.Axis(i1), e2 = body.Axis(i2);
+            Vec3 a = Vec3.Dot(d, body.Axis(axial)) < 0 ? -body.Axis(axial) : body.Axis(axial);
+            Vec3 e1 = body.Axis(i1), e2 = body.Axis(i2);
 
             double area = s1 * s2;
             double inertia1 = s1 * s2 * s2 * s2 / 12;
             double inertia2 = s2 * s1 * s1 * s1 / 12;
             double torsion = TorsionConstant(s1, s2);
             double e = body.Material.Elasticity, g = body.Material.ShearModulus;
+            double shear = length / (ShearCorrection * g * area);
+            double l2 = length * length, l3 = l2 * length;
 
-            double shear = ShearCorrection * g * area / length;
-            translational = Mat3.Outer(a, e * area / length) + Mat3.Outer(e1, shear) + Mat3.Outer(e2, shear);
-            rotational = Mat3.Outer(a, g * torsion / length)
-                         + Mat3.Outer(e1, e * inertia1 / length)
-                         + Mat3.Outer(e2, e * inertia2 / length);
+            AddOuter(compliance, 0, 0, a, a, length / (e * area));
+            AddOuter(compliance, 0, 0, e1, e1, shear + l3 / (3 * e * inertia2));
+            AddOuter(compliance, 0, 0, e2, e2, shear + l3 / (3 * e * inertia1));
+            AddOuter(compliance, 3, 3, a, a, length / (g * torsion));
+            AddOuter(compliance, 3, 3, e1, e1, length / (e * inertia1));
+            AddOuter(compliance, 3, 3, e2, e2, length / (e * inertia2));
+
+            Vec3 n1 = Vec3.Cross(a, e1), n2 = Vec3.Cross(a, e2);
+            AddOuter(compliance, 0, 3, e1, n1, l2 / (2 * e * inertia2));
+            AddOuter(compliance, 3, 0, n1, e1, l2 / (2 * e * inertia2));
+            AddOuter(compliance, 0, 3, e2, n2, l2 / (2 * e * inertia1));
+            AddOuter(compliance, 3, 0, n2, e2, l2 / (2 * e * inertia1));
         }
 
-        public static Mat3 Series(Mat3 k1, Mat3 k2)
+        private static void AddOuter(double[] m, int row, int col, Vec3 u, Vec3 v, double s)
         {
-            Mat3 c1 = k1.Inverse(), c2 = k2.Inverse();
-            return (c1 + c2).Inverse();
+            for (int r = 0; r < 3; r++)
+                for (int c = 0; c < 3; c++)
+                    m[(row + r) * 6 + col + c] += s * u[r] * v[c];
         }
 
         public static double TorsionConstant(double s1, double s2)
