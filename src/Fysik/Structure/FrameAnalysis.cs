@@ -14,6 +14,7 @@ namespace Fysik.Structure
 
         private readonly double[] _diagonal;
         private readonly double[] _offDiagonal;
+        private readonly double[] _linkStiffness;
         private readonly double[] _preconditioner;
 
         private readonly double[] _x, _r, _z, _p, _q, _f;
@@ -26,7 +27,9 @@ namespace Fysik.Structure
         private int _assembled;
         private bool _ready;
         private readonly double[] _ta = new double[Block], _tb = new double[Block], _d = new double[Block],
-                                  _dta = new double[Block], _dtb = new double[Block], _tmp = new double[Block];
+                                  _dta = new double[Block], _dtb = new double[Block], _tmp = new double[Block],
+                                  _compliance = new double[Block], _factor = new double[Block];
+        private readonly double[] _unit = new double[Dof], _column = new double[Dof];
 
         public int Iterations { get; private set; }
         public bool Converged { get; private set; }
@@ -38,7 +41,6 @@ namespace Fysik.Structure
         {
             public int A, B;
             public Vec3 ArmA, ArmB;
-            public Mat3 Translational, Rotational;
         }
 
         public FrameAnalysis(StructureModel model, double tolerance = 1e-6, int maxIterations = 0)
@@ -51,6 +53,7 @@ namespace Fysik.Structure
             _links = new LinkData[model.Links.Count];
             _diagonal = new double[_n * Block];
             _offDiagonal = new double[model.Links.Count * Block];
+            _linkStiffness = new double[model.Links.Count * Block];
             _preconditioner = new double[_n * Block];
             _x = new double[_n * Dof];
             _r = new double[_n * Dof];
@@ -124,8 +127,10 @@ namespace Fysik.Structure
             for (int i = 0; i < _n; i++)
                 loads[i] = new List<ContactLoad>();
 
-            foreach (LinkData l in _links)
+            var deformation = new double[Dof];
+            for (int li = 0; li < _links.Length; li++)
             {
+                LinkData l = _links[li];
                 Vec3 ua = Translation(l.A), ta = Rotation(l.A);
                 Vec3 delta = -(ua + Vec3.Cross(ta, l.ArmA));
                 Vec3 dTheta = -ta;
@@ -135,8 +140,14 @@ namespace Fysik.Structure
                     delta += ub + Vec3.Cross(tb, l.ArmB);
                     dTheta += tb;
                 }
-                Vec3 force = l.Translational * delta;
-                Vec3 moment = l.Rotational * dTheta;
+                deformation[0] = delta.X;
+                deformation[1] = delta.Y;
+                deformation[2] = delta.Z;
+                deformation[3] = dTheta.X;
+                deformation[4] = dTheta.Y;
+                deformation[5] = dTheta.Z;
+                Vec3 force = new Vec3(Row(li, 0, deformation), Row(li, 1, deformation), Row(li, 2, deformation));
+                Vec3 moment = new Vec3(Row(li, 3, deformation), Row(li, 4, deformation), Row(li, 5, deformation));
                 Vec3 point = _model.Bodies[l.A].Center + l.ArmA;
 
                 loads[l.A].Add(new ContactLoad { Point = point, Force = force, Moment = moment });
@@ -153,6 +164,13 @@ namespace Fysik.Structure
             for (int i = 0; i < _n; i++)
                 results[i] = Mechanics.Evaluate(_model.Bodies[i], loads[i], _model.Gravity);
             return results;
+        }
+
+        private double Row(int link, int row, double[] v)
+        {
+            int o = link * Block + row * Dof;
+            return _linkStiffness[o] * v[0] + _linkStiffness[o + 1] * v[1] + _linkStiffness[o + 2] * v[2]
+                   + _linkStiffness[o + 3] * v[3] + _linkStiffness[o + 4] * v[4] + _linkStiffness[o + 5] * v[5];
         }
 
         private Vec3 Translation(int i) => new Vec3(_x[i * Dof], _x[i * Dof + 1], _x[i * Dof + 2]);
@@ -179,29 +197,22 @@ namespace Fysik.Structure
             Body a = _model.Bodies[link.A];
             var data = new LinkData { A = link.A, B = link.B, ArmA = link.Point - a.Center };
 
-            Mechanics.SegmentStiffness(a, link.Point, out Mat3 ktA, out Mat3 krA);
-            if (link.IsGround)
-            {
-                data.Translational = ktA;
-                data.Rotational = krA;
-            }
-            else
+            Array.Clear(_compliance, 0, Block);
+            Mechanics.AddSegmentCompliance(a, link.Point, _compliance);
+            if (!link.IsGround)
             {
                 Body b = _model.Bodies[link.B];
                 data.ArmB = link.Point - b.Center;
-                Mechanics.SegmentStiffness(b, link.Point, out Mat3 ktB, out Mat3 krB);
-                data.Translational = Mechanics.Series(ktA, ktB);
-                data.Rotational = Mechanics.Series(krA, krB);
+                Mechanics.AddSegmentCompliance(b, link.Point, _compliance);
             }
             _links[li] = data;
+            InvertSymmetric(_compliance, _linkStiffness, li * Block);
 
             Array.Clear(_ta, 0, Block);
             SetBlock(_ta, 0, 0, -Mat3.Identity);
             SetBlock(_ta, 0, 3, Mat3.Skew(data.ArmA));
             SetBlock(_ta, 3, 3, -Mat3.Identity);
-            Array.Clear(_d, 0, Block);
-            SetBlock(_d, 0, 0, data.Translational);
-            SetBlock(_d, 3, 3, data.Rotational);
+            Array.Copy(_linkStiffness, li * Block, _d, 0, Block);
 
             Mul6(_d, _ta, _dta);
             MulT6(_ta, _dta, _tmp);
@@ -219,6 +230,26 @@ namespace Fysik.Structure
                 MulT6(_ta, _dtb, _tmp);
                 Array.Copy(_tmp, 0, _offDiagonal, li * Block, Block);
             }
+        }
+
+        private void InvertSymmetric(double[] m, double[] target, int offset)
+        {
+            Cholesky6(m, 0, _factor, 0);
+            for (int c = 0; c < Dof; c++)
+            {
+                Array.Clear(_unit, 0, Dof);
+                _unit[c] = 1;
+                CholeskySolve6(_factor, 0, _unit, _column, 0);
+                for (int r = 0; r < Dof; r++)
+                    target[offset + r * Dof + c] = _column[r];
+            }
+            for (int r = 0; r < Dof; r++)
+                for (int c = r + 1; c < Dof; c++)
+                {
+                    double mean = (target[offset + r * Dof + c] + target[offset + c * Dof + r]) / 2;
+                    target[offset + r * Dof + c] = mean;
+                    target[offset + c * Dof + r] = mean;
+                }
         }
 
         private void Initialize()

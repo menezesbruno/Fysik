@@ -115,6 +115,58 @@ namespace Fysik.Tests
             Assert.True(cantilever > 4 * fixedBeam);
         }
 
+        [Theory]
+        [InlineData(2, 3.0 / 32, 1.0 / 32)]
+        [InlineData(4, 11.0 / 128, 5.0 / 128)]
+        public void Fixed_beam_moments_match_beam_theory_for_the_lumped_weights(int beams, double end, double middle)
+        {
+            var (frame, _) = Solve(Structures.FixedBeam(beams));
+            ContactLoad[] loads = frame.ContactLoads().SelectMany(l => l).ToArray();
+            double MomentAt(double x) => Math.Abs(loads.First(c => Math.Abs(c.Point.X - x) < 1e-9).Moment.Z);
+
+            double w = 500 * 0.2 * 0.2 * G;
+            double length = 2.0 * beams;
+            double wl2 = w * length * length;
+            _out.WriteLine($"{beams} beams: end {MomentAt(0) / wl2:0.0000} wL² (theory {end:0.0000}), " +
+                           $"middle {MomentAt(length / 2) / wl2:0.0000} wL² (theory {middle:0.0000})");
+
+            Assert.Equal(end, MomentAt(0) / wl2, 1e-3);
+            Assert.Equal(middle, MomentAt(length / 2) / wl2, 1e-3);
+        }
+
+        [Fact]
+        public void Thin_floor_glued_on_a_thick_beam_leaves_the_load_to_the_beam()
+        {
+            var m = new StructureModel();
+            Body beam = Structures.Box(new Vec3(0, 0, 0), new Vec3(4, 0.5, 0.5), Structures.Wood);
+            beam.Mass = 2000;
+            Body floor = Structures.Box(new Vec3(0, 0.315, 0), new Vec3(4, 0.13, 2), Structures.Wood);
+            m.AddBody(beam);
+            m.AddBody(floor);
+            m.Ground(0, new Vec3(-2, 0, 0));
+            m.Ground(0, new Vec3(2, 0, 0));
+            m.Ground(1, new Vec3(-2, 0.315, 0));
+            m.Ground(1, new Vec3(2, 0.315, 0));
+            m.Connect(0, 1, new Vec3(0, 0.25, 0));
+
+            var (frame, _) = Solve(m);
+            var loads = frame.ContactLoads();
+            double floorShare = (loads[1][0].Force.Y + loads[1][1].Force.Y) / ((beam.Mass + floor.Mass) * G);
+
+            double Stiffness(double width, double depth)
+            {
+                double inertia = width * depth * depth * depth / 12;
+                double half = 2;
+                double compliance = half * half * half / (12 * Structures.Wood.Elasticity * inertia)
+                                    + half / (5.0 / 6 * Structures.Wood.ShearModulus * width * depth);
+                return 2 / compliance;
+            }
+            double expected = Stiffness(2, 0.13) / (Stiffness(2, 0.13) + Stiffness(0.5, 0.5));
+            _out.WriteLine($"floor carries {floorShare:P1} (Timoshenko {expected:P1})");
+
+            Assert.Equal(expected, floorShare, expected * 0.1);
+        }
+
         [Fact]
         public void Unfinished_arch_bends_like_a_cantilever_and_the_closed_arch_works_in_compression()
         {

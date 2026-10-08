@@ -97,25 +97,61 @@ is squeezed and barely notices; a beam reaching out is bent, and the joint where
 carries the whole reach. The stress grows with the square of the length: half again as far out means
 more than twice the stress.
 
-- With 4 m core wood logs and floors on top, a balcony 8 m out is comfortable (42%), 12 m out is at
-  the edge (93%) and 16 m out falls.
+- With 4 m core wood logs and floors on top, a balcony 8 m out is comfortable (46%), 12 m out is just
+  past the limit (101%) and 16 m out falls.
 - A **diagonal brace** turns the bending into a squeeze: two 45° logs from the ground to the first
-  joint bring the 12 m balcony back to 42%.
+  joint bring the 12 m balcony back to 45%.
 - The brace pushes back against whatever it stands on. Give the house a diagonal (or a solid wall),
   or the push bends its posts instead.
 
 ### Arches
 
 An arch turns the weight into a squeeze that follows its curve, so it spans far more than a flat
-beam. This 24 m bridge stands with nothing in the middle; without the arch, the same deck breaks.
+beam. This bridge is 24 m long with 20 m clear underneath; hanging the deck from the arch takes it
+from 67% down to 43%.
 
 ![Tied-arch bridge, 24 m: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-tied-arch.png)
 
-- **Build it on scaffolding.** Until the last piece closes it, half an arch is just a cantilever and
-  will crack. Prop it with plain poles, close it, then remove the poles: it should turn blue and green.
+- **Prop it while you build.** Until the arches close, the hangers and half arches hang on the deck
+  and the corner posts crack (118%). One plain pole under the middle of each side keeps everything
+  below 38%; remove the poles once both arches are closed.
 - **Hold its feet.** An arch pushes outwards where it lands. Here the deck beams tie the two feet
-  together (in tension, about 53 kN); otherwise set the feet against the ground or a heavy wall.
+  together (in tension, about 46 kN); otherwise set the feet against the ground or a heavy wall.
 - **Hang the deck from it.** Poles from the arch down to the deck (hangers) carry the deck in tension.
+- **Two posts per corner.** A deck flexes, and a lone post glued under its end gets bent (87%); two
+  posts 2 m apart hold it straight (24%).
+
+![Tied-arch bridge with braced ends, 24 m: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-tied-arch-braced.png)
+
+- **Or brace the ends.** Two 45° logs from the foot of each post up to the deck close a triangle, and
+  the same bridge needs no scaffolding: nothing goes above 59% while it is built, as long as all the
+  beams meet before the floors go on. The deck then holds on its own (41%), so the arch is for looks.
+  A short brace from halfway up the post would bend the post instead (118%).
+
+### Wider gaps and boats
+
+To leave more water free, put the structure under the deck and let stone take the ends. In the
+pictures, temporary props are dashed: build with them, then take them away.
+
+![Truss bridge, 24 m between stone abutments: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-truss.png)
+
+- **Truss.** A zigzag of 45° logs between the deck and a bottom chord 4 m below turns the weight into
+  squeeze and pull along the logs: worst piece 49% between stone abutments 24 m apart, where the deck
+  alone would reach 118% and fall. Build it out from both abutments, panel by panel: nothing goes above
+  54% on the way, so it needs no scaffolding.
+
+![Arch bridge, 40 m clear between stone abutments: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-arch-bridge.png)
+
+- **Arch under the deck.** With heavy stone abutments to push against, a wooden arch leaves 40 m of
+  water clear, with about 11 m of headroom for boats in the middle: worst piece 45%. Without props
+  the arch cracks once it is 12 m out; a plain pole standing in the water under every joint from 10 m
+  out keeps it below 48%. Once closed it stands on its own (25%) and the props come out.
+
+![Long crossing, three 32 m arches on stone piers: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-viaduct.png)
+
+- **Farther islands.** Repeat the span on stone piers standing in the water. Between two arches a
+  pier is pushed from both sides and only carries weight: three 32 m arches cross 100 m at 62%. Prop
+  each arch from 10 m out as it is built (it reaches 96% without), then move the props to the next span.
 
 ### Stone bridges
 
@@ -124,14 +160,15 @@ arches are built out from the piers in steps and closed at the top with a pair o
 
 ![Stone arcade bridge: pillars every 4 m with pairs of stone arches; side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-stone-arcade.png)
 
-- Pillars every 4 m, a pair of stone arches between each two, stone floors on top: worst piece 27%.
+- Pillars every 4 m, a pair of stone arches between each two, stone floors on top: worst piece 23%.
   At this span the arches are mostly for looks: the same floors laid straight on the pillars hold too
-  (19%).
+  (22%). No scaffolding: the first stone arch of each pair stands on its pillar (17%) until the second
+  one closes it.
 
 ![Roman bridge: three 8 m arches on 2 m piers; side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-roman-bridge.png)
 
 - With 8 m between the piers the arch does the work: worst piece 48%, while the same piers with a
-  flat deck reach 109% and the deck falls.
+  flat deck reach 122% and the deck falls.
 - Each arch steps out 1 m and then 2 m from the piers and closes with two stone arches. Before the
   arches close nothing goes above 39%, so no scaffolding is needed.
 

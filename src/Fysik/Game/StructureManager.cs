@@ -549,7 +549,13 @@ namespace Fysik.Game
             s_terrainMask = 1 << s_terrainLayer;
         }
 
-        private readonly Dictionary<PieceNode, List<Vector3>> _contactPoints = new Dictionary<PieceNode, List<Vector3>>();
+        private struct WeightedPoint
+        {
+            public Vec3 Point;
+            public double Weight;
+        }
+
+        private readonly Dictionary<PieceNode, List<WeightedPoint>> _contactPoints = new Dictionary<PieceNode, List<WeightedPoint>>();
 
         private void ScanContacts(PieceNode node)
         {
@@ -664,7 +670,7 @@ namespace Fysik.Game
         private void FindContacts(PieceGeometry geometry, WearNTear self, List<Contact> contacts, List<Vector3> ground)
         {
             EnsureMasks();
-            foreach (List<Vector3> list in _contactPoints.Values)
+            foreach (List<WeightedPoint> list in _contactPoints.Values)
                 list.Clear();
             ground.Clear();
             s_groundColliders.Clear();
@@ -673,6 +679,7 @@ namespace Fysik.Game
             foreach (Obb box in geometry.Boxes)
             {
                 AddBottomSamples(box, null, ground);
+                OrientedBox grown = box.Grown(ContactMargin);
 
                 int count = Physics.OverlapBoxNonAlloc(box.Center, box.Size * 0.5f + Vector3.one * ContactMargin,
                                                        s_hits, box.Rotation, s_rayMask);
@@ -694,18 +701,18 @@ namespace Fysik.Game
                     if (otherNode == null || !otherNode.Structural)
                         continue;
 
-                    Vector3 q = Obb.Of(c).ClosestPoint(center);
-                    Vector3 p = (q + box.ClosestPoint(q)) * 0.5f;
-                    if (!_contactPoints.TryGetValue(otherNode, out List<Vector3> points))
-                        _contactPoints[otherNode] = points = new List<Vector3>();
-                    points.Add(p);
+                    if (!Overlap.Of(grown, Obb.Of(c).Grown(ContactMargin), out Vec3 centroid, out double volume))
+                        continue;
+                    if (!_contactPoints.TryGetValue(otherNode, out List<WeightedPoint> points))
+                        _contactPoints[otherNode] = points = new List<WeightedPoint>();
+                    points.Add(new WeightedPoint { Point = centroid, Weight = volume });
                 }
             }
 
             contacts.Clear();
-            foreach (KeyValuePair<PieceNode, List<Vector3>> kv in _contactPoints)
+            foreach (KeyValuePair<PieceNode, List<WeightedPoint>> kv in _contactPoints)
                 if (kv.Value.Count > 0)
-                    contacts.Add(new Contact { Other = kv.Key, Point = Average(kv.Value) });
+                    contacts.Add(new Contact { Other = kv.Key, Point = Centroid(kv.Value) });
             contacts.Sort((a, b) => PieceNode.Compare(a.Other, b.Other));
             _contactPoints.Clear();
 
@@ -780,13 +787,21 @@ namespace Fysik.Game
         private static void SortPoints(List<Vector3> points) =>
             points.Sort((a, b) => a.x != b.x ? a.x.CompareTo(b.x) : a.y != b.y ? a.y.CompareTo(b.y) : a.z.CompareTo(b.z));
 
-        private static Vector3 Average(List<Vector3> points)
+        private static Vector3 Centroid(List<WeightedPoint> points)
         {
-            SortPoints(points);
-            Vector3 sum = Vector3.zero;
-            foreach (Vector3 p in points)
-                sum += p;
-            return sum / points.Count;
+            points.Sort((a, b) => a.Point.X != b.Point.X ? a.Point.X.CompareTo(b.Point.X)
+                                : a.Point.Y != b.Point.Y ? a.Point.Y.CompareTo(b.Point.Y)
+                                : a.Point.Z != b.Point.Z ? a.Point.Z.CompareTo(b.Point.Z)
+                                : a.Weight.CompareTo(b.Weight));
+            Vec3 sum = Vec3.Zero;
+            double weight = 0;
+            foreach (WeightedPoint p in points)
+            {
+                sum += p.Point * p.Weight;
+                weight += p.Weight;
+            }
+            Vec3 c = sum / weight;
+            return new Vector3((float)c.X, (float)c.Y, (float)c.Z);
         }
 
         private sealed class GhostPiece
