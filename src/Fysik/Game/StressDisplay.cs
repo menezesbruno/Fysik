@@ -22,6 +22,8 @@ namespace Fysik.Game
 
         public static readonly Color Unsupported = new Color(0.85f, 0.2f, 0.85f);
 
+        public static readonly Color World = new Color(0.7f, 0.7f, 0.7f);
+
         public static Color ForUtilization(double u)
         {
             float t = Mathf.Clamp01((float)u);
@@ -33,6 +35,8 @@ namespace Fysik.Game
 
         public static Color For(PieceNode node)
         {
+            if (node != null && node.Anchored)
+                return World;
             if (node == null || !node.HasResult)
                 return Pending;
             return node.Result.Mode == StressMode.Unsupported ? Unsupported : ForUtilization(node.Result.Utilization);
@@ -89,6 +93,8 @@ namespace Fysik.Game
         {
             if (node == null || !node.Structural)
                 return null;
+            if (node.Anchored)
+                return $"<color=#{ColorUtility.ToHtmlStringRGB(World)}>{L("$fysik_world")}</color>";
             if (!node.HasResult)
                 return $"<color=#{ColorUtility.ToHtmlStringRGB(Pending)}>{L("$fysik_pending")}</color>";
 

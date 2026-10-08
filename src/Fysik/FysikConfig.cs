@@ -13,6 +13,13 @@ namespace Fysik
         Sandbox,
     }
 
+    internal enum WorldBuildingMode
+    {
+        Vanilla,
+
+        Physics,
+    }
+
     internal enum Difficulty
     {
         Relaxed,
@@ -25,6 +32,7 @@ namespace Fysik
     internal static class FysikConfig
     {
         internal static ConfigEntry<StructureMode> Mode { get; private set; }
+        internal static ConfigEntry<WorldBuildingMode> WorldBuildings { get; private set; }
         internal static ConfigEntry<float> CrackWarningSeconds { get; private set; }
         internal static ConfigEntry<bool> DamageWeakens { get; private set; }
         internal static ConfigEntry<int> MaxFrameBodies { get; private set; }
@@ -65,6 +73,15 @@ namespace Fysik
                 Server("Physics: overloaded pieces crack, then fall (vanilla support is replaced). " +
                        "DisplayOnly: vanilla decides what falls, Fysik only shows the forces. " +
                        "Sandbox: nothing falls for lack of support, Fysik shows the forces (calibration, test worlds).",
+                       null));
+
+            WorldBuildings = config.Bind(
+                "Structure", "WorldBuildings", WorldBuildingMode.Vanilla,
+                Server("Buildings that come with the world, not built by a player: stone towers, abandoned houses, villages, " +
+                       "ruins, fortresses. Vanilla: they keep vanilla support and Fysik never brings them down; only what " +
+                       "players build is simulated, and a player build resting on them is held as if on rock. Physics: they " +
+                       "are simulated like player builds. Warning: many were not built to stand up to real forces and may " +
+                       "crack and fall as soon as a player comes near, changing the world for good.",
                        null));
 
             CrackWarningSeconds = config.Bind(

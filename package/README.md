@@ -15,10 +15,14 @@ matters, in the spirit of Poly Bridge and Bridge Constructor:
 
 > ### ⚠ Before you install
 >
-> Fysik is **on from the start**. As soon as a world loads, every building is checked against the
-> physics Fysik applies, and **buildings that do not respect it will crack and fall**, including
-> bases you built before installing it. **Back up your world first.** We recommend **starting a new
-> world** with Fysik, so everything you build is designed for it from the first post.
+> Fysik is **on from the start**. As soon as a world loads, every building made by players is checked
+> against the physics Fysik applies, and **buildings that do not respect it will crack and fall**,
+> including bases you built before installing it. **Back up your world first.** We recommend
+> **starting a new world** with Fysik, so everything you build is designed for it from the first post.
+>
+> Buildings that come with the world (stone towers, abandoned houses, villages, ruins) are **not**
+> simulated: they keep vanilla support, unless the server sets `Structure.WorldBuildings = Physics`
+> (see [World buildings](#world-buildings)).
 
 ## Status
 
@@ -37,8 +41,8 @@ Install with a mod manager (r2modman, Thunderstore Mod Manager) or manually:
 player who owns part of a structure must calculate it exactly as the others do).
 Players without it cannot join a server that has it, and vice versa.
 
-Existing buildings follow the new rules as soon as the mod is enabled: **back up your world**, and
-preferably start a new one. To look at an old base before letting it settle, set
+Existing player buildings follow the new rules as soon as the mod is enabled: **back up your world**,
+and preferably start a new one. To look at an old base before letting it settle, set
 `Structure.Mode = Sandbox` (nothing falls for lack of support) or `DisplayOnly` (vanilla decides).
 
 ## Seeing the forces
@@ -46,7 +50,8 @@ preferably start a new one. To look at an old base before letting it settle, set
 - **Hammer:** aim at a piece. It is colored by stress, from blue (relaxed) through green and yellow to
   red (at its limit), and the value appears next to the crosshair, e.g. *Compression 72%*, with its
   material and weight. Light blue means the structure is still being calculated; magenta means it has
-  no path to the ground at all.
+  no path to the ground at all; neutral grey means a world building that Fysik does not simulate
+  (*World building · not simulated*).
 - **Placing a piece:** the ghost is colored by the stress it would have once placed, with the value
   next to the crosshair (*Preview: Bending 85%*). If it would push another piece past its limit, a
   second line names that piece. When vanilla says the spot is invalid, the ghost stays vanilla red.
@@ -59,6 +64,25 @@ preferably start a new one. To look at an old base before letting it settle, set
   support) has nothing to shore up and falls at once, as in vanilla.
 - **Furniture:** chests, workbenches, torches and similar pieces hold nothing up and add no weight,
   but still need something to rest on: they fall when the piece under them goes, as in vanilla.
+
+## World buildings
+
+Stone towers, abandoned houses, villages, ruins, fortresses and everything else the game places in
+the world were designed for vanilla support, not for real forces. By default Fysik leaves them alone:
+
+- **Only what players build is simulated.** World buildings keep vanilla support: they stand as the
+  game built them, and if you break their base, the rest crumbles as in vanilla. Fysik never brings
+  them down.
+- They show in **neutral grey** with the hammer and the X-ray.
+- A player build resting on a world building is held as if on rock. If that world building is
+  destroyed, your build is recalculated and may fall.
+
+To simulate world buildings too, the server sets `Structure.WorldBuildings = Physics`. They are then
+calculated, colored and brought down like any player build. **This changes the game:** many of them do
+not respect the physics and will crack and fall, for good, as soon as someone comes near.
+
+A piece counts as a world building when no player placed it. Pieces spawned with console commands, or
+by mods that do not record a builder, count as world buildings too.
 
 ## Building guide
 
@@ -152,6 +176,7 @@ synced to every client; they can also be edited in game with a configuration man
 | Section | Setting | Default | Range | Description |
 |---|---|---|---|---|
 | Structure | Mode (*server*) | Physics | Physics, DisplayOnly, Sandbox | Physics: Fysik decides what falls. DisplayOnly: vanilla decides, Fysik only shows. Sandbox: nothing falls for lack of support. |
+| Structure | WorldBuildings (*server*) | Vanilla | Vanilla, Physics | Buildings that come with the world (stone towers, abandoned houses, villages, ruins). Vanilla: they keep vanilla support, are not simulated and show in grey; player builds rest on them as on rock. Physics: simulated like player builds. **Warning:** many were not built for real forces and will crack and fall when players come near, changing the game. |
 | Failure | CrackWarningSeconds (*server*) | 5 | 0–60 | Seconds an overloaded piece stays cracked before it falls. |
 | Failure | DamageWeakens (*server*) | on | | Pieces below half health are weaker, down to 25% strength at the brink of breaking; rain wear alone never weakens them. Off: damage never changes strength. |
 | Structure | Difficulty (*server*) | Normal | Relaxed, Normal, Strict | Relaxed: materials 50% stronger (longer spans and cantilevers). Strict: 30% weaker. |

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1: world buildings
+
+- Buildings that come with the world (stone towers, abandoned houses, villages, ruins) no longer
+  crack and fall when you come near: they keep vanilla support, are not simulated and show in neutral
+  grey. Player builds resting on them are held as if on rock, and are recalculated if they are
+  destroyed.
+- New server setting `Structure.WorldBuildings`: `Vanilla` (default) or `Physics`, which simulates
+  world buildings like player builds; many of them will then crack and fall.
+
 ## 0.1.0: first release (early access)
 
 Fysik replaces Valheim's structural support with a force calculation. **Back up your worlds.**

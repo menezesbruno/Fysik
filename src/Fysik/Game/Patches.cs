@@ -59,11 +59,11 @@ namespace Fysik.Game
         [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.HaveSupport))]
         private static class HaveSupport
         {
-            private static bool Prefix(ref bool __result)
+            private static bool Prefix(WearNTear __instance, ref bool __result)
             {
                 try
                 {
-                    if (Hooks.VanillaSupportDecides())
+                    if (Hooks.VanillaSupportDecides(__instance))
                         return true;
                     __result = true;
                     return false;
@@ -142,7 +142,9 @@ namespace Fysik.Game
             return true;
         }
 
-        public static bool VanillaSupportDecides() => FysikConfig.Mode.Value == StructureMode.DisplayOnly;
+        public static bool VanillaSupportDecides(WearNTear wnt) =>
+            FysikConfig.Mode.Value == StructureMode.DisplayOnly ||
+            (FysikConfig.Mode.Value == StructureMode.Physics && PieceNode.KeepsVanilla(wnt));
 
         public static void PlacementGhost(Player player)
         {
