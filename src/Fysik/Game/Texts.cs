@@ -21,6 +21,7 @@ namespace Fysik.Game
                 { "fysik_overloaded", "would break" },
                 { "fysik_cracking", "cracking!" },
                 { "fysik_pending", "Calculating…" },
+                { "fysik_world", "World building · not simulated" },
                 { "fysik_loadpath", "simplified model" },
                 { "fysik_preview", "Preview" },
                 { "fysik_overloads", "overloads" },

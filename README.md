@@ -30,6 +30,11 @@ Players: installation, settings and a **building guide** with worked examples ar
   as equivalent beams. Loads: self-weight only (v1). Simple buckling: slender pieces get a lower
   compression limit. Pieces that hold nothing up (chests, workbenches, torches) add no weight but,
   as in vanilla, need a structural piece or the ground to rest on, and fall without one.
+- **World buildings:** buildings that come with the world (stone towers, abandoned houses, villages,
+  ruins: every piece no player placed) do not get Fysik's physics. They keep vanilla support, are
+  shown in neutral grey, and a player build resting on them treats them as fixed ground; only player
+  builds are simulated directly. The server setting `Structure.WorldBuildings = Physics` simulates
+  them too, with the normal stress colors; many were not designed for it and will fall.
 - **Materials:** wood < core wood < stone / iron. Stone is strong in compression with moderate tension.
   Unknown materials from other mods get safe defaults and a log warning.
 - **Multiplayer:** only players calculate. Whoever owns a piece (the player near it, as in vanilla)

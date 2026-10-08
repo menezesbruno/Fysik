@@ -44,7 +44,7 @@ namespace Fysik.Game
             int created = 0;
             foreach (WearNTear wnt in WearNTear.GetAllInstances())
             {
-                if (!Owned(wnt))
+                if (!Owned(wnt) || PieceNode.KeepsVanilla(wnt))
                     continue;
                 if (!manager.Knows(wnt) && created++ >= MaxNewPiecesPerPass)
                     continue;
@@ -63,13 +63,18 @@ namespace Fysik.Game
 
             foreach (WearNTear wnt in WearNTear.GetAllInstances())
             {
-                if (!Owned(wnt) || !manager.TryGetNode(wnt, out PieceNode node))
+                if (!Owned(wnt))
+                    continue;
+                bool vanilla = PieceNode.KeepsVanilla(wnt);
+                bool known = manager.TryGetNode(wnt, out PieceNode node);
+                if (!known && !vanilla)
                     continue;
                 ZDO zdo = wnt.m_nview.GetZDO();
                 long crack = zdo.GetLong(CrackKey);
-                node.CrackTicks = crack;
+                if (known)
+                    node.CrackTicks = crack;
 
-                if (!physics)
+                if (!physics || vanilla)
                 {
                     if (crack != 0)
                         SetCrack(zdo, node, 0);
@@ -141,7 +146,8 @@ namespace Fysik.Game
         }
 
         private static bool CanFall(WearNTear wnt, bool worldAllowsFalls) =>
-            worldAllowsFalls && wnt.m_noSupportWear && (wnt.m_piece == null || wnt.m_piece.CanBeRemoved());
+            worldAllowsFalls && wnt.m_noSupportWear && (wnt.m_piece == null || wnt.m_piece.CanBeRemoved()) &&
+            !PieceNode.KeepsVanilla(wnt);
 
         private readonly HashSet<PieceNode> _fallingSet = new HashSet<PieceNode>();
         private readonly HashSet<Island> _fallingIslands = new HashSet<Island>();
@@ -221,7 +227,8 @@ namespace Fysik.Game
         private static void SetCrack(ZDO zdo, PieceNode node, long ticks)
         {
             zdo.Set(CrackKey, ticks);
-            node.CrackTicks = ticks;
+            if (node != null)
+                node.CrackTicks = ticks;
         }
 
         private bool IsReady(Island island)
