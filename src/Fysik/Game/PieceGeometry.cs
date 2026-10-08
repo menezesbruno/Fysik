@@ -22,6 +22,15 @@ namespace Fysik.Game
             return Center + Rotation * local;
         }
 
+        public OrientedBox Grown(float margin) => new OrientedBox
+        {
+            Center = PieceGeometry.ToVec(Center),
+            AxisX = PieceGeometry.ToVec(Rotation * Vector3.right),
+            AxisY = PieceGeometry.ToVec(Rotation * Vector3.up),
+            AxisZ = PieceGeometry.ToVec(Rotation * Vector3.forward),
+            Half = PieceGeometry.ToVec(Size * 0.5f + Vector3.one * margin),
+        };
+
         public static Obb Of(Collider collider)
         {
             Transform t = collider.transform;

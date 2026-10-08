@@ -23,7 +23,9 @@ Players: installation, settings and a **building guide** with worked examples ar
   connected island of up to `Structure.MaxFrameBodies` pieces (2000 by default, up to 5000); a
   simplified load-path model above that. Each piece is a
   rigid body with 6 degrees of freedom; each joint is an elastic connection whose stiffness comes
-  from the two pieces' cross-sections (EA/L, EI/L, GJ/L) between their centres and the contact point.
+  from the two pieces' cross-sections between their centres and the contact point, each segment
+  treated as a Timoshenko cantilever (stretching, shear, bending and twisting, with the rotation a
+  sideways push causes). The contact point is the centre of the overlap between the two pieces.
   Stresses are then checked on cuts across every piece, so a beam resting on a post in the middle
   still sees its own bending.
 - **Connections:** every pair of touching pieces is a rigid joint. Walls and floors are approximated
@@ -94,7 +96,7 @@ directly. Game and third-party DLLs are referenced in place and never committed.
 |---|---|
 | `src/Fysik/Structure/` | The solver: pure C#, no Unity types, shared with the tests |
 | `src/Fysik/Game/` | Valheim side: piece graph, contacts, display, patches |
-| `tests/Fysik.Tests/` | Solver tests against beam theory (cantilever, column, arch, brace, performance) |
+| `tests/Fysik.Tests/` | Solver tests against beam theory (cantilever, fixed beam, column, arch, brace, floor on a beam, contact overlap, performance) |
 | `package/` | Thunderstore `manifest.json` template and the package README |
 | `art/` | `icon.png` and `banner.png` |
 | `docs/images/` | The building guide's pictures |
