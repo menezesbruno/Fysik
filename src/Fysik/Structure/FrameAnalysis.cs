@@ -35,7 +35,6 @@ namespace Fysik.Structure
         public bool Converged { get; private set; }
         public double RelativeResidual { get; private set; }
 
-        public double[] Displacements => _x;
 
         private struct LinkData
         {
@@ -150,7 +149,7 @@ namespace Fysik.Structure
                 Vec3 moment = new Vec3(Row(li, 3, deformation), Row(li, 4, deformation), Row(li, 5, deformation));
                 Vec3 point = _model.Bodies[l.A].Center + l.ArmA;
 
-                loads[l.A].Add(new ContactLoad { Point = point, Force = force, Moment = moment });
+                loads[l.A].Add(new ContactLoad { Point = point, Force = force, Moment = moment, Ground = l.B < 0 });
                 if (l.B >= 0)
                     loads[l.B].Add(new ContactLoad { Point = point, Force = -force, Moment = -moment });
             }

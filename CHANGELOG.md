@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.1.3: what things weigh and what they hold
+
+- Furniture, crafting stations, lighting, decor, portals and other pieces the game tags as objects now
+  weigh what they are made of: 4 kg per piece of wood, 10 kg per stone, 4 kg per metal bar, 0.1 kg per
+  nail and 2 kg per unit of item weight for the rest. Their colliders were counted as solid material
+  before: a smelter went from about 50 t to 250 kg, a hearth from 17 t to 150 kg, a bed from 672 kg to
+  32 kg. Pieces tagged as structure (building, floor, wall, roof, architecture, stairs, doors, stacks)
+  keep the weight of their volume, including fences, stake walls and carved statues.
+- Chests, workbenches, forges, torches, stone and wood piles and other pieces that hold nothing up
+  used to weigh nothing. They now weigh their materials the same way, as a load on the pieces they
+  rest on, shared among them and the ground: a stone pile 500 kg, a forge 120 kg, a chest 40 to 113
+  kg, a standing torch about 9 kg. Placing, moving or removing one recalculates what holds it.
+- Under the stress, the hammer now shows the piece's name, material and own weight, then a line with
+  the weight it holds up, that is whatever rests on it and everything above (*Holds 6.5 t* on a post
+  of a two-storey house), and for posts, beams and logs a line with how hard they are squeezed or
+  stretched (*Squeezed 6.7 t*). The placement preview shows the same for the piece being placed, so a
+  post slid under a beam says what it will take. Aiming at a chest, torch or pile shows its name and
+  weight. The dump has two new last columns: the weight of objects resting on each piece and the
+  weight it holds up.
+- Fysik's text next to the crosshair has its own place now, in the game's font and size, clear of the
+  game's piece health bar and hover text instead of mixed into them.
+- New server settings in the `Weight` section: kilograms per wood item, stone item, metal bar and
+  nail, and per unit of item weight for every other material. Changing them recalculates every
+  structure.
+- Numbers change: pieces under hearths, beds and other heavy furniture read lower, and pieces holding
+  piles, forges or chests read higher. A 500 kg stone pile on a wood floor laid on beams adds about 7
+  points. Look over floors and cantilevers that hold stone piles after updating.
+
 ## 0.1.2: joints that bend like beams
 
 - The stiffness between a piece's centre and each joint now follows beam theory: it bends, not only

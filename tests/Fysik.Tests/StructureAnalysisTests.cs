@@ -21,6 +21,55 @@ namespace Fysik.Tests
             return analysis.Results;
         }
 
+        [Theory]
+        [InlineData(500)]
+        [InlineData(1)]
+        public void A_post_holds_everything_resting_on_it(int maxFrameBodies)
+        {
+            var model = new StructureModel();
+            model.AddBody(Structures.Box(new Vec3(0, 1, 0), new Vec3(0.2, 2, 0.2), Structures.Wood));
+            model.AddBody(Structures.Box(new Vec3(0, 2.1, 0), new Vec3(2, 0.2, 0.2), Structures.Wood));
+            model.AddBody(Structures.Box(new Vec3(0, 2.35, 0), new Vec3(0.3, 0.3, 0.3), Structures.Stone));
+            model.Ground(0, new Vec3(0, 0, 0));
+            model.Connect(0, 1, new Vec3(0, 2, 0));
+            model.Connect(1, 2, new Vec3(0, 2.2, 0));
+
+            BodyResult[] results = Run(model, maxFrameBodies, out SolverKind solver);
+            Assert.Equal(maxFrameBodies > 1 ? SolverKind.Frame : SolverKind.LoadPath, solver);
+            double g = model.Gravity.Length;
+            double beam = model.Bodies[1].Mass * g, block = model.Bodies[2].Mass * g;
+            Assert.Equal(beam + block, results[0].HeldWeight, 1e-3 * (beam + block));
+            Assert.Equal(block, results[1].HeldWeight, 1e-3 * block);
+            Assert.Equal(0, results[2].HeldWeight, 1e-6);
+        }
+
+        [Theory]
+        [InlineData(500)]
+        [InlineData(1)]
+        public void A_post_under_a_load_is_squeezed_by_it_and_half_its_own_weight(int maxFrameBodies)
+        {
+            var model = new StructureModel();
+            model.AddBody(Structures.Box(new Vec3(0, 1, 0), new Vec3(0.2, 2, 0.2), Structures.Wood));
+            model.AddBody(Structures.Box(new Vec3(0, 2.1, 0), new Vec3(2, 0.2, 0.2), Structures.Wood));
+            model.AddBody(Structures.Box(new Vec3(0, 2.35, 0), new Vec3(0.3, 0.3, 0.3), Structures.Stone));
+            model.Ground(0, new Vec3(0, 0, 0));
+            model.Connect(0, 1, new Vec3(0, 2, 0));
+            model.Connect(1, 2, new Vec3(0, 2.2, 0));
+
+            BodyResult[] results = Run(model, maxFrameBodies, out _);
+            double g = model.Gravity.Length;
+            double squeeze = (model.Bodies[1].Mass + model.Bodies[2].Mass + 0.5 * model.Bodies[0].Mass) * g;
+            Assert.Equal(-squeeze, results[0].MemberForce, 1e-3 * squeeze);
+        }
+
+        [Fact]
+        public void A_tie_under_an_arch_is_stretched_and_the_arch_squeezed()
+        {
+            StructureModel model = Structures.Arch(13, 5);
+            BodyResult[] free = Run(model, 500, out _);
+            Assert.All(free, r => Assert.True(r.MemberForce <= 0, $"arch piece in tension: {r.MemberForce:0} N"));
+        }
+
         [Fact]
         public void Island_without_ground_is_unsupported()
         {

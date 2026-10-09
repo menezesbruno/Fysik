@@ -29,9 +29,16 @@ Players: installation, settings and a **building guide** with worked examples ar
   Stresses are then checked on cuts across every piece, so a beam resting on a post in the middle
   still sees its own bending.
 - **Connections:** every pair of touching pieces is a rigid joint. Walls and floors are approximated
-  as equivalent beams. Loads: self-weight only (v1). Simple buckling: slender pieces get a lower
-  compression limit. Pieces that hold nothing up (chests, workbenches, torches) add no weight but,
-  as in vanilla, need a structural piece or the ground to rest on, and fall without one.
+  as equivalent beams. Loads: self-weight, plus what rests on a piece. Pieces the game tags as
+  structure (building, floor, wall, roof, architecture, stairs, doors, stacks) weigh their volume
+  times their material's density; pieces it tags as objects (furniture, crafting, lighting, decor,
+  storage, transport, defense, food) weigh what they are made of, since their colliders are not solid
+  material: 4 kg per piece of wood, 10 kg per stone, 4 kg per metal bar, 0.1 kg per nail, and 2 kg per
+  unit of item weight for anything else (server settings in the `Weight` section). Simple buckling:
+  slender pieces get a lower compression limit. Pieces that hold nothing up (chests, workbenches,
+  torches, stone and wood piles) weigh their materials too, as a load shared among the pieces they
+  rest on (the ground takes its share when they also touch it) and spread over each of those pieces;
+  as in vanilla, they need a structural piece or the ground to rest on, and fall without one.
 - **World buildings:** buildings that come with the world (stone towers, abandoned houses, villages,
   ruins: every piece no player placed) do not get Fysik's physics. They keep vanilla support, are
   shown in neutral grey, and a player build resting on them treats them as fixed ground; only player
@@ -43,18 +50,19 @@ Players: installation, settings and a **building guide** with worked examples ar
   solves the whole structure and decides its fate; the calculation is deterministic, so owners of
   different parts of one structure agree, and the crack is synced through the piece's ZDO. The
   dedicated server calculates nothing: it relays, syncs the settings (Jötunn) and hands the pieces
-  near the world centre, which it would otherwise keep, to the nearest player. Every player must have the mod
-  (`CompatibilityLevel.EveryoneMustHaveMod`).
-- **Performance:** recalculation only on events (piece placed, removed or damaged), only on the
-  affected island. Reading contacts and building the model stay within ~1–2 ms per frame; the solve
-  itself runs on a worker thread (a 2000-piece island in about half a second).
+  near the world centre, which it would otherwise keep, to the nearest player. Every player must have
+  the mod (`CompatibilityLevel.EveryoneMustHaveMod`).
+- **Performance:** recalculation only on events (piece placed, removed or damaged, an object placed on
+  it or taken away, a weight or material setting changed), only on the affected island. Reading
+  contacts and building the model stay within ~1–2 ms per frame; the solve itself runs on a worker
+  thread (a 2000-piece island in about half a second).
 
 ## Roadmap
 
 Next:
 
 - Masonry: stone blocks that only hold by pressing on each other, interlocking walls, arches built on wooden centering
-- Loads beyond self-weight: furniture, chest contents, snow on roofs
+- Loads beyond self-weight: chest contents, snow on roofs
 
 Later:
 
@@ -96,7 +104,7 @@ directly. Game and third-party DLLs are referenced in place and never committed.
 |---|---|
 | `src/Fysik/Structure/` | The solver: pure C#, no Unity types, shared with the tests |
 | `src/Fysik/Game/` | Valheim side: piece graph, contacts, display, patches |
-| `tests/Fysik.Tests/` | Solver tests against beam theory (cantilever, fixed beam, column, arch, brace, floor on a beam, contact overlap, performance) |
+| `tests/Fysik.Tests/` | Solver tests against beam theory (cantilever, fixed beam, column, arch, brace, floor on a beam, contact overlap, weight held, squeeze along a piece, performance) |
 | `package/` | Thunderstore `manifest.json` template and the package README |
 | `art/` | `icon.png` and `banner.png` |
 | `docs/images/` | The building guide's pictures |

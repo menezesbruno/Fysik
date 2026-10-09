@@ -41,6 +41,12 @@ namespace Fysik
         internal static double StrengthMultiplier =>
             StructureDifficulty.Value == Difficulty.Relaxed ? 1.5 : StructureDifficulty.Value == Difficulty.Strict ? 0.7 : 1.0;
 
+        internal static ConfigEntry<float> WoodWeight { get; private set; }
+        internal static ConfigEntry<float> StoneWeight { get; private set; }
+        internal static ConfigEntry<float> MetalBarWeight { get; private set; }
+        internal static ConfigEntry<float> NailWeight { get; private set; }
+        internal static ConfigEntry<float> KilogramsPerItemWeight { get; private set; }
+
         internal static ConfigEntry<float> FrameBudgetMs { get; private set; }
         internal static ConfigEntry<bool> BackgroundSolver { get; private set; }
         internal static ConfigEntry<bool> HammerInfo { get; private set; }
@@ -107,6 +113,30 @@ namespace Fysik
                 "Structure", "Difficulty", Difficulty.Normal,
                 Server("Relaxed: materials 50% stronger (longer spans and cantilevers). Normal. " +
                        "Strict: materials 30% weaker (structures need more thought).", null));
+
+            const string objects = "Objects (furniture, crafting stations, chests, torches, lighting, decor, piles) weigh " +
+                                   "the materials they are made of, not their volume.";
+            WoodWeight = config.Bind(
+                "Weight", "Wood", 4f,
+                Server($"{objects} Kilograms per wood item ({string.Join(", ", Game.Recipe.WoodItems)}).",
+                       new AcceptableValueRange<float>(0f, 1000f)));
+            StoneWeight = config.Bind(
+                "Weight", "Stone", 10f,
+                Server($"{objects} Kilograms per stone item ({string.Join(", ", Game.Recipe.StoneItems)}).",
+                       new AcceptableValueRange<float>(0f, 1000f)));
+            MetalBarWeight = config.Bind(
+                "Weight", "MetalBar", 4f,
+                Server($"{objects} Kilograms per metal bar ({string.Join(", ", Game.Recipe.MetalBars)}).",
+                       new AcceptableValueRange<float>(0f, 1000f)));
+            NailWeight = config.Bind(
+                "Weight", "Nail", 0.1f,
+                Server($"{objects} Kilograms per nail ({string.Join(", ", Game.Recipe.Nails)}).",
+                       new AcceptableValueRange<float>(0f, 1000f)));
+            KilogramsPerItemWeight = config.Bind(
+                "Weight", "PerItemWeight", 2f,
+                Server($"{objects} Kilograms per unit of the game's item weight, for every other material " +
+                       "(an item that weighs 0.5 in the inventory counts as 1 kg at the default 2).",
+                       new AcceptableValueRange<float>(0f, 100f)));
 
             FrameBudgetMs = config.Bind(
                 "Performance", "FrameBudgetMs", 1.5f,
@@ -185,7 +215,8 @@ namespace Fysik
             return new MaterialEntries
             {
                 Density = config.Bind(section, "Density", density,
-                    Server($"{what}: density, kg/m³ (the weight of a piece comes from its volume).",
+                    Server($"{what}: density, kg/m³ (a structural piece weighs its volume times this; objects weigh their " +
+                           "materials, see the Weight section).",
                            new AcceptableValueRange<float>(10f, 20000f))),
                 Compression = config.Bind(section, "CompressiveStrength", compression,
                     Server($"{what}: compressive strength, MPa.", new AcceptableValueRange<float>(0.01f, 1000f))),
