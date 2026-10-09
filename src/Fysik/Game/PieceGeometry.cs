@@ -74,17 +74,76 @@ namespace Fysik.Game
         private static Vector3 Abs(Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
     }
 
+    internal struct Recipe
+    {
+        public static readonly string[] WoodItems =
+            { "Wood", "FineWood", "RoundLog", "ElderBark", "YggdrasilWood", "Blackwood", "Frostwood" };
+        public static readonly string[] StoneItems = { "Stone", "Grausten", "BlackMarble", "Obsidian" };
+        public static readonly string[] MetalBars =
+            { "Iron", "Copper", "Bronze", "Tin", "Silver", "BlackMetal", "Flametal", "FlametalNew", "Gold" };
+        public static readonly string[] Nails = { "IronNails", "BronzeNails" };
+
+        private static readonly HashSet<string> s_wood = new HashSet<string>(WoodItems);
+        private static readonly HashSet<string> s_stone = new HashSet<string>(StoneItems);
+        private static readonly HashSet<string> s_metal = new HashSet<string>(MetalBars);
+        private static readonly HashSet<string> s_nails = new HashSet<string>(Nails);
+
+        public double Wood, Stone, Metal, Nail, ItemWeight;
+
+        public double Mass =>
+            Wood * FysikConfig.WoodWeight.Value + Stone * FysikConfig.StoneWeight.Value +
+            Metal * FysikConfig.MetalBarWeight.Value + Nail * FysikConfig.NailWeight.Value +
+            ItemWeight * FysikConfig.KilogramsPerItemWeight.Value;
+
+        public static Recipe Of(Piece piece)
+        {
+            var recipe = new Recipe();
+            if (piece == null || piece.m_resources == null)
+                return recipe;
+            foreach (Piece.Requirement r in piece.m_resources)
+            {
+                if (r == null || r.m_resItem == null)
+                    continue;
+                string name = r.m_resItem.gameObject.name;
+                if (s_wood.Contains(name))
+                    recipe.Wood += r.m_amount;
+                else if (s_stone.Contains(name))
+                    recipe.Stone += r.m_amount;
+                else if (s_metal.Contains(name))
+                    recipe.Metal += r.m_amount;
+                else if (s_nails.Contains(name))
+                    recipe.Nail += r.m_amount;
+                else if (r.m_resItem.m_itemData?.m_shared != null)
+                    recipe.ItemWeight += r.m_resItem.m_itemData.m_shared.m_weight * r.m_amount;
+            }
+            return recipe;
+        }
+    }
+
     internal sealed class PieceGeometry
     {
         private const float MinExtent = 0.05f;
 
         private const float MeshFill = 0.6f;
 
+        private const Piece.UsageTagFlags StructureTags =
+            Piece.UsageTagFlags.Building | Piece.UsageTagFlags.Floor | Piece.UsageTagFlags.Wall | Piece.UsageTagFlags.Roof |
+            Piece.UsageTagFlags.Architecture | Piece.UsageTagFlags.Stacks | Piece.UsageTagFlags.Stairs | Piece.UsageTagFlags.Doors;
+
+        private const Piece.UsageTagFlags ObjectTags =
+            Piece.UsageTagFlags.Crafting | Piece.UsageTagFlags.Furniture | Piece.UsageTagFlags.Lighting | Piece.UsageTagFlags.Decor |
+            Piece.UsageTagFlags.Storage | Piece.UsageTagFlags.Transport | Piece.UsageTagFlags.Food | Piece.UsageTagFlags.Meads |
+            Piece.UsageTagFlags.Feasts | Piece.UsageTagFlags.Defense | Piece.UsageTagFlags.Seasonal;
+
         public readonly List<Collider> Colliders = new List<Collider>();
         public readonly List<Obb> Boxes = new List<Obb>();
         public Obb Main;
         public float Volume;
+        public bool WeighsRecipe;
+        public Recipe Recipe;
         public string Summary;
+
+        public double MaterialsMass => WeighsRecipe ? Recipe.Mass : 0;
 
         public bool IsValid => Boxes.Count > 0;
 
@@ -139,6 +198,10 @@ namespace Fysik.Game
                 g.Main = Enclose(s_solid, wnt.transform.rotation);
 
             g.Main.Size = Vector3.Max(g.Main.Size, Vector3.one * MinExtent);
+            Piece piece = wnt.GetComponent<Piece>();
+            g.WeighsRecipe = piece != null && IsObject(piece);
+            if (g.WeighsRecipe)
+                g.Recipe = Recipe.Of(piece);
             g.Volume = Mathf.Max(g.Volume, g.Main.Volume * 0.05f);
             g.Summary = $"colliders box {boxes}, capsule {capsules}, sphere {spheres}, mesh {meshes}, other {others}; " +
                         $"main box {g.Main.Size.x:0.00} x {g.Main.Size.y:0.00} x {g.Main.Size.z:0.00} m; volume {g.Volume:0.000} m³";
@@ -199,6 +262,8 @@ namespace Fysik.Game
             return new Obb { Center = frame * ((min + max) * 0.5f), Rotation = frame, Size = max - min };
         }
 
+        public double MassFor(MaterialProps material) => MaterialsMass > 0 ? MaterialsMass : material.Density * Volume;
+
         public Body ToBody(MaterialProps material) => new Body
         {
             Center = ToVec(Main.Center),
@@ -206,9 +271,28 @@ namespace Fysik.Game
             AxisY = ToVec(Main.Rotation * Vector3.up),
             AxisZ = ToVec(Main.Rotation * Vector3.forward),
             Size = ToVec(Main.Size),
-            Mass = material.Density * Volume,
+            Mass = MassFor(material),
             Material = material,
         };
+
+        private static bool IsObject(Piece piece)
+        {
+            if ((piece.m_usage & StructureTags) != 0)
+                return false;
+            if ((piece.m_usage & ObjectTags) != 0)
+                return true;
+            switch (piece.m_category)
+            {
+                case Piece.PieceCategory.Crafting:
+                case Piece.PieceCategory.Furniture:
+                case Piece.PieceCategory.Feasts:
+                case Piece.PieceCategory.Food:
+                case Piece.PieceCategory.Meads:
+                    return true;
+                default:
+                    return false;
+            }
+        }
 
         public static Vec3 ToVec(Vector3 v) => new Vec3(v.x, v.y, v.z);
     }

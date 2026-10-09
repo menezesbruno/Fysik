@@ -8,6 +8,7 @@ namespace Fysik.Structure
         public Vec3 Point;
         public Vec3 Force;
         public Vec3 Moment;
+        public bool Ground;
     }
 
     public static class Mechanics
@@ -151,6 +152,17 @@ namespace Fysik.Structure
                         worst = r;
                 }
             }
+            Vec3 down = gravity.Normalized();
+            Vec3 along = body.Axis(longest);
+            Vec3 outer = weight * 0.5;
+            foreach (ContactLoad c in contacts)
+            {
+                if (!c.Ground)
+                    worst.HeldWeight += Math.Max(0, Vec3.Dot(c.Force, down));
+                if (Vec3.Dot(c.Point - body.Center, along) > 0)
+                    outer += c.Force;
+            }
+            worst.MemberForce = Vec3.Dot(outer, along);
             return worst;
         }
 
