@@ -28,8 +28,6 @@ namespace Fysik.Game
         private readonly Dictionary<string, GameObject> _sounds = new Dictionary<string, GameObject>();
         private float _nextScan;
 
-        public bool IsCracking(WearNTear wnt) => _active.ContainsKey(wnt);
-
         public void Tick()
         {
             Player player = Player.m_localPlayer;

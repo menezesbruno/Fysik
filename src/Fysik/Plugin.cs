@@ -88,6 +88,7 @@ namespace Fysik
             }
             try
             {
+                Overlay.Instance.HideIfStale();
                 XRayView.Instance.Tick();
             }
             catch (System.Exception e)
@@ -139,7 +140,8 @@ namespace Fysik
         private static void OnSettingChanged(object sender, SettingChangedEventArgs args)
         {
             string section = args.ChangedSetting.Definition.Section;
-            if (section.StartsWith("Material.") || section == "Structure" || args.ChangedSetting == FysikConfig.DamageWeakens)
+            if (section.StartsWith("Material.") || section == "Structure" || section == "Weight" ||
+                args.ChangedSetting == FysikConfig.DamageWeakens)
                 SolveAgain();
         }
 

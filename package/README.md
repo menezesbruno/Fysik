@@ -47,23 +47,34 @@ and preferably start a new one. To look at an old base before letting it settle,
 
 ## Seeing the forces
 
-- **Hammer:** aim at a piece. It is colored by stress, from blue (relaxed) through green and yellow to
-  red (at its limit), and the value appears next to the crosshair, e.g. *Compression 72%*, with its
-  material and weight. Light blue means the structure is still being calculated; magenta means it has
-  no path to the ground at all; neutral grey means a world building that Fysik does not simulate
-  (*World building · not simulated*).
+- **Hammer:** aim at a piece. It is colored by stress, from blue (relaxed) through green and yellow
+  to red (at its limit), and next to the crosshair you get its stress, e.g. *Compression 72%*, then
+  its name, material and own weight, the weight it holds up (*Holds 6.5 t*) and, for posts, beams
+  and logs, how hard they are squeezed or stretched (*Squeezed 6.7 t*). Aiming at a chest, torch or
+  pile shows its name and weight. Light blue means the structure is still being calculated; magenta
+  means it has no path to the ground at all; neutral grey means a world building that Fysik does not
+  simulate (*World building · not simulated*).
 - **Placing a piece:** the ghost is colored by the stress it would have once placed, with the value
-  next to the crosshair (*Preview: Bending 85%*). If it would push another piece past its limit, a
-  second line names that piece. When vanilla says the spot is invalid, the ghost stays vanilla red.
+  next to the crosshair (*Preview: Bending 85%*) and the same lines as the hammer, including what it
+  would hold up. If it would push another piece past its limit, a red line names that piece. When
+  vanilla says the spot is invalid, the ghost stays vanilla red.
 - **X-ray (F7):** colors every piece within 40 m. **Ctrl+F7** widens the radius by 10 m, up to 80 m,
   then back to 40 m.
 - **Cracking:** a piece above 100% pulses red, shakes, creaks and sheds dust. You have
-  `CrackWarningSeconds` (5 s) to shore it up (add a post, a brace, finish the arch) before it falls. Once something gives way, everything that lost its support comes down with it at
-  once, as debris that bursts on hitting the ground, like a building being imploded; whatever is left
-  overloaded follows without warning. A piece left with no path to the ground at all (you removed its
-  support) has nothing to shore up and falls at once, as in vanilla.
-- **Furniture:** chests, workbenches, torches and similar pieces hold nothing up and add no weight,
-  but still need something to rest on: they fall when the piece under them goes, as in vanilla.
+  `CrackWarningSeconds` (5 s) to shore it up (add a post, a brace, finish the arch) before it falls.
+  Once something gives way, everything that lost its support comes down with it at once, as debris
+  that bursts on hitting the ground, like a building being imploded; whatever is left overloaded
+  follows without warning. A piece left with no path to the ground at all (you removed its support)
+  has nothing to shore up and falls at once, as in vanilla.
+- **Furniture:** beds, tables, smelters, hearths, portals and other pieces the game tags as objects
+  rather than structure weigh what they are made of (4 kg per piece of wood, 10 kg per stone, 4 kg
+  per metal bar, adjustable in the `Weight` settings): a smelter about 250 kg, a bed 32 kg, a chair
+  16 kg. Chests, workbenches, forges, torches, stone and wood piles and similar pieces that hold
+  nothing up weigh the same way and load the pieces they rest on: a stone pile is 500 kg, a forge
+  120 kg, a chest 40 to 113 kg, a standing torch about 9 kg. Their load counts once they are placed;
+  the ghost does not show it yet. They still need something to rest on and fall when the piece under
+  them goes, as in vanilla. Fences, stake walls, carved statues and some stacks (fine wood, metal
+  bars) count as structure and weigh their full volume.
 
 ## World buildings
 
@@ -183,8 +194,8 @@ arches are built out from the piers in steps and closed at the top with a pair o
 
 - Watch the ghost's color before placing each piece, and check the whole building with the X-ray
   (F7) after big changes.
-- When something cracks, you have a few seconds: put a post under it, add a brace, or remove what
-  it carries.
+- When something cracks, you have a few seconds: put a post under it, add a brace, or remove what it
+  carries (a stone pile is 500 kg).
 - Badly damaged pieces (below half health) are weaker; repair them.
 - Big bases: structures up to `Structure.MaxFrameBodies` pieces (2000) get the full calculation.
   Larger ones use a simpler model that does not recognise arches; raise the limit (up to 5000) if you
@@ -196,7 +207,7 @@ arches are built out from the piers in steps and closed at the top with a pair o
 Next:
 
 - Masonry: stone blocks that only hold by pressing on each other, interlocking walls, arches built on wooden centering
-- Loads beyond self-weight: furniture, chest contents, snow on roofs
+- Loads beyond self-weight: chest contents, snow on roofs
 
 Later:
 
@@ -218,9 +229,11 @@ synced to every client; they can also be edited in game with a configuration man
 | Failure | DamageWeakens (*server*) | on | | Pieces below half health are weaker, down to 25% strength at the brink of breaking; rain wear alone never weakens them. Off: damage never changes strength. |
 | Structure | Difficulty (*server*) | Normal | Relaxed, Normal, Strict | Relaxed: materials 50% stronger (longer spans and cantilevers). Strict: 30% weaker. |
 | Structure | MaxFrameBodies (*server*) | 2000 | 500–5000 | Largest structure solved with the full frame analysis; bigger ones use a simplified model that does not recognise arches. Higher values take longer to update (about 0.5 s for 2000 pieces, 2 s for 5000). |
-| Material.\<type\> | Density, CompressiveStrength, TensileStrength, ShearStrength, BucklingSlenderness (*server*) | per material | | Weight and strength of each material (kg/m³, MPa). Stone is strong in compression and weak in tension. |
-| Display | HammerInfo | on | | Stress color and value on the piece under the hammer. |
-| Display | PlacementPreview | on | | Predicted stress on the piece being placed. |
+| Material.\<type\> | Density, CompressiveStrength, TensileStrength, ShearStrength, BucklingSlenderness (*server*) | per material | | Density (kg/m³) gives structural pieces their weight; strengths in MPa. Stone is strong in compression and weak in tension. Objects weigh their materials instead (see Weight). |
+| Weight | Wood, Stone, MetalBar, Nail (*server*) | 4, 10, 4, 0.1 | 0–1000 | Kilograms per item used to build an object (furniture, crafting stations, chests, torches, piles); objects weigh their materials, not their volume. |
+| Weight | PerItemWeight (*server*) | 2 | 0–100 | Kilograms per unit of the game's item weight, for every other material in an object's recipe. |
+| Display | HammerInfo | on | | Stress color, value, weight and weight held on the piece under the hammer. |
+| Display | PlacementPreview | on | | Predicted stress and weight held on the piece being placed. |
 | Display | CollapseAnimation | on | | Falling pieces come down as debris and burst on impact (off: they shatter in place, as in vanilla). |
 | Display | XRayKey | F7 | | Toggles the X-ray view. |
 | Display | XRayRadius | 40 | 40–80 | X-ray radius, metres. |
@@ -240,6 +253,8 @@ to `BepInEx/fysik-dump.txt`.
 Fysik takes over structural integrity, so it is expected to conflict with other mods that change it,
 such as NoBuildIntegrity, Forever Build or Balrond Better Build. Pieces added by other mods will use
 conservative default material properties, with a warning in the log for each unknown material.
+Their furniture and other objects weigh their recipe: Fysik knows the vanilla wood, stone, metal bars
+and nails, and counts any other resource by its weight in the inventory (`Weight.PerItemWeight`).
 
 ## Links
 

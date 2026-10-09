@@ -164,21 +164,17 @@ namespace Fysik.Game
         {
             string text = null;
             StructureManager manager = StructureManager.Instance;
-            if (ActiveGhost(player) != null)
-                text = StressDisplay.PreviewText(manager.Preview, manager.PreviewPending);
+            WearNTear ghost = ActiveGhost(player);
+            if (ghost != null)
+                text = StressDisplay.PreviewText(manager.Preview, manager.PreviewPending, StressDisplay.PieceName(ghost));
 
             Piece piece = FysikConfig.HammerInfo.Value ? player.GetHoveringPiece() : null;
             WearNTear wnt = piece != null ? piece.GetComponent<WearNTear>() : null;
-            if (wnt != null)
-            {
-                string hover = StressDisplay.HoverText(manager.Request(wnt));
-                if (!string.IsNullOrEmpty(hover))
-                    text = string.IsNullOrEmpty(text) ? hover : text + "\n" + hover;
-            }
-            if (string.IsNullOrEmpty(text))
-                return;
-            string current = hud.m_hoverName.text;
-            hud.m_hoverName.text = string.IsNullOrEmpty(current) ? text : current + "\n" + text;
+            PieceNode node = wnt != null ? manager.Request(wnt) : null;
+            string hover = StressDisplay.HoverText(node);
+            if (!string.IsNullOrEmpty(hover))
+                text = string.IsNullOrEmpty(text) ? hover : text + "\n" + hover;
+            Overlay.Instance.Show(hud, Overlay.CanShow(hud) ? text : null);
         }
 
         private static WearNTear ActiveGhost(Player player)

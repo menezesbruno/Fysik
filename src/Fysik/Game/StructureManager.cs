@@ -18,6 +18,10 @@ namespace Fysik.Game
 
         public readonly bool Attachment;
 
+        private readonly Recipe _recipe;
+
+        public double AttachmentMass => Attachment ? _recipe.Mass : 0;
+
         public readonly List<Obb> SupportBoxes;
 
         public readonly Collider[] OwnColliders;
@@ -54,6 +58,8 @@ namespace Fysik.Game
         public bool HasResult;
         public BodyResult Result;
         public double Mass;
+        public double Carried;
+        public double Holds;
         public string MaterialName;
 
         public double Strength = 1;
@@ -77,6 +83,8 @@ namespace Fysik.Game
                 OwnColliders = wnt.GetComponentsInChildren<Collider>(true);
                 SupportBoxes = PieceGeometry.VanillaSupportBoxes(OwnColliders);
                 Attachment = SupportBoxes.Count > 0;
+                if (Attachment)
+                    _recipe = Recipe.Of(wnt.GetComponent<Piece>());
             }
         }
 
@@ -164,6 +172,7 @@ namespace Fysik.Game
     {
         public BodyResult Ghost;
         public double GhostMass;
+        public Vector3 GhostSize;
         public string MaterialName;
         public SolverKind Solver;
         public PieceNode WorstOther;
@@ -231,7 +240,11 @@ namespace Fysik.Game
             {
                 _nodes.Remove(wnt);
                 foreach (Contact c in node.Contacts)
+                {
                     c.Other.Attached.Remove(node);
+                    if (node.AttachmentMass > 0)
+                        Reload(c.Other);
+                }
                 return;
             }
             foreach (PieceNode attachment in node.Attached)
@@ -306,6 +319,39 @@ namespace Fysik.Game
 
         public void InvalidateContacts(PieceNode node) => Invalidate(node);
 
+        private void Reload(PieceNode node)
+        {
+            if (!node.Alive || !node.Structural || node.Anchored)
+                return;
+            if (node.Island != null)
+                node.Island.Stale = true;
+            if (_job != null && _job.Visited.Contains(node))
+                _job.MarkDirty();
+            Request(node.Wnt);
+        }
+
+        private static readonly List<PieceNode> s_carried = new List<PieceNode>();
+
+        private static double CarriedBy(PieceNode node)
+        {
+            s_carried.Clear();
+            foreach (PieceNode a in node.Attached)
+                if (a.Alive && a.ContactsValid && a.AttachmentMass > 0)
+                    s_carried.Add(a);
+            s_carried.Sort(PieceNode.Compare);
+            double mass = 0;
+            foreach (PieceNode a in s_carried)
+            {
+                int shares = a.OnGround ? 1 : 0;
+                foreach (Contact c in a.Contacts)
+                    if (c.Other.Alive)
+                        shares++;
+                if (shares > 0)
+                    mass += a.AttachmentMass / shares;
+            }
+            return mass;
+        }
+
         private void Invalidate(PieceNode node)
         {
             node.ContactsValid = false;
@@ -339,8 +385,12 @@ namespace Fysik.Game
             if (FysikConfig.LogGeometry.Value && s_describedPrefabs.Add(node.Name))
             {
                 MaterialProps material = MaterialTable.For(wnt);
-                Plugin.Log.LogInfo($"Piece {node.Name}: {(node.Structural ? node.Geometry.Summary : node.Attachment ? "attachment" : "ignored")}; " +
-                                   $"{material.Name}, {material.Density * node.Geometry.Volume:0} kg");
+                Plugin.Log.LogInfo(node.Structural
+                    ? $"Piece {node.Name}: {node.Geometry.Summary}; {material.Name}, {node.Geometry.MassFor(material):0} kg" +
+                      (node.Geometry.MaterialsMass > 0 ? " (from its materials)" : "")
+                    : node.Attachment
+                        ? $"Piece {node.Name}: attachment, {node.AttachmentMass:0} kg (from its materials) on what holds it"
+                        : $"Piece {node.Name}: ignored");
             }
             return node;
         }
@@ -481,6 +531,8 @@ namespace Fysik.Game
             {
                 Ghost = results[ghost],
                 GhostMass = job.Model.Bodies[ghost].Mass,
+                GhostSize = new Vector3((float)job.Model.Bodies[ghost].Size.X, (float)job.Model.Bodies[ghost].Size.Y,
+                                        (float)job.Model.Bodies[ghost].Size.Z),
                 MaterialName = job.Model.Bodies[ghost].Material.Name,
                 Solver = job.Analysis.Solver,
             };
@@ -520,7 +572,9 @@ namespace Fysik.Game
                 if (!node.HasResult)
                     _watch.Add(node);
                 node.HasResult = true;
-                node.Mass = job.Model.Bodies[i].Mass;
+                node.Mass = job.Model.Bodies[i].Mass - job.Carried[i];
+                node.Carried = job.Carried[i];
+                node.Holds = results[i].HeldWeight / job.Model.Gravity.Length + job.Carried[i];
                 node.MaterialName = job.Model.Bodies[i].Material.Name;
                 if (worst < 0 || results[i].Utilization > results[worst].Utilization)
                     worst = i;
@@ -575,12 +629,19 @@ namespace Fysik.Game
                 _attachmentChecks.Enqueue(node);
         }
 
+        private static readonly List<PieceNode> s_oldSupporters = new List<PieceNode>();
+
         private void ScanAttachment(PieceNode node)
         {
             EnsureMasks();
             node.ScanTrusted = Readiness.Settled(node.Wnt);
+            s_oldSupporters.Clear();
             foreach (Contact c in node.Contacts)
+            {
                 c.Other.Attached.Remove(node);
+                s_oldSupporters.Add(c.Other);
+            }
+            bool wasOnGround = node.OnGround;
             node.Contacts.Clear();
             node.OnGround = false;
 
@@ -608,6 +669,14 @@ namespace Fysik.Game
                 }
             }
             node.ContactsValid = true;
+            if (node.AttachmentMass > 0 && (wasOnGround != node.OnGround || s_oldSupporters.Count != node.Contacts.Count ||
+                                            node.Contacts.Exists(k => !s_oldSupporters.Contains(k.Other))))
+            {
+                foreach (PieceNode old in s_oldSupporters)
+                    Reload(old);
+                foreach (Contact c in node.Contacts)
+                    Reload(c.Other);
+            }
             if (!node.InWatchList)
             {
                 node.InWatchList = true;
@@ -820,6 +889,7 @@ namespace Fysik.Game
             private readonly GhostPiece _ghost;
 
             public List<PieceNode> Members;
+            public double[] Carried;
             public StructureModel Model;
             public StructureAnalysis Analysis;
             public bool Dirty;
@@ -902,10 +972,13 @@ namespace Fysik.Game
 
                 var index = new Dictionary<PieceNode, int>(Members.Count);
                 Model = new StructureModel();
+                Carried = new double[Members.Count];
                 for (int i = 0; i < Members.Count; i++)
                 {
                     index[Members[i]] = i;
                     Body body = Members[i].Geometry.ToBody(MaterialTable.For(Members[i].Wnt));
+                    Carried[i] = CarriedBy(Members[i]);
+                    body.Mass += Carried[i];
                     body.StrengthFactor = FysikConfig.DamageWeakens.Value
                         ? Damage.StrengthFactor(Members[i].Wnt.GetHealthPercentage())
                         : 1;

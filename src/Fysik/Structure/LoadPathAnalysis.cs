@@ -121,6 +121,9 @@ namespace Fysik.Structure
                 }
 
                 results[i] = Check(body, load[i], centroid, supportPoint, supports, down);
+                results[i].HeldWeight = Math.Max(0, load[i] - body.Mass * g);
+                results[i].MemberForce = -Math.Abs(Vec3.Dot(down, body.Axis(Mechanics.LongestAxis(body)))) *
+                                         (load[i] - 0.5 * body.Mass * g);
             }
             return results;
         }

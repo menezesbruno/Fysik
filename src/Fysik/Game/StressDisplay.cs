@@ -24,6 +24,10 @@ namespace Fysik.Game
 
         public static readonly Color World = new Color(0.7f, 0.7f, 0.7f);
 
+        private const double Gravity = 9.81;
+
+        private const float BarAspect = 1.5f;
+
         public static Color ForUtilization(double u)
         {
             float t = Mathf.Clamp01((float)u);
@@ -64,7 +68,7 @@ namespace Fysik.Game
             return ForUtilization(u);
         }
 
-        public static string PreviewText(PreviewResult p, bool pending)
+        public static string PreviewText(PreviewResult p, bool pending, string ghostName)
         {
             if (p == null)
                 return pending ? $"<color=#{ColorUtility.ToHtmlStringRGB(Pending)}>{L("$fysik_preview")}: {L("$fysik_pending")}</color>" : null;
@@ -74,14 +78,14 @@ namespace Fysik.Game
                 : $"{L("$fysik_preview")}: {L(ModeToken(p.Ghost.Mode))} {Percent(p.Ghost.Utilization)}";
             if (p.Ghost.Mode != StressMode.Unsupported && p.Ghost.Utilization >= 1)
                 headline += " · " + L("$fysik_overloaded");
-            string text = $"<color=#{ColorUtility.ToHtmlStringRGB(ForPreview(p))}><b>{headline}</b></color>";
+            string details = Details(ghostName, p.MaterialName, p.GhostMass, p.Ghost.HeldWeight / Gravity,
+                                     p.Ghost.MemberForce, p.GhostSize, null);
+            string text = $"<color=#{ColorUtility.ToHtmlStringRGB(ForPreview(p))}>{headline}</color>\n{details}";
 
             if (p.WorstOther != null && p.WorstOther.Alive && p.WorstOtherResult.Utilization >= 1 &&
                 p.WorstOtherResult.Mode != StressMode.Unsupported)
             {
-                Piece other = p.WorstOther.Wnt.GetComponent<Piece>();
-                string name = other != null ? L(other.m_name) : p.WorstOther.Name;
-                text += $"\n<color=#{ColorUtility.ToHtmlStringRGB(ForUtilization(1))}>{L("$fysik_overloads")} {name} " +
+                text += $"\n<color=#{ColorUtility.ToHtmlStringRGB(ForUtilization(1))}>{L("$fysik_overloads")} {PieceName(p.WorstOther)} " +
                         $"({Percent(p.WorstOtherResult.Utilization)})</color>";
             }
             return text;
@@ -91,12 +95,14 @@ namespace Fysik.Game
 
         public static string HoverText(PieceNode node)
         {
+            if (node != null && node.Attachment)
+                return node.AttachmentMass > 0 ? $"{PieceName(node)} · {Weight(node.AttachmentMass)}" : null;
             if (node == null || !node.Structural)
                 return null;
             if (node.Anchored)
                 return $"<color=#{ColorUtility.ToHtmlStringRGB(World)}>{L("$fysik_world")}</color>";
             if (!node.HasResult)
-                return $"<color=#{ColorUtility.ToHtmlStringRGB(Pending)}>{L("$fysik_pending")}</color>";
+                return $"<color=#{ColorUtility.ToHtmlStringRGB(Pending)}>{L("$fysik_pending")}</color>\n{PieceName(node)}";
 
             BodyResult r = node.Result;
             Color color = For(node);
@@ -108,11 +114,45 @@ namespace Fysik.Game
             else if (r.Mode != StressMode.Unsupported && r.Utilization >= 1)
                 headline += " · " + L("$fysik_overloaded");
 
-            string details = $"{L("$fysik_mat_" + node.MaterialName.ToLowerInvariant())} · {node.Mass:0} kg";
-            if (node.Island != null && node.Island.Solver == SolverKind.LoadPath)
-                details += " · " + L("$fysik_loadpath");
-            return $"<color=#{ColorUtility.ToHtmlStringRGB(color)}><b>{headline}</b></color>\n<size=75%>{details}</size>";
+            string note = node.Island != null && node.Island.Solver == SolverKind.LoadPath ? L("$fysik_loadpath") : null;
+            string details = Details(PieceName(node), node.MaterialName, node.Mass, node.Holds, r.MemberForce,
+                                     node.Geometry.Main.Size, note);
+            return $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>{headline}</color>\n{details}";
         }
+
+        private static string Details(string name, string material, double mass, double holds, double memberForce,
+                                      Vector3 size, string note)
+        {
+            string text = $"{name} · {L("$fysik_mat_" + material.ToLowerInvariant())} · {Weight(mass)}";
+            if (note != null)
+                text += " · " + note;
+            if (holds >= 1)
+                text += $"\n{L("$fysik_holds")} {Weight(holds)}";
+            double member = memberForce / Gravity;
+            if (System.Math.Abs(member) >= 5 && IsBar(size))
+                text += $"\n{L(member < 0 ? "$fysik_squeezed" : "$fysik_stretched")} {Weight(System.Math.Abs(member))}";
+            return text;
+        }
+
+        private static string PieceName(PieceNode node)
+        {
+            Piece piece = node.Alive ? node.Wnt.GetComponent<Piece>() : null;
+            return piece != null ? L(piece.m_name) : node.Name;
+        }
+
+        public static string PieceName(WearNTear wnt)
+        {
+            Piece piece = wnt != null ? wnt.GetComponent<Piece>() : null;
+            return piece != null ? L(piece.m_name) : wnt != null ? wnt.gameObject.name : "";
+        }
+
+        private static bool IsBar(Vector3 size)
+        {
+            int axis = size.x >= size.y && size.x >= size.z ? 0 : size.y >= size.z ? 1 : 2;
+            return size[axis] >= BarAspect * Mathf.Max(size[(axis + 1) % 3], size[(axis + 2) % 3]);
+        }
+
+        private static string Weight(double kg) => kg >= 1000 ? $"{kg / 1000:0.#} t" : $"{kg:0} kg";
 
         private static string ModeToken(StressMode mode)
         {
@@ -217,8 +257,9 @@ namespace Fysik.Game
                 Color color = StressDisplay.For(node);
                 if (_colored.TryGetValue(wnt, out Color current) && current == color)
                     continue;
-                if (recolors++ >= MaxRecolorsPerRefresh)
-                    break;
+                if (recolors >= MaxRecolorsPerRefresh)
+                    continue;
+                recolors++;
                 StressDisplay.Apply(wnt, color);
                 _colored[wnt] = color;
             }

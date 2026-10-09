@@ -36,7 +36,6 @@ namespace Fysik.Structure
 
         public Vec3 Axis(int i) => i == 0 ? AxisX : i == 1 ? AxisY : AxisZ;
 
-        public double Extent(int i) => Size[i];
     }
 
     public readonly struct Link
@@ -99,6 +98,10 @@ namespace Fysik.Structure
         public double BendingMoment;
 
         public double Torque;
+
+        public double HeldWeight;
+
+        public double MemberForce;
 
         public static BodyResult Unsupported => new BodyResult
         {

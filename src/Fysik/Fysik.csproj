@@ -13,7 +13,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <Product>Fysik</Product>
-    <Version>0.1.2</Version>
+    <Version>0.1.3</Version>
     <Authors>menezesbruno</Authors>
     <Copyright>Copyright (c) 2026 Bruno Menezes</Copyright>
     <RepositoryUrl>https://github.com/menezesbruno/Fysik</RepositoryUrl>
