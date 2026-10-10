@@ -72,6 +72,46 @@ namespace Fysik.Game
             }
         }
 
+        [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.GetSupportColorValue))]
+        private static class SnowSupport
+        {
+            private static bool Prefix(WearNTear __instance, ref float __result)
+            {
+                try
+                {
+                    if (Hooks.VanillaSupportDecides(__instance))
+                        return true;
+                    __result = -1f;
+                    return false;
+                }
+                catch (Exception e) { Guard.Report("Vanilla snow damage switch", e); return true; }
+            }
+        }
+
+        [HarmonyPatch(typeof(Container), nameof(Container.Load))]
+        private static class ContainerLoaded
+        {
+            private static void Postfix(Container __instance, bool __result)
+            {
+                try
+                {
+                    if (__result)
+                        StructureManager.Instance.OnContainerChanged(__instance);
+                }
+                catch (Exception e) { Guard.Report("Chest contents (loaded)", e); }
+            }
+        }
+
+        [HarmonyPatch(typeof(Container), nameof(Container.Save))]
+        private static class ContainerSaved
+        {
+            private static void Postfix(Container __instance)
+            {
+                try { StructureManager.Instance.OnContainerChanged(__instance); }
+                catch (Exception e) { Guard.Report("Chest contents (saved)", e); }
+            }
+        }
+
         [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.RPC_CreateFragments))]
         private static class CreateFragments
         {

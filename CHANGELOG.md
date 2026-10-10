@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.1.4: players, carts, chests and snow
+
+- Players weigh on what they stand, sit or lie on: 80 kg plus their inventory. A loaded cart weighs
+  its materials plus its cargo, shared among the pieces under its wheels. A weak bridge creaks under
+  a cart and gives way if the cart is too heavy or stops on it; keep moving and a bridge that is only
+  just too weak lets you through. Whoever owns a player or a cart tells everyone which pieces it rests
+  on, so every player calculates the same.
+- What is inside a chest weighs 1 kg per unit of the game's item weight: 50 stones weigh 100 kg, 30
+  iron bars 360 kg, a reinforced chest full of stone about 2.4 t. Putting things in or taking them
+  out recalculates the pieces under it, and aiming at a chest shows what it holds.
+- Deep North snow weighs: a full layer is 150 kg per square metre of ground, on pieces left in the
+  open. Roofs up to 30° steep hold 80% of it, 45° roofs 40%, and from 60° it slides off. Shovel it
+  off, or walk across it, and its weight goes with it. Tarred roofs and the stave church pieces, which
+  the game protects from heavy snow, hold none, nor does a world with the no heavy snow modifier.
+  Vanilla's snow damage, which wore down exposed pieces by their distance to the ground whatever the
+  build, is gone in Physics and Sandbox modes. The hammer shows the snow on a piece (*Snow 340 kg*).
+- The crack warning now depends on how far past its limit a piece is: the full
+  `CrackWarningSeconds` up to 110%, half of it at 155%, none from twice the limit. Taking the load
+  off in time (the cart rolls on, the snow is shoveled) still stops the crack.
+- Piles and stacks weigh what their items weigh in a chest: a stone pile went from 500 kg to 100 kg,
+  a wood stack from 200 kg to 100 kg, a fine wood stack from 1.6 t to 100 kg, and a stack of iron bars
+  from 125 kg to 360 kg.
+- New server settings in the `Weight` section: `LiveLoads` (on by default; off turns chest contents,
+  players, carts and snow off together), `Contents` (kilograms per unit of item weight for stored
+  items: inside chests, carts and inventories, and in piles and stacks), `Player` (body weight) and
+  `Snow` (kilograms per square metre of a full layer; 0 turns snow weight off).
+- When only the loads on a structure change, it keeps its last result while the new one is
+  calculated, so people walking around a big base do not leave it light blue.
+- The dump has two new last columns: snow and moving loads on each piece, in kilograms.
+- Numbers change: floors under full chests read higher (a reinforced chest full of stone adds 2.4 t),
+  pieces under piles of stone and stacks of wood lower, pieces under stacks of metal bars higher, and
+  in the Deep North roofs read higher as snow builds up. Look over storage rooms and wide roofs after
+  updating.
+
 ## 0.1.3: what things weigh and what they hold
 
 - Furniture, crafting stations, lighting, decor, portals and other pieces the game tags as objects now

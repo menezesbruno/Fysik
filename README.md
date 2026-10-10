@@ -21,30 +21,45 @@ Players: installation, settings and a **building guide** with worked examples ar
 
 - **Solver:** linear 3D frame analysis (K·u = F, sparse stiffness matrix, conjugate gradient) on each
   connected island of up to `Structure.MaxFrameBodies` pieces (2000 by default, up to 5000); a
-  simplified load-path model above that. Each piece is a
-  rigid body with 6 degrees of freedom; each joint is an elastic connection whose stiffness comes
-  from the two pieces' cross-sections between their centres and the contact point, each segment
-  treated as a Timoshenko cantilever (stretching, shear, bending and twisting, with the rotation a
-  sideways push causes). The contact point is the centre of the overlap between the two pieces.
-  Stresses are then checked on cuts across every piece, so a beam resting on a post in the middle
-  still sees its own bending.
+  simplified load-path model above that. Each piece is a rigid body with 6 degrees of freedom; each
+  joint is an elastic connection whose stiffness comes from the two pieces' cross-sections between
+  their centres and the contact point, each segment treated as a Timoshenko cantilever (stretching,
+  shear, bending and twisting, with the rotation a sideways push causes). The contact point is the
+  centre of the overlap between the two pieces. Stresses are then checked on cuts across every piece,
+  so a beam resting on a post in the middle still sees its own bending.
 - **Connections:** every pair of touching pieces is a rigid joint. Walls and floors are approximated
   as equivalent beams. Loads: self-weight, plus what rests on a piece. Pieces the game tags as
-  structure (building, floor, wall, roof, architecture, stairs, doors, stacks) weigh their volume
-  times their material's density; pieces it tags as objects (furniture, crafting, lighting, decor,
-  storage, transport, defense, food) weigh what they are made of, since their colliders are not solid
-  material: 4 kg per piece of wood, 10 kg per stone, 4 kg per metal bar, 0.1 kg per nail, and 2 kg per
-  unit of item weight for anything else (server settings in the `Weight` section). Simple buckling:
+  structure (building, floor, wall, roof, architecture, stairs, doors) weigh their volume times their
+  material's density; pieces it tags as objects (furniture, crafting, lighting, decor, storage,
+  transport, defense, food) weigh what they are made of, since their colliders are not solid material:
+  4 kg per piece of wood, 10 kg per stone, 4 kg per metal bar, 0.1 kg per nail, and 2 kg per unit of
+  item weight for anything else (server settings in the `Weight` section). Piles and stacks weigh
+  their items as stored items do, 1 kg per unit of item weight (`Weight.Contents`). Simple buckling:
   slender pieces get a lower compression limit. Pieces that hold nothing up (chests, workbenches,
-  torches, stone and wood piles) weigh their materials too, as a load shared among the pieces they
-  rest on (the ground takes its share when they also touch it) and spread over each of those pieces;
-  as in vanilla, they need a structural piece or the ground to rest on, and fall without one.
+  torches, most piles) weigh by the same rules, as a load shared among the pieces they rest on (the
+  ground takes its share when they also touch it) and spread over each of those pieces; as in vanilla,
+  they need a structural piece or the ground to rest on, and fall without one.
+- **Loads beyond the pieces:** what is inside a chest, a cart or a player's inventory weighs 1 kg per
+  unit of item weight (the game's weights read as kilograms). A player weighs 80 kg plus their
+  inventory, on the piece they stand, sit or lie on; a cart weighs its materials plus its cargo,
+  shared among the pieces under its wheels. The owner of each player or cart writes the pieces it
+  rests on and its weight into its ZDO, so every client solving a structure sees the same moving
+  loads. Deep North snow (the game's own buildup, synced in each piece's ZDO, in quarter steps) weighs
+  150 kg/m² at full depth over the piece's plan area, times a roof shape factor (0.8 up to 30°, down
+  to 0 at 60°); pieces the game makes immune to heavy snow and worlds without heavy snow hold none,
+  and vanilla's snow damage is off in Physics and Sandbox modes. A change in these loads re-solves the
+  island while its last result stays in use, so moving loads never leave a structure without a result.
+  `Weight.LiveLoads` (on by default) switches all of these loads off at once.
+- **Failure:** an overloaded piece cracks before it falls, for `Failure.CrackWarningSeconds` (5 s)
+  when it is just past its limit (up to 110%), shorter the further past, none from 200%. A piece with
+  no path to the ground falls at once. Whatever loses its support falls with the piece that gave way,
+  and for 3 s afterwards overloaded pieces of the same structure fall without warning (cascade).
 - **World buildings:** buildings that come with the world (stone towers, abandoned houses, villages,
   ruins: every piece no player placed) do not get Fysik's physics. They keep vanilla support, are
   shown in neutral grey, and a player build resting on them treats them as fixed ground; only player
   builds are simulated directly. The server setting `Structure.WorldBuildings = Physics` simulates
   them too, with the normal stress colors; many were not designed for it and will fall.
-- **Materials:** wood < core wood < stone / iron. Stone is strong in compression with moderate tension.
+- **Materials:** wood < core wood < stone / iron. Stone is strong in compression and weak in tension.
   Unknown materials from other mods get safe defaults and a log warning.
 - **Multiplayer:** only players calculate. Whoever owns a piece (the player near it, as in vanilla)
   solves the whole structure and decides its fate; the calculation is deterministic, so owners of
@@ -53,19 +68,20 @@ Players: installation, settings and a **building guide** with worked examples ar
   near the world centre, which it would otherwise keep, to the nearest player. Every player must have
   the mod (`CompatibilityLevel.EveryoneMustHaveMod`).
 - **Performance:** recalculation only on events (piece placed, removed or damaged, an object placed on
-  it or taken away, a weight or material setting changed), only on the affected island. Reading
-  contacts and building the model stay within ~1–2 ms per frame; the solve itself runs on a worker
-  thread (a 2000-piece island in about half a second).
+  it or taken away, a chest's contents changed, a player or cart moving onto another piece, snow
+  building up or shoveled off, a weight or material setting changed), only on the affected island.
+  Reading contacts and building the model stay within ~1–2 ms per frame; the solve itself runs on a
+  worker thread (a 2000-piece island in about half a second).
 
 ## Roadmap
 
 Next:
 
 - Masonry: stone blocks that only hold by pressing on each other, interlocking walls, arches built on wooden centering
-- Loads beyond self-weight: chest contents, snow on roofs
 
 Later:
 
+- Creatures' weight (tamed lox, trolls) on bridges and floors
 - Calibration with player builds (feedback welcome)
 - Faster recalculation for very large bases
 - Translations into every language Valheim supports
@@ -104,15 +120,16 @@ directly. Game and third-party DLLs are referenced in place and never committed.
 |---|---|
 | `src/Fysik/Structure/` | The solver: pure C#, no Unity types, shared with the tests |
 | `src/Fysik/Game/` | Valheim side: piece graph, contacts, display, patches |
-| `tests/Fysik.Tests/` | Solver tests against beam theory (cantilever, fixed beam, column, arch, brace, floor on a beam, contact overlap, weight held, squeeze along a piece, performance) |
+| `tests/Fysik.Tests/` | Solver tests: beam theory (cantilever, fixed beam, column, arch, brace, floor on a beam), contact overlap, weight held, squeeze along a piece, snow on roofs, crack policy and warning, performance |
 | `package/` | Thunderstore `manifest.json` template and the package README |
 | `art/` | `icon.png` and `banner.png` |
 | `docs/images/` | The building guide's pictures |
 
 ### Releasing on Thunderstore
 
-Run the `Package` target and upload `dist/Fysik-<version>.zip`. Select the categories **Building** and
-**Mods**. Update `CHANGELOG.md` before each release.
+Run the `Package` target and upload `dist/Fysik-<version>.zip`. The package is listed under
+**Mods**, **Tweaks**, **Server-side**, **Client-side** and **Building**. Update `CHANGELOG.md` before
+each release.
 
 ## License
 
