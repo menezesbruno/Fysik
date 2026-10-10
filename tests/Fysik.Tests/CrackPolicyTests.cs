@@ -17,6 +17,29 @@ namespace Fysik.Tests
         [Fact]
         public void Overloaded_piece_cracks_first() => Assert.Equal(CrackAction.StartCrack, Decide(1.3));
 
+        [Theory]
+        [InlineData(1.0, 5.0)]
+        [InlineData(1.1, 5.0)]
+        [InlineData(1.55, 2.5)]
+        [InlineData(2.0, 0.0)]
+        [InlineData(3.0, 0.0)]
+        public void Warning_shortens_as_the_overload_grows(double u, double seconds) =>
+            Assert.Equal(seconds, CrackPolicy.WarningFor(u, Warning), 9);
+
+        [Fact]
+        public void Piece_far_past_its_limit_falls_without_warning()
+        {
+            Assert.Equal(CrackAction.Fall, Decide(2.0));
+            Assert.Equal(CrackAction.Fall, Decide(2.5, cracking: true, seconds: 0.1));
+        }
+
+        [Fact]
+        public void A_heavier_overload_ends_the_warning_already_running()
+        {
+            Assert.Equal(CrackAction.None, Decide(1.05, cracking: true, seconds: 3));
+            Assert.Equal(CrackAction.Fall, Decide(1.6, cracking: true, seconds: 3));
+        }
+
         [Fact]
         public void Piece_with_no_path_to_the_ground_falls_at_once()
         {
@@ -31,8 +54,8 @@ namespace Fysik.Tests
         [Fact]
         public void Cracking_piece_waits_for_the_warning_time()
         {
-            Assert.Equal(CrackAction.None, Decide(1.3, cracking: true, seconds: 4.9));
-            Assert.Equal(CrackAction.Fall, Decide(1.3, cracking: true, seconds: 5));
+            Assert.Equal(CrackAction.None, Decide(1.05, cracking: true, seconds: 4.9));
+            Assert.Equal(CrackAction.Fall, Decide(1.05, cracking: true, seconds: 5));
         }
 
         [Fact]

@@ -83,7 +83,10 @@ namespace Fysik
             if (ZNetScene.instance == null)
             {
                 if (StructureManager.Instance.NodeCount > 0)
+                {
                     StructureManager.Instance.Clear();
+                    MovingLoads.Instance.Clear();
+                }
                 return;
             }
             try
@@ -103,6 +106,14 @@ namespace Fysik
             {
                 Guard.Report("Structure solver", e);
                 StructureManager.Instance.AbortJob();
+            }
+            try
+            {
+                MovingLoads.Instance.Tick();
+            }
+            catch (System.Exception e)
+            {
+                Guard.Report("Moving loads", e);
             }
             try
             {
