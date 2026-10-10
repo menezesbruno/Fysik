@@ -78,7 +78,7 @@ namespace Fysik.Game
                 : $"{L("$fysik_preview")}: {L(ModeToken(p.Ghost.Mode))} {Percent(p.Ghost.Utilization)}";
             if (p.Ghost.Mode != StressMode.Unsupported && p.Ghost.Utilization >= 1)
                 headline += " · " + L("$fysik_overloaded");
-            string details = Details(ghostName, p.MaterialName, p.GhostMass, p.Ghost.HeldWeight / Gravity,
+            string details = Details(ghostName, p.MaterialName, p.GhostMass, p.Ghost.HeldWeight / Gravity, 0,
                                      p.Ghost.MemberForce, p.GhostSize, null);
             string text = $"<color=#{ColorUtility.ToHtmlStringRGB(ForPreview(p))}>{headline}</color>\n{details}";
 
@@ -96,7 +96,13 @@ namespace Fysik.Game
         public static string HoverText(PieceNode node)
         {
             if (node != null && node.Attachment)
-                return node.AttachmentMass > 0 ? $"{PieceName(node)} · {Weight(node.AttachmentMass)}" : null;
+            {
+                if (node.AttachmentLoad <= 0)
+                    return null;
+                string text = $"{PieceName(node)} · {Weight(node.AttachmentMass)}";
+                double held = node.Contents + node.Riding;
+                return held >= 1 ? $"{text}\n{L("$fysik_holds")} {Weight(held)}" : text;
+            }
             if (node == null || !node.Structural)
                 return null;
             if (node.Anchored)
@@ -115,19 +121,21 @@ namespace Fysik.Game
                 headline += " · " + L("$fysik_overloaded");
 
             string note = node.Island != null && node.Island.Solver == SolverKind.LoadPath ? L("$fysik_loadpath") : null;
-            string details = Details(PieceName(node), node.MaterialName, node.Mass, node.Holds, r.MemberForce,
+            string details = Details(PieceName(node), node.MaterialName, node.Mass, node.Holds, node.Snow, r.MemberForce,
                                      node.Geometry.Main.Size, note);
             return $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>{headline}</color>\n{details}";
         }
 
-        private static string Details(string name, string material, double mass, double holds, double memberForce,
-                                      Vector3 size, string note)
+        private static string Details(string name, string material, double mass, double holds, double snow,
+                                      double memberForce, Vector3 size, string note)
         {
             string text = $"{name} · {L("$fysik_mat_" + material.ToLowerInvariant())} · {Weight(mass)}";
             if (note != null)
                 text += " · " + note;
             if (holds >= 1)
                 text += $"\n{L("$fysik_holds")} {Weight(holds)}";
+            if (snow >= 1)
+                text += $"\n{L("$fysik_snow")} {Weight(snow)}";
             double member = memberForce / Gravity;
             if (System.Math.Abs(member) >= 5 && IsBar(size))
                 text += $"\n{L(member < 0 ? "$fysik_squeezed" : "$fysik_stretched")} {Weight(System.Math.Abs(member))}";

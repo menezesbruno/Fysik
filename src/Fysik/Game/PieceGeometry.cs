@@ -88,22 +88,28 @@ namespace Fysik.Game
         private static readonly HashSet<string> s_metal = new HashSet<string>(MetalBars);
         private static readonly HashSet<string> s_nails = new HashSet<string>(Nails);
 
-        public double Wood, Stone, Metal, Nail, ItemWeight;
+        public double Wood, Stone, Metal, Nail, ItemWeight, Stored;
 
-        public double Mass =>
-            Wood * FysikConfig.WoodWeight.Value + Stone * FysikConfig.StoneWeight.Value +
-            Metal * FysikConfig.MetalBarWeight.Value + Nail * FysikConfig.NailWeight.Value +
-            ItemWeight * FysikConfig.KilogramsPerItemWeight.Value;
+        public bool Pile;
+
+        public double Mass => Pile
+            ? Stored * FysikConfig.ContentsWeight.Value
+            : Wood * FysikConfig.WoodWeight.Value + Stone * FysikConfig.StoneWeight.Value +
+              Metal * FysikConfig.MetalBarWeight.Value + Nail * FysikConfig.NailWeight.Value +
+              ItemWeight * FysikConfig.KilogramsPerItemWeight.Value;
 
         public static Recipe Of(Piece piece)
         {
             var recipe = new Recipe();
             if (piece == null || piece.m_resources == null)
                 return recipe;
+            recipe.Pile = (piece.m_usage & Piece.UsageTagFlags.Stacks) != 0;
             foreach (Piece.Requirement r in piece.m_resources)
             {
                 if (r == null || r.m_resItem == null)
                     continue;
+                if (r.m_resItem.m_itemData?.m_shared != null)
+                    recipe.Stored += r.m_resItem.m_itemData.m_shared.m_weight * r.m_amount;
                 string name = r.m_resItem.gameObject.name;
                 if (s_wood.Contains(name))
                     recipe.Wood += r.m_amount;
@@ -128,7 +134,7 @@ namespace Fysik.Game
 
         private const Piece.UsageTagFlags StructureTags =
             Piece.UsageTagFlags.Building | Piece.UsageTagFlags.Floor | Piece.UsageTagFlags.Wall | Piece.UsageTagFlags.Roof |
-            Piece.UsageTagFlags.Architecture | Piece.UsageTagFlags.Stacks | Piece.UsageTagFlags.Stairs | Piece.UsageTagFlags.Doors;
+            Piece.UsageTagFlags.Architecture | Piece.UsageTagFlags.Stairs | Piece.UsageTagFlags.Doors;
 
         private const Piece.UsageTagFlags ObjectTags =
             Piece.UsageTagFlags.Crafting | Piece.UsageTagFlags.Furniture | Piece.UsageTagFlags.Lighting | Piece.UsageTagFlags.Decor |
@@ -141,6 +147,7 @@ namespace Fysik.Game
         public float Volume;
         public bool WeighsRecipe;
         public Recipe Recipe;
+        public double SnowArea;
         public string Summary;
 
         public double MaterialsMass => WeighsRecipe ? Recipe.Mass : 0;
@@ -198,6 +205,8 @@ namespace Fysik.Game
                 g.Main = Enclose(s_solid, wnt.transform.rotation);
 
             g.Main.Size = Vector3.Max(g.Main.Size, Vector3.one * MinExtent);
+            g.SnowArea = Loads.SnowArea(ToVec(g.Main.Rotation * Vector3.right), ToVec(g.Main.Rotation * Vector3.up),
+                                        ToVec(g.Main.Rotation * Vector3.forward), ToVec(g.Main.Size));
             Piece piece = wnt.GetComponent<Piece>();
             g.WeighsRecipe = piece != null && IsObject(piece);
             if (g.WeighsRecipe)
@@ -277,6 +286,8 @@ namespace Fysik.Game
 
         private static bool IsObject(Piece piece)
         {
+            if ((piece.m_usage & Piece.UsageTagFlags.Stacks) != 0)
+                return true;
             if ((piece.m_usage & StructureTags) != 0)
                 return false;
             if ((piece.m_usage & ObjectTags) != 0)

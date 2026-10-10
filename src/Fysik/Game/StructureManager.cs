@@ -20,7 +20,19 @@ namespace Fysik.Game
 
         private readonly Recipe _recipe;
 
+        public readonly Container Container;
+
         public double AttachmentMass => Attachment ? _recipe.Mass : 0;
+
+        public double AttachmentLoad => Attachment ? _recipe.Mass + Contents + Riding : 0;
+
+        public double Contents;
+
+        public double Riding;
+
+        public double Snow;
+
+        public int SnowLevel;
 
         public readonly List<Obb> SupportBoxes;
 
@@ -78,6 +90,7 @@ namespace Fysik.Game
             Geometry = PieceGeometry.Of(wnt);
             Structural = wnt.m_supports && Geometry.IsValid;
             WorldBuilt = IsWorldBuilt(wnt);
+            Container = wnt.GetComponentInChildren<Container>();
             if (!wnt.m_supports && wnt.m_noSupportWear)
             {
                 OwnColliders = wnt.GetComponentsInChildren<Collider>(true);
@@ -129,6 +142,7 @@ namespace Fysik.Game
     {
         public readonly List<PieceNode> Members;
         public bool Stale;
+        public bool LoadsChanged;
         public SolverKind Solver;
 
         public float CascadeUntil;
@@ -203,6 +217,9 @@ namespace Fysik.Game
         private int _watchNext;
         private const double WatchBudgetMs = 0.25;
 
+        private int _snowNext;
+        private const int SnowChecksPerFrame = 200;
+
         private Job _previewJob;
         private GhostPose? _previewPose;
 
@@ -242,7 +259,7 @@ namespace Fysik.Game
                 foreach (Contact c in node.Contacts)
                 {
                     c.Other.Attached.Remove(node);
-                    if (node.AttachmentMass > 0)
+                    if (node.AttachmentLoad > 0)
                         Reload(c.Other);
                 }
                 return;
@@ -314,6 +331,7 @@ namespace Fysik.Game
             _attachmentQueued.Clear();
             _watch.Clear();
             _watchNext = 0;
+            _snowNext = 0;
             ClearPreview();
         }
 
@@ -330,14 +348,52 @@ namespace Fysik.Game
             Request(node.Wnt);
         }
 
+        public void ReloadLoads(PieceNode node)
+        {
+            if (node == null || !node.Alive)
+                return;
+            if (node.Attachment)
+            {
+                foreach (Contact c in node.Contacts)
+                    ReloadLoads(c.Other);
+                return;
+            }
+            if (!node.Structural || node.Anchored)
+                return;
+            if (_job != null && _job.Model != null && _job.Visited.Contains(node))
+                _job.LoadsChanged = true;
+            if (node.Island != null)
+                node.Island.LoadsChanged = true;
+            if (_requested.Add(node))
+                _requests.Enqueue(node);
+        }
+
+        public void OnContainerChanged(Container container)
+        {
+            ZNetView root = container.m_rootObjectOverride;
+            WearNTear wnt = root != null ? root.GetComponent<WearNTear>() : container.GetComponent<WearNTear>();
+            if (wnt == null || !_nodes.TryGetValue(wnt, out PieceNode node) || node.Container == null)
+                return;
+            double contents = ExtraLoads.ContentsOf(node.Container);
+            if (contents == node.Contents)
+                return;
+            node.Contents = contents;
+            ReloadLoads(node);
+        }
+
         private static readonly List<PieceNode> s_carried = new List<PieceNode>();
 
         private static double CarriedBy(PieceNode node)
         {
             s_carried.Clear();
             foreach (PieceNode a in node.Attached)
-                if (a.Alive && a.ContactsValid && a.AttachmentMass > 0)
+            {
+                if (!a.Alive || !a.ContactsValid)
+                    continue;
+                a.Contents = ExtraLoads.ContentsOf(a.Container);
+                if (a.AttachmentLoad > 0)
                     s_carried.Add(a);
+            }
             s_carried.Sort(PieceNode.Compare);
             double mass = 0;
             foreach (PieceNode a in s_carried)
@@ -347,7 +403,7 @@ namespace Fysik.Game
                     if (c.Other.Alive)
                         shares++;
                 if (shares > 0)
-                    mass += a.AttachmentMass / shares;
+                    mass += a.AttachmentLoad / shares;
             }
             return mass;
         }
@@ -432,6 +488,7 @@ namespace Fysik.Game
 
             long watchDeadline = Math.Min(deadline, Stopwatch.GetTimestamp() + (long)(WatchBudgetMs * Stopwatch.Frequency / 1000.0));
             WatchGround(watchDeadline);
+            WatchSnow();
 
             while (Stopwatch.GetTimestamp() < deadline)
             {
@@ -460,7 +517,7 @@ namespace Fysik.Game
                 _requested.Remove(seed);
                 if (!seed.Alive || !_nodes.ContainsKey(seed.Wnt) || seed.Anchored)
                     continue;
-                if (seed.HasResult && seed.Island != null && !seed.Island.Stale)
+                if (seed.HasResult && seed.Island != null && !seed.Island.Stale && !seed.Island.LoadsChanged)
                     continue;
                 _job = new Job(seed);
                 return true;
@@ -574,10 +631,18 @@ namespace Fysik.Game
                 node.HasResult = true;
                 node.Mass = job.Model.Bodies[i].Mass - job.Carried[i];
                 node.Carried = job.Carried[i];
+                node.Snow = job.Snow[i];
+                node.SnowLevel = job.SnowLevels[i];
                 node.Holds = results[i].HeldWeight / job.Model.Gravity.Length + job.Carried[i];
                 node.MaterialName = job.Model.Bodies[i].Material.Name;
                 if (worst < 0 || results[i].Utilization > results[worst].Utilization)
                     worst = i;
+            }
+            if (job.LoadsChanged)
+            {
+                island.LoadsChanged = true;
+                if (job.Seed.Alive && _requested.Add(job.Seed))
+                    _requests.Enqueue(job.Seed);
             }
 
             double ms = job.ComputeTicks * 1000.0 / Stopwatch.Frequency;
@@ -669,7 +734,7 @@ namespace Fysik.Game
                 }
             }
             node.ContactsValid = true;
-            if (node.AttachmentMass > 0 && (wasOnGround != node.OnGround || s_oldSupporters.Count != node.Contacts.Count ||
+            if (node.AttachmentLoad > 0 && (wasOnGround != node.OnGround || s_oldSupporters.Count != node.Contacts.Count ||
                                             node.Contacts.Exists(k => !s_oldSupporters.Contains(k.Other))))
             {
                 foreach (PieceNode old in s_oldSupporters)
@@ -710,6 +775,21 @@ namespace Fysik.Game
                     Invalidate(node);
                     Request(node.Wnt);
                 }
+            }
+        }
+
+        private void WatchSnow()
+        {
+            if (!FysikConfig.LiveLoads.Value || FysikConfig.SnowWeight.Value <= 0)
+                return;
+            int count = Math.Min(SnowChecksPerFrame, _watch.Count);
+            for (int k = 0; k < count; k++)
+            {
+                if (_snowNext >= _watch.Count)
+                    _snowNext = 0;
+                PieceNode node = _watch[_snowNext++];
+                if (node.Alive && node.Structural && node.HasResult && ExtraLoads.SnowLevel(node.Wnt) != node.SnowLevel)
+                    ReloadLoads(node);
             }
         }
 
@@ -890,9 +970,12 @@ namespace Fysik.Game
 
             public List<PieceNode> Members;
             public double[] Carried;
+            public double[] Snow;
+            public int[] SnowLevels;
             public StructureModel Model;
             public StructureAnalysis Analysis;
             public bool Dirty;
+            public bool LoadsChanged;
             public long ComputeTicks;
             public int Frames;
             public readonly long Started = Stopwatch.GetTimestamp();
@@ -973,16 +1056,22 @@ namespace Fysik.Game
                 var index = new Dictionary<PieceNode, int>(Members.Count);
                 Model = new StructureModel();
                 Carried = new double[Members.Count];
+                Snow = new double[Members.Count];
+                SnowLevels = new int[Members.Count];
                 for (int i = 0; i < Members.Count; i++)
                 {
-                    index[Members[i]] = i;
-                    Body body = Members[i].Geometry.ToBody(MaterialTable.For(Members[i].Wnt));
-                    Carried[i] = CarriedBy(Members[i]);
+                    PieceNode member = Members[i];
+                    index[member] = i;
+                    Body body = member.Geometry.ToBody(MaterialTable.For(member.Wnt));
+                    member.Contents = ExtraLoads.ContentsOf(member.Container);
+                    SnowLevels[i] = ExtraLoads.SnowLevel(member.Wnt);
+                    Snow[i] = ExtraLoads.SnowMass(member.Geometry, SnowLevels[i]);
+                    Carried[i] = CarriedBy(member) + member.Riding + member.Contents + Snow[i];
                     body.Mass += Carried[i];
                     body.StrengthFactor = FysikConfig.DamageWeakens.Value
-                        ? Damage.StrengthFactor(Members[i].Wnt.GetHealthPercentage())
+                        ? Damage.StrengthFactor(member.Wnt.GetHealthPercentage())
                         : 1;
-                    Members[i].Strength = body.StrengthFactor;
+                    member.Strength = body.StrengthFactor;
                     Model.AddBody(body);
                 }
 

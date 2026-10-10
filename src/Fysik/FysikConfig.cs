@@ -46,6 +46,10 @@ namespace Fysik
         internal static ConfigEntry<float> MetalBarWeight { get; private set; }
         internal static ConfigEntry<float> NailWeight { get; private set; }
         internal static ConfigEntry<float> KilogramsPerItemWeight { get; private set; }
+        internal static ConfigEntry<bool> LiveLoads { get; private set; }
+        internal static ConfigEntry<float> ContentsWeight { get; private set; }
+        internal static ConfigEntry<float> PlayerWeight { get; private set; }
+        internal static ConfigEntry<float> SnowWeight { get; private set; }
 
         internal static ConfigEntry<float> FrameBudgetMs { get; private set; }
         internal static ConfigEntry<bool> BackgroundSolver { get; private set; }
@@ -92,8 +96,10 @@ namespace Fysik
 
             CrackWarningSeconds = config.Bind(
                 "Failure", "CrackWarningSeconds", 5f,
-                Server("Seconds an overloaded piece stays cracked (red, shaking) before it falls, " +
-                       "giving time to shore it up. Once the first piece falls, the rest of the collapse is instant.",
+                Server("Seconds an overloaded piece stays cracked (red, shaking) before it falls, giving time to shore " +
+                       "it up or take the load off. That is for a piece just past its limit (up to 110%): the further " +
+                       "past, the shorter the warning, down to none at twice its limit. Once the first piece falls, the " +
+                       "rest of the collapse is instant.",
                        new AcceptableValueRange<float>(0f, 60f)));
 
             DamageWeakens = config.Bind(
@@ -114,8 +120,8 @@ namespace Fysik
                 Server("Relaxed: materials 50% stronger (longer spans and cantilevers). Normal. " +
                        "Strict: materials 30% weaker (structures need more thought).", null));
 
-            const string objects = "Objects (furniture, crafting stations, chests, torches, lighting, decor, piles) weigh " +
-                                   "the materials they are made of, not their volume.";
+            const string objects = "Objects (furniture, crafting stations, chests, torches, lighting, decor) weigh the " +
+                                   "materials they are made of, not their volume.";
             WoodWeight = config.Bind(
                 "Weight", "Wood", 4f,
                 Server($"{objects} Kilograms per wood item ({string.Join(", ", Game.Recipe.WoodItems)}).",
@@ -137,6 +143,30 @@ namespace Fysik
                 Server($"{objects} Kilograms per unit of the game's item weight, for every other material " +
                        "(an item that weighs 0.5 in the inventory counts as 1 kg at the default 2).",
                        new AcceptableValueRange<float>(0f, 100f)));
+            LiveLoads = config.Bind(
+                "Weight", "LiveLoads", true,
+                Server("Loads that are not part of the building weigh on it: what is inside chests, players, carts and " +
+                       "Deep North snow (Contents, Player and Snow below). Off: only the pieces and the objects built on " +
+                       "them (furniture, crafting stations, piles and stacks) weigh.", null));
+            ContentsWeight = config.Bind(
+                "Weight", "Contents", 1f,
+                Server("Stored items weigh this many kilograms per unit of the game's item weight: inside chests, carts " +
+                       "and players' inventories, and piled up in piles and stacks. At the default 1 the game's weights " +
+                       "read as kilograms (50 stones = 100 kg, a stack of 30 iron bars = 360 kg).",
+                       new AcceptableValueRange<float>(0f, 20f)));
+            PlayerWeight = config.Bind(
+                "Weight", "Player", 80f,
+                Server("Body weight of a player, kilograms. A player standing, sitting or lying on a piece adds this " +
+                       "plus their inventory (Contents) to it, and a cart adds its own weight plus its cargo to the " +
+                       "pieces under its wheels.",
+                       new AcceptableValueRange<float>(0f, 500f)));
+            SnowWeight = config.Bind(
+                "Weight", "Snow", 150f,
+                Server("Weight of a full layer of Deep North snow, kilograms per square metre of ground. Snow builds up " +
+                       "on pieces left in the open and can be shoveled off; a roof up to 30° steep holds 80% of it, " +
+                       "less as it gets steeper, none from 60°. Pieces the game protects from heavy snow (tarred roofs, " +
+                       "stave church) and worlds with the no heavy snow modifier hold none. 0: snow weighs nothing.",
+                       new AcceptableValueRange<float>(0f, 1000f)));
 
             FrameBudgetMs = config.Bind(
                 "Performance", "FrameBudgetMs", 1.5f,

@@ -28,6 +28,7 @@ namespace Fysik.Game
                 { "fysik_holds", "Holds" },
                 { "fysik_squeezed", "Squeezed" },
                 { "fysik_stretched", "Stretched" },
+                { "fysik_snow", "Snow" },
                 { "fysik_xray_on", "Fysik X-ray on" },
                 { "fysik_xray_off", "Fysik X-ray off" },
                 { "fysik_xray_radius", "Fysik X-ray radius:" },

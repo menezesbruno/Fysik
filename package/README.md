@@ -9,9 +9,13 @@ matters, in the spirit of Poly Bridge and Bridge Constructor:
   balcony halves its stress.
 - **Cantilevers** bend, and the longer they reach, the more they strain.
 - An overloaded piece **cracks before it falls**: it turns red, shakes, creaks and sheds dust, giving
-  you a few seconds to shore it up. Once something gives way, the collapse follows instantly.
+  you a few seconds to shore it up or take the load off (fewer the more it is overloaded). Once
+  something gives way, the collapse follows instantly.
 - Building an arch works like the real thing: until the last stone closes it, an unfinished arch is
   just two cantilevers and needs scaffolding. Close it, remove the scaffolding, and it stands.
+- **Everything weighs**: furniture, full chests, players walking across, a loaded cart rolling over a
+  bridge, and the snow piling up on roofs in the Deep North. A weak bridge creaks under a cart, and
+  gives way if the cart is too heavy or stops on it.
 
 > ### ⚠ Before you install
 >
@@ -49,32 +53,65 @@ and preferably start a new one. To look at an old base before letting it settle,
 
 - **Hammer:** aim at a piece. It is colored by stress, from blue (relaxed) through green and yellow
   to red (at its limit), and next to the crosshair you get its stress, e.g. *Compression 72%*, then
-  its name, material and own weight, the weight it holds up (*Holds 6.5 t*) and, for posts, beams
-  and logs, how hard they are squeezed or stretched (*Squeezed 6.7 t*). Aiming at a chest, torch or
-  pile shows its name and weight. Light blue means the structure is still being calculated; magenta
-  means it has no path to the ground at all; neutral grey means a world building that Fysik does not
-  simulate (*World building · not simulated*).
+  its name, material and own weight, the weight it holds up (*Holds 6.5 t*), the snow on it
+  (*Snow 340 kg*) and, for posts, beams and logs, how hard they are squeezed or stretched
+  (*Squeezed 6.7 t*). Aiming at a chest, torch or pile shows its name and weight, and for a chest
+  what is inside it (*Holds 240 kg*). A player standing, sitting or lying on a piece counts in that
+  piece's *Holds*. Light blue means the structure is still being calculated; magenta means it has no
+  path to the ground at all; neutral grey means a world building that Fysik does not simulate
+  (*World building · not simulated*).
 - **Placing a piece:** the ghost is colored by the stress it would have once placed, with the value
   next to the crosshair (*Preview: Bending 85%*) and the same lines as the hammer, including what it
   would hold up. If it would push another piece past its limit, a red line names that piece. When
   vanilla says the spot is invalid, the ghost stays vanilla red.
 - **X-ray (F7):** colors every piece within 40 m. **Ctrl+F7** widens the radius by 10 m, up to 80 m,
   then back to 40 m.
-- **Cracking:** a piece above 100% pulses red, shakes, creaks and sheds dust. You have
-  `CrackWarningSeconds` (5 s) to shore it up (add a post, a brace, finish the arch) before it falls.
-  Once something gives way, everything that lost its support comes down with it at once, as debris
-  that bursts on hitting the ground, like a building being imploded; whatever is left overloaded
-  follows without warning. A piece left with no path to the ground at all (you removed its support)
-  has nothing to shore up and falls at once, as in vanilla.
+- **Cracking:** a piece above 100% pulses red, shakes, creaks and sheds dust. Just past its limit (up
+  to 110%) you have `CrackWarningSeconds` (5 s) to shore it up (add a post, a brace, finish the arch)
+  or take the load off before it falls; the further past, the shorter the warning: half of it at 155%,
+  none at twice its limit. If the load goes away in time (the cart rolls on, you shovel the snow off),
+  the piece stops cracking. Once something gives way, everything that lost its support comes down with
+  it at once, as debris that bursts on hitting the ground, like a building being imploded; whatever is
+  left overloaded follows without warning. A piece left with no path to the ground at all (you removed
+  its support) has nothing to shore up and falls at once, as in vanilla.
 - **Furniture:** beds, tables, smelters, hearths, portals and other pieces the game tags as objects
-  rather than structure weigh what they are made of (4 kg per piece of wood, 10 kg per stone, 4 kg
-  per metal bar, adjustable in the `Weight` settings): a smelter about 250 kg, a bed 32 kg, a chair
-  16 kg. Chests, workbenches, forges, torches, stone and wood piles and similar pieces that hold
-  nothing up weigh the same way and load the pieces they rest on: a stone pile is 500 kg, a forge
-  120 kg, a chest 40 to 113 kg, a standing torch about 9 kg. Their load counts once they are placed;
-  the ghost does not show it yet. They still need something to rest on and fall when the piece under
-  them goes, as in vanilla. Fences, stake walls, carved statues and some stacks (fine wood, metal
-  bars) count as structure and weigh their full volume.
+  rather than structure weigh what they are made of (4 kg per piece of wood, 10 kg per stone, 4 kg per
+  metal bar, adjustable in the `Weight` settings): a smelter about 250 kg, a bed 32 kg, a chair 16 kg.
+  Chests, workbenches, forges, torches and similar pieces that hold nothing up weigh the same way and
+  load the pieces they rest on: a forge 120 kg, an empty chest 40 to 113 kg, a standing torch about
+  9 kg. Their load counts once they are placed; the ghost does not show it yet. They still need
+  something to rest on and fall when the piece under them goes, as in vanilla. Fences, stake walls and
+  carved statues count as structure and weigh their full volume.
+- **Piles and stacks:** wood, stone, coal and other piles and stacks weigh what their items weigh in
+  a chest (see below): a stone pile or a wood stack 100 kg, a stack of iron bars 360 kg.
+
+## What weighs on a structure
+
+Besides the pieces themselves and the objects on them:
+
+- **Chests:** what is inside weighs 1 kg per unit of the game's item weight (`Weight.Contents`), so
+  the inventory weights read as kilograms: 50 stones weigh 100 kg, 30 iron bars 360 kg, a reinforced
+  chest full of stone about 2.4 t. The pieces under a chest are recalculated when you put things in or
+  take them out.
+- **Players:** 80 kg (`Weight.Player`) plus their inventory, counted like a chest's contents, on the
+  piece they stand, sit or lie on.
+- **Carts:** their own weight (about 80 kg) plus their cargo, counted like a chest's contents and
+  shared among the pieces under their wheels. A full cart of wood, core wood or stone is about 1.9 t,
+  of ore about 5.5 t, of metal bars about 6.6 t.
+- **Snow:** in the Deep North, snow builds up on pieces left in the open, and it weighs: a full layer
+  is 150 kg per square metre of ground (`Weight.Snow`). A roof up to 30° steep holds 80% of it, a 45°
+  roof 40%, and from 60° the snow slides off. Shovel a roof, or walk across it, to clear the snow and
+  its weight. Pieces the game already protects from heavy snow (tarred roofs, the stave church pieces)
+  hold none, and neither does a world with the no heavy snow modifier. In Physics and Sandbox modes,
+  Fysik replaces vanilla's snow damage, which wore down exposed pieces by their distance to the
+  ground.
+
+All of these are on by default; the server turns them off together with `Weight.LiveLoads = false`,
+leaving only the pieces and the objects built on them. Vanilla's snow damage stays off either way in
+Physics and Sandbox modes.
+
+Moving loads are recalculated each time someone steps onto another piece. A structure keeps its last
+result while the new one is calculated, so a big base with people walking around it does not flicker.
 
 ## World buildings
 
@@ -183,6 +220,18 @@ arches are built out from the piers in steps and closed at the top with a pair o
 - Each arch steps out 1 m and then 2 m from the piers and closes with two stone arches. Before the
   arches close nothing goes above 39%, so no scaffolding is needed.
 
+### Snow
+
+Snow weighs on whatever is left in the open, mostly roofs. With full snow at the default weight and
+26° roofs of wood:
+
+- A house up to 8 m wide with posts every 2 to 4 m under the eaves and the ridge stays below 40%.
+- A 12 m hall with posts every 4 m reaches about 75%. A 16 m hall with posts every 4 m under the eaves
+  and every 8 m under the ridge is already at 63% with no snow and gives way when the snow is half deep.
+- **Steep roofs shed snow:** the same 16 m hall with 45° roofs holds full snow at about 85%.
+- A roof sticking out from a wall with nothing under it holds one roof piece out (37%), not two (136%).
+- Shovel the roof when something starts to crack, or prop it from below.
+
 ### Materials
 
 - **Stone** is very strong squeezed and weak pulled: use it for walls, pillars and arches, not for
@@ -195,7 +244,8 @@ arches are built out from the piers in steps and closed at the top with a pair o
 - Watch the ghost's color before placing each piece, and check the whole building with the X-ray
   (F7) after big changes.
 - When something cracks, you have a few seconds: put a post under it, add a brace, or remove what it
-  carries (a stone pile is 500 kg).
+  carries (a stack of iron bars is 360 kg, a cart full of ore about 5.5 t).
+- Before taking a loaded cart across a bridge, look at the bridge with the X-ray, and keep moving.
 - Badly damaged pieces (below half health) are weaker; repair them.
 - Big bases: structures up to `Structure.MaxFrameBodies` pieces (2000) get the full calculation.
   Larger ones use a simpler model that does not recognise arches; raise the limit (up to 5000) if you
@@ -207,10 +257,10 @@ arches are built out from the piers in steps and closed at the top with a pair o
 Next:
 
 - Masonry: stone blocks that only hold by pressing on each other, interlocking walls, arches built on wooden centering
-- Loads beyond self-weight: chest contents, snow on roofs
 
 Later:
 
+- Creatures' weight (tamed lox, trolls) on bridges and floors
 - Calibration with player builds (feedback welcome)
 - Faster recalculation for very large bases
 - Translations into every language Valheim supports
@@ -225,13 +275,17 @@ synced to every client; they can also be edited in game with a configuration man
 |---|---|---|---|---|
 | Structure | Mode (*server*) | Physics | Physics, DisplayOnly, Sandbox | Physics: Fysik decides what falls. DisplayOnly: vanilla decides, Fysik only shows. Sandbox: nothing falls for lack of support. |
 | Structure | WorldBuildings (*server*) | Vanilla | Vanilla, Physics | Buildings that come with the world (stone towers, abandoned houses, villages, ruins). Vanilla: they keep vanilla support, are not simulated and show in grey; player builds rest on them as on rock. Physics: simulated like player builds. **Warning:** many were not built for real forces and will crack and fall when players come near, changing the game. |
-| Failure | CrackWarningSeconds (*server*) | 5 | 0–60 | Seconds an overloaded piece stays cracked before it falls. |
+| Failure | CrackWarningSeconds (*server*) | 5 | 0–60 | Seconds an overloaded piece stays cracked before it falls, when it is just past its limit (up to 110%); shorter the further past, none at twice its limit. |
 | Failure | DamageWeakens (*server*) | on | | Pieces below half health are weaker, down to 25% strength at the brink of breaking; rain wear alone never weakens them. Off: damage never changes strength. |
 | Structure | Difficulty (*server*) | Normal | Relaxed, Normal, Strict | Relaxed: materials 50% stronger (longer spans and cantilevers). Strict: 30% weaker. |
 | Structure | MaxFrameBodies (*server*) | 2000 | 500–5000 | Largest structure solved with the full frame analysis; bigger ones use a simplified model that does not recognise arches. Higher values take longer to update (about 0.5 s for 2000 pieces, 2 s for 5000). |
 | Material.\<type\> | Density, CompressiveStrength, TensileStrength, ShearStrength, BucklingSlenderness (*server*) | per material | | Density (kg/m³) gives structural pieces their weight; strengths in MPa. Stone is strong in compression and weak in tension. Objects weigh their materials instead (see Weight). |
-| Weight | Wood, Stone, MetalBar, Nail (*server*) | 4, 10, 4, 0.1 | 0–1000 | Kilograms per item used to build an object (furniture, crafting stations, chests, torches, piles); objects weigh their materials, not their volume. |
+| Weight | Wood, Stone, MetalBar, Nail (*server*) | 4, 10, 4, 0.1 | 0–1000 | Kilograms per item used to build an object (furniture, crafting stations, chests, torches); objects weigh their materials, not their volume. |
 | Weight | PerItemWeight (*server*) | 2 | 0–100 | Kilograms per unit of the game's item weight, for every other material in an object's recipe. |
+| Weight | LiveLoads (*server*) | on | | Chest contents, players, carts and Deep North snow weigh on the structure. Off: only the pieces and the objects built on them (piles and stacks included) weigh. |
+| Weight | Contents (*server*) | 1 | 0–20 | Kilograms per unit of the game's item weight for stored items: inside chests, carts and players' inventories, and in piles and stacks (at 1, the game's weights read as kilograms). |
+| Weight | Player (*server*) | 80 | 0–500 | Body weight of a player, kilograms; their inventory adds to it. |
+| Weight | Snow (*server*) | 150 | 0–1000 | Weight of a full layer of Deep North snow, kilograms per square metre of ground; roofs hold less of it the steeper they are. 0: snow weighs nothing. |
 | Display | HammerInfo | on | | Stress color, value, weight and weight held on the piece under the hammer. |
 | Display | PlacementPreview | on | | Predicted stress and weight held on the piece being placed. |
 | Display | CollapseAnimation | on | | Falling pieces come down as debris and burst on impact (off: they shatter in place, as in vanilla). |
