@@ -14,6 +14,12 @@ owners of different parts of one structure agree, and a crack is synced to every
 piece. Each player and cart tells everyone which pieces it rests on, so moving loads are the same for
 all.
 
+To check that two players agree, both aim the hammer at the same structure and type `fysik hash` in
+the console: it prints the number of pieces, a fingerprint of the result and the most loaded piece.
+With both players close enough to have the whole structure loaded, and nobody building or moving on
+it, both must see the same fingerprint. If they differ, send both players' dumps (**Ctrl+F8**) in an
+issue.
+
 The dedicated server calculates nothing. It relays, syncs the settings and hands the pieces near the
 centre of the world, which it would otherwise keep, to the nearest player. It needs no extra CPU.
 
@@ -74,5 +80,6 @@ warning in the log for each unknown material; their objects weigh their recipe.
 ## Console
 
 With the game started with `-console`, F5 opens the console: `fysik stats` shows solver statistics
-and who owns the pieces around you, `fysik recalc` recalculates everything and `fysik dump` writes
-the structure under the hammer to `BepInEx/fysik-dump.txt`.
+and who owns the pieces around you, `fysik recalc` recalculates everything, `fysik dump` writes
+the structure under the hammer to `BepInEx/fysik-dump.txt` and `fysik hash` prints the fingerprint of
+its result (see **Who calculates**).

@@ -6,6 +6,16 @@ using UnityEngine;
 
 namespace Fysik.Game
 {
+    [Flags]
+    internal enum GroundKind : byte
+    {
+        None = 0,
+        Terrain = 1,
+        Rock = 2,
+        Tree = 4,
+        WorldBuilding = 8,
+    }
+
     internal sealed class PieceNode
     {
         public readonly WearNTear Wnt;
@@ -52,6 +62,20 @@ namespace Fysik.Game
 
         public readonly List<Contact> Contacts = new List<Contact>();
         public readonly List<Vector3> GroundPoints = new List<Vector3>();
+
+        public GroundKind GroundKinds;
+
+        public GroundKind RestsOn
+        {
+            get
+            {
+                GroundKind kinds = GroundKinds;
+                foreach (Contact c in Contacts)
+                    if (c.Other.Anchored && c.Other.Alive)
+                        kinds |= GroundKind.WorldBuilding;
+                return kinds;
+            }
+        }
 
         public bool Grounded
         {
@@ -191,6 +215,7 @@ namespace Fysik.Game
         public SolverKind Solver;
         public PieceNode WorstOther;
         public BodyResult WorstOtherResult;
+        public GroundKind RestsOn;
     }
 
     internal sealed class StructureManager
@@ -560,7 +585,7 @@ namespace Fysik.Game
                 return;
 
             var g = new GhostPiece { Geometry = geometry, Material = MaterialTable.For(ghost) };
-            FindContacts(geometry, ghost, g.Contacts, g.GroundPoints);
+            g.GroundKinds = FindContacts(geometry, ghost, g.Contacts, g.GroundPoints);
             var seeds = new List<PieceNode>();
             foreach (Contact c in g.Contacts)
                 seeds.Add(c.Other);
@@ -592,6 +617,7 @@ namespace Fysik.Game
                                         (float)job.Model.Bodies[ghost].Size.Z),
                 MaterialName = job.Model.Bodies[ghost].Material.Name,
                 Solver = job.Analysis.Solver,
+                RestsOn = job.GhostRestsOn,
             };
             for (int i = 0; i < ghost; i++)
             {
@@ -679,7 +705,7 @@ namespace Fysik.Game
         private void ScanContacts(PieceNode node)
         {
             node.ScanTrusted = Readiness.Settled(node.Wnt);
-            FindContacts(node.Geometry, node.Wnt, node.Contacts, node.GroundPoints);
+            node.GroundKinds = FindContacts(node.Geometry, node.Wnt, node.Contacts, node.GroundPoints);
             node.ContactsValid = true;
             if (node.WorldBuilt)
                 return;
@@ -709,6 +735,7 @@ namespace Fysik.Game
             bool wasOnGround = node.OnGround;
             node.Contacts.Clear();
             node.OnGround = false;
+            node.GroundKinds = GroundKind.None;
 
             foreach (Obb box in node.SupportBoxes)
             {
@@ -718,10 +745,12 @@ namespace Fysik.Game
                     Collider c = s_hits[i];
                     if (c.isTrigger || c.attachedRigidbody != null || Array.IndexOf(node.OwnColliders, c) >= 0)
                         continue;
-                    WearNTear other = c.gameObject.layer == s_terrainLayer ? null : c.GetComponentInParent<WearNTear>();
+                    bool terrain = c.gameObject.layer == s_terrainLayer;
+                    WearNTear other = terrain ? null : c.GetComponentInParent<WearNTear>();
                     if (other == null)
                     {
                         node.OnGround = true;
+                        node.GroundKinds |= terrain ? GroundKind.Terrain : KindOf(c);
                         continue;
                     }
                     if (other == node.Wnt || !other.m_supports)
@@ -816,7 +845,7 @@ namespace Fysik.Game
             return Math.Min(_scratchGround.Count, MaxGroundPoints);
         }
 
-        private void FindContacts(PieceGeometry geometry, WearNTear self, List<Contact> contacts, List<Vector3> ground)
+        private GroundKind FindContacts(PieceGeometry geometry, WearNTear self, List<Contact> contacts, List<Vector3> ground)
         {
             EnsureMasks();
             foreach (List<WeightedPoint> list in _contactPoints.Values)
@@ -824,10 +853,14 @@ namespace Fysik.Game
             ground.Clear();
             s_groundColliders.Clear();
             Vector3 center = geometry.Main.Center;
+            GroundKind kinds = GroundKind.None;
 
             foreach (Obb box in geometry.Boxes)
             {
+                int before = ground.Count;
                 AddBottomSamples(box, null, ground);
+                if (ground.Count > before)
+                    kinds |= GroundKind.Terrain;
                 OrientedBox grown = box.Grown(ContactMargin);
 
                 int count = Physics.OverlapBoxNonAlloc(box.Center, box.Size * 0.5f + Vector3.one * ContactMargin,
@@ -841,7 +874,8 @@ namespace Fysik.Game
                     WearNTear other = c.GetComponentInParent<WearNTear>();
                     if (other == null)
                     {
-                        AddStaticGround(c, box, center, ground);
+                        if (AddStaticGround(c, box, center, ground))
+                            kinds |= KindOf(c);
                         continue;
                     }
                     if (other == self || !other.m_supports)
@@ -872,6 +906,15 @@ namespace Fysik.Game
                     ground[i] = ground[i * ground.Count / MaxGroundPoints];
                 ground.RemoveRange(MaxGroundPoints, ground.Count - MaxGroundPoints);
             }
+            return kinds;
+        }
+
+        private static GroundKind KindOf(Collider c)
+        {
+            IDestructible destructible = c.GetComponentInParent<IDestructible>();
+            return destructible != null && destructible.GetDestructibleType() == DestructibleType.Tree
+                ? GroundKind.Tree
+                : GroundKind.Rock;
         }
 
         private static void AddBottomSamples(Obb box, Collider only, List<Vector3> output)
@@ -915,22 +958,23 @@ namespace Fysik.Game
             }
         }
 
-        private static void AddStaticGround(Collider c, Obb box, Vector3 center, List<Vector3> ground)
+        private static bool AddStaticGround(Collider c, Obb box, Vector3 center, List<Vector3> ground)
         {
             if (!s_groundColliders.Add(c))
-                return;
+                return false;
             bool closestPointSupported = c is BoxCollider || c is SphereCollider || c is CapsuleCollider ||
                                          (c is MeshCollider mesh && mesh.convex);
             if (closestPointSupported)
             {
                 Vector3 q = c.ClosestPoint(center);
                 ground.Add((q + box.ClosestPoint(q)) * 0.5f);
-                return;
+                return true;
             }
             int before = ground.Count;
             AddBottomSamples(box, c, ground);
             if (ground.Count == before)
                 ground.Add(box.ClosestPoint(c.bounds.ClosestPoint(center)));
+            return true;
         }
 
         private static void SortPoints(List<Vector3> points) =>
@@ -957,6 +1001,7 @@ namespace Fysik.Game
         {
             public PieceGeometry Geometry;
             public MaterialProps Material;
+            public GroundKind GroundKinds;
             public readonly List<Contact> Contacts = new List<Contact>();
             public readonly List<Vector3> GroundPoints = new List<Vector3>();
         }
@@ -974,6 +1019,7 @@ namespace Fysik.Game
             public int[] SnowLevels;
             public StructureModel Model;
             public StructureAnalysis Analysis;
+            public GroundKind GhostRestsOn;
             public bool Dirty;
             public bool LoadsChanged;
             public long ComputeTicks;
@@ -1104,12 +1150,18 @@ namespace Fysik.Game
                 if (_ghost != null)
                 {
                     int g = Model.AddBody(_ghost.Geometry.ToBody(_ghost.Material));
+                    GhostRestsOn = _ghost.GroundKinds;
                     foreach (Contact c in _ghost.Contacts)
                     {
                         if (index.TryGetValue(c.Other, out int j))
+                        {
                             Model.Connect(g, j, PieceGeometry.ToVec(c.Point));
+                        }
                         else if (c.Other.Anchored && c.Other.Alive)
+                        {
                             Model.Ground(g, PieceGeometry.ToVec(c.Point));
+                            GhostRestsOn |= GroundKind.WorldBuilding;
+                        }
                     }
                     foreach (Vector3 p in _ghost.GroundPoints)
                         Model.Ground(g, PieceGeometry.ToVec(p));

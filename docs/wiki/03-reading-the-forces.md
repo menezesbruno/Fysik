@@ -28,6 +28,13 @@ Aim at a piece with the hammer. Next to the crosshair, one fact per line:
 4. **Snow**: the snow lying on it, in the Deep North.
 5. **Squeezed** or **Stretched**: for posts, beams and logs, the force along the piece, e.g.
    *Squeezed 6.7 t*.
+6. **Rests on**: what holds the piece from below that Fysik counts as ground: *the ground* (terrain,
+   including pieces buried up to 2 m), *rock*, *a tree* or *a world building*, e.g. *Rests on the
+   ground, rock*. These pieces are the foundations of the structure: everything else holds through
+   them. A piece resting on a tree or a rock that can be mined falls if the tree is cut down or the
+   rock mined away.
+7. **Damaged**: below half health, the strength the piece has left, e.g. *Damaged · 60% strength*.
+   Repair it to get the rest back.
 
 The stress line names what is closest to breaking the piece:
 
@@ -44,15 +51,17 @@ work. Long, thin pieces buckle, so a slender post carries less in compression th
 alone would allow.
 
 Aiming at a chest, a torch, a pile or another object that holds nothing up shows its name and
-weight, and for a chest what is inside it (*Holds 240 kg*).
+weight, for a chest what is inside it (*Holds 240 kg*), and *Rests on the ground* when it stands on
+the ground.
 
 ## Placing a piece
 
 The ghost is colored by the stress it would have once placed, with the value next to the crosshair
 (*Preview: Bending 85%*) and the same lines as the hammer, so a post slid under a beam says what it
-will take. If placing it would push another piece past its limit, a red line names that piece and
-its value. When vanilla says the spot is invalid, the ghost stays vanilla red. Objects (chests,
-piles, furniture) do not preview their weight; it counts once they are placed.
+will take, and *Rests on the ground* tells you a foundation post really reaches the ground. If
+placing it would push another piece past its limit, a red line names that piece and its value. When
+vanilla says the spot is invalid, the ghost stays vanilla red. Objects (chests, piles, furniture) do
+not preview their weight; it counts once they are placed.
 
 ## X-ray
 
@@ -73,12 +82,13 @@ the radius by 10 m, up to 80 m, then back to 40 m.
 - A piece left with no path to the ground at all (you removed what held it) has nothing to shore up
   and falls at once, as in vanilla.
 - Badly damaged pieces are weaker: below half health their strength drops, down to a quarter at the
-  brink of breaking. Rain wear alone never weakens a piece. Repair them.
+  brink of breaking, and the hammer shows what is left (*Damaged · 60% strength*). Rain wear alone
+  never weakens a piece. Repair them.
 - Nothing falls while a structure is still loading: pieces that appeared in the last 10 s or lie
   close to the edge of the loaded area wait.
 
 ## Saving a structure for a report
 
 **Ctrl+F8** writes the structure under the hammer to `BepInEx/fysik-dump.txt`: every piece, its
-weight, stress and joints. Attach it to an issue on GitHub when a build behaves strangely (see
+weight, stress, joints and what it rests on. Attach it to an issue on GitHub when a build behaves strangely (see
 **FAQ**).

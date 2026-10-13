@@ -122,7 +122,7 @@ directly. Game and third-party DLLs are referenced in place and never committed.
 |---|---|
 | `src/Fysik/Structure/` | The solver: pure C#, no Unity types, shared with the tests |
 | `src/Fysik/Game/` | Valheim side: piece graph, contacts, display, patches |
-| `tests/Fysik.Tests/` | Solver tests: beam theory (cantilever, fixed beam, column, arch, brace, floor on a beam), contact overlap, weight held, squeeze along a piece, snow on roofs, crack policy and warning, performance |
+| `tests/Fysik.Tests/` | Solver tests: beam theory (cantilever, fixed beam, column, arch, brace, floor on a beam), loads meeting at a piece's centre, stacked stone walls, contact overlap, weight held, squeeze along a piece, snow on roofs, crack policy and warning, performance |
 | `package/` | Thunderstore `manifest.json` template and the package README |
 | `art/` | `icon.png` and `banner.png` |
 | `docs/images/` | The building guide's pictures |

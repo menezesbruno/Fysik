@@ -35,6 +35,9 @@ version. Players without it, or with another version, cannot join.
   green are fine, yellow is getting close, red would break.
 - **Press F7** after big changes: the X-ray colors every piece within 40 m.
 - **Posts every 2 to 4 m** under beams and floors keep most houses well below their limit.
+- **Check the foundations.** Aim the hammer at a post or wall at the bottom of a build: *Rests on the
+  ground* means it carries its load into the world. A piece without that line only holds through the
+  pieces around it.
 - **A beam reaching out bends**, and the longer it reaches, the worse. A diagonal brace under it
   turns the bending into a squeeze.
 - **Stone** is strong squeezed and weak pulled: use it for walls, pillars and arches, not for beams
