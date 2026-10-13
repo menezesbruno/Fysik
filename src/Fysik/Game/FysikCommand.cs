@@ -12,7 +12,8 @@ namespace Fysik.Game
         public override string Name => "fysik";
 
         public override string Help =>
-            "stats | recalc | dump  (dump writes the structure under the hammer to BepInEx/fysik-dump.txt)";
+            "stats | recalc | dump | hash  (dump writes the structure under the hammer to BepInEx/fysik-dump.txt; " +
+            "hash prints a fingerprint of its result, the same on every player's game when they agree)";
 
         public override void Run(string[] args)
         {
@@ -32,6 +33,9 @@ namespace Fysik.Game
                     break;
                 case "dump":
                     Dump();
+                    break;
+                case "hash":
+                    PrintHash();
                     break;
                 default:
                     Print("Usage: fysik " + Help);
@@ -67,35 +71,87 @@ namespace Fysik.Game
                    $"{serverOwned} the server's, {nobody} without owner.";
         }
 
-        internal static void Dump()
+        private static Island AimedIsland()
         {
             Piece piece = Player.m_localPlayer != null ? Player.m_localPlayer.GetHoveringPiece() : null;
             WearNTear wnt = piece != null ? piece.GetComponent<WearNTear>() : null;
             PieceNode node = StructureManager.Instance.GetNode(wnt);
-            if (node?.Island == null)
+            if (node?.Island != null)
+                return node.Island;
+            Print("Fysik: aim at a solved piece with the hammer first.");
+            Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, "Fysik: aim at a piece with the hammer");
+            return null;
+        }
+
+        internal static ulong Hash(Island island)
+        {
+            ulong hash = 14695981039346656037UL;
+            Mix(ref hash, (ulong)island.Members.Count);
+            foreach (PieceNode m in island.Members)
             {
-                Print("Fysik: aim at a solved piece with the hammer first.");
-                Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, "Fysik: aim at a piece with the hammer");
-                return;
+                Mix(ref hash, (ulong)m.Id.UserID);
+                Mix(ref hash, m.Id.ID);
+                Mix(ref hash, (ulong)BitConverter.DoubleToInt64Bits(m.Result.Utilization));
+                Mix(ref hash, (ulong)m.Result.Mode);
             }
+            return hash;
+        }
+
+        private static void Mix(ref ulong hash, ulong value)
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                hash ^= (value >> (8 * i)) & 0xff;
+                hash *= 1099511628211UL;
+            }
+        }
+
+        private static string Describe(Island island)
+        {
+            PieceNode worst = null;
+            foreach (PieceNode m in island.Members)
+                if (worst == null || m.Result.Utilization > worst.Result.Utilization)
+                    worst = m;
+            string text = $"{island.Members.Count} pieces, hash {Hash(island):X16}";
+            if (worst != null)
+                text += $", worst {worst.Name} {StructureManager.Describe(worst.Result)}";
+            return island.Stale || island.LoadsChanged ? text + " (recalculating)" : text;
+        }
+
+        private static void PrintHash()
+        {
+            Island island = AimedIsland();
+            if (island == null)
+                return;
+            string text = "Fysik: " + Describe(island);
+            Print(text);
+            Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, text);
+        }
+
+        internal static void Dump()
+        {
+            Island island = AimedIsland();
+            if (island == null)
+                return;
 
             CultureInfo inv = CultureInfo.InvariantCulture;
             var sb = new StringBuilder();
-            Island island = node.Island;
             sb.AppendLine($"Fysik {MyPluginInfo.PLUGIN_VERSION} dump, {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             sb.AppendLine($"Island: {island.Members.Count} pieces, solver {island.Solver}{(island.Stale ? " (stale)" : "")}");
+            sb.AppendLine("Result: " + Describe(island));
             sb.AppendLine("Last solve: " + StructureManager.Instance.LastSolve);
             sb.AppendLine();
             sb.AppendLine("# index; prefab; zdo; material; mass kg; center; size; rotation (euler, degrees); ground points; " +
-                          "mode; utilization; axial N; moment N·m; torque N·m; carried kg; holds kg; snow kg; riding kg");
+                          "mode; utilization; axial N; moment N·m; torque N·m; carried kg; holds kg; snow kg; riding kg; rests on");
             for (int i = 0; i < island.Members.Count; i++)
             {
                 PieceNode m = island.Members[i];
                 Obb box = m.Geometry.Main;
-                sb.AppendLine(string.Format(inv, "{0}; {1}; {2}; {3}; {4:0.0}; {5}; {6}; {7}; {8}; {9}; {10:0.000}; {11:0}; {12:0}; {13:0}; {14:0.0}; {15:0.0}; {16:0.0}; {17:0.0}",
+                sb.AppendLine(string.Format(inv, "{0}; {1}; {2}; {3}; {4:0.0}; {5}; {6}; {7}; {8}; {9}; {10:0.000}; {11:0}; {12:0}; {13:0}; {14:0.0}; {15:0.0}; {16:0.0}; {17:0.0}; {18}",
                     i, m.Name, m.Id, m.MaterialName, m.Mass, Format(box.Center), Format(box.Size),
                     Format(box.Rotation.eulerAngles), m.GroundPoints.Count, m.Result.Mode, m.Result.Utilization,
-                    m.Result.AxialForce, m.Result.BendingMoment, m.Result.Torque, m.Carried, m.Holds, m.Snow, m.Riding));
+                    m.Result.AxialForce, m.Result.BendingMoment, m.Result.Torque, m.Carried, m.Holds, m.Snow, m.Riding,
+                    m.RestsOn));
             }
             sb.AppendLine();
             sb.AppendLine("# joints: index; index; point");
@@ -106,6 +162,11 @@ namespace Fysik.Game
                     if (j > i)
                         sb.AppendLine($"{i}; {j}; {Format(c.Point)}");
                 }
+            sb.AppendLine();
+            sb.AppendLine("# ground: index; point");
+            for (int i = 0; i < island.Members.Count; i++)
+                foreach (Vector3 p in island.Members[i].GroundPoints)
+                    sb.AppendLine($"{i}; {Format(p)}");
 
             string path = Path.Combine(BepInEx.Paths.BepInExRootPath, "fysik-dump.txt");
             File.WriteAllText(path, sb.ToString());

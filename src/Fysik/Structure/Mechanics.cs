@@ -116,13 +116,17 @@ namespace Fysik.Structure
                 double eps = 1e-3 * span + 1e-6;
 
                 cuts.Clear();
-                cuts.Add(0);
+                bool centre = true;
                 foreach (ContactLoad c in contacts)
                 {
                     double t = Vec3.Dot(c.Point - body.Center, e);
+                    if (Math.Abs(t) < eps)
+                        centre = false;
                     cuts.Add(Clamp(t - eps, -half + eps, half - eps));
                     cuts.Add(Clamp(t + eps, -half + eps, half - eps));
                 }
+                if (centre)
+                    cuts.Insert(0, 0);
 
                 int i1 = (axis + 1) % 3, i2 = (axis + 2) % 3;
                 Vec3 e1 = body.Axis(i1), e2 = body.Axis(i2);

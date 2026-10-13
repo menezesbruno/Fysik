@@ -79,7 +79,7 @@ namespace Fysik.Game
             if (p.Ghost.Mode != StressMode.Unsupported && p.Ghost.Utilization >= 1)
                 headline += " · " + L("$fysik_overloaded");
             string details = Details(ghostName, p.MaterialName, p.GhostMass, p.Ghost.HeldWeight / Gravity, 0,
-                                     p.Ghost.MemberForce, p.GhostSize, null);
+                                     p.Ghost.MemberForce, p.GhostSize, null) + RestsOnLine(p.RestsOn);
             string text = $"<color=#{ColorUtility.ToHtmlStringRGB(ForPreview(p))}>{headline}</color>\n{details}";
 
             if (p.WorstOther != null && p.WorstOther.Alive && p.WorstOtherResult.Utilization >= 1 &&
@@ -101,7 +101,9 @@ namespace Fysik.Game
                     return null;
                 string text = $"{PieceName(node)} · {Weight(node.AttachmentMass)}";
                 double held = node.Contents + node.Riding;
-                return held >= 1 ? $"{text}\n{L("$fysik_holds")} {Weight(held)}" : text;
+                if (held >= 1)
+                    text += $"\n{L("$fysik_holds")} {Weight(held)}";
+                return text + RestsOnLine(node.RestsOn);
             }
             if (node == null || !node.Structural)
                 return null;
@@ -122,8 +124,33 @@ namespace Fysik.Game
 
             string note = node.Island != null && node.Island.Solver == SolverKind.LoadPath ? L("$fysik_loadpath") : null;
             string details = Details(PieceName(node), node.MaterialName, node.Mass, node.Holds, node.Snow, r.MemberForce,
-                                     node.Geometry.Main.Size, note);
+                                     node.Geometry.Main.Size, note) + RestsOnLine(node.RestsOn) + DamageLine(node);
             return $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>{headline}</color>\n{details}";
+        }
+
+        private static readonly GroundKind[] s_groundKinds =
+            { GroundKind.Terrain, GroundKind.Rock, GroundKind.Tree, GroundKind.WorldBuilding };
+
+        private static readonly string[] s_groundTokens =
+            { "$fysik_ground_terrain", "$fysik_ground_rock", "$fysik_ground_tree", "$fysik_ground_world" };
+
+        private static string RestsOnLine(GroundKind kinds)
+        {
+            if (kinds == GroundKind.None)
+                return "";
+            string text = null;
+            for (int i = 0; i < s_groundKinds.Length; i++)
+                if ((kinds & s_groundKinds[i]) != 0)
+                    text = text == null ? L(s_groundTokens[i]) : text + ", " + L(s_groundTokens[i]);
+            return $"\n{L("$fysik_rests_on")} {text}";
+        }
+
+        private static string DamageLine(PieceNode node)
+        {
+            if (!FysikConfig.DamageWeakens.Value || !node.Alive)
+                return "";
+            double strength = Damage.StrengthFactor(node.Wnt.GetHealthPercentage());
+            return strength < 1 ? $"\n{L("$fysik_damaged")} · {Percent(strength)} {L("$fysik_strength")}" : "";
         }
 
         private static string Details(string name, string material, double mass, double holds, double snow,

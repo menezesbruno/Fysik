@@ -30,8 +30,8 @@ is at 44%, and it goes up without scaffolding. The parts list and building order
    need Fysik, with the same version.
 3. **Watch the ghost** while building: before you place a piece, it is colored by the stress it would
    have. Red would break.
-4. **Aim the hammer** at a piece to read its stress (*Bending 72%*), its weight and the weight it holds
-   up (*Holds 6.5 t*).
+4. **Aim the hammer** at a piece to read its stress (*Bending 72%*), its weight, the weight it holds
+   up (*Holds 6.5 t*) and whether it stands on the ground (*Rests on the ground*).
 5. **Press F7** for the X-ray: every piece within 40 m colored by stress (**Ctrl+F7** widens it).
 6. **When something cracks**, put a post or a brace under it, or take the load off, before it falls.
 7. **Build like a carpenter**: posts every 2 to 4 m, a diagonal brace under anything that reaches out,
@@ -120,7 +120,7 @@ synced to every client; they can also be edited in game with a configuration man
 | Weight | Contents (*server*) | 1 | 0–20 | Kilograms per unit of the game's item weight for stored items: inside chests, carts and players' inventories, and in piles and stacks (at 1, the game's weights read as kilograms). |
 | Weight | Player (*server*) | 80 | 0–500 | Body weight of a player, kilograms; their inventory adds to it. |
 | Weight | Snow (*server*) | 150 | 0–1000 | Weight of a full layer of Deep North snow, kilograms per square metre of ground; roofs hold less of it the steeper they are. 0: snow weighs nothing. |
-| Display | HammerInfo | on | | Stress color, value, weight and weight held on the piece under the hammer. |
+| Display | HammerInfo | on | | Stress color and the lines next to the crosshair for the piece under the hammer: stress, weight, weight held, what it rests on, damage. |
 | Display | PlacementPreview | on | | Predicted stress and weight held on the piece being placed. |
 | Display | CollapseAnimation | on | | Falling pieces come down as debris and burst on impact (off: they shatter in place, as in vanilla). |
 | Display | XRayKey | F7 | | Toggles the X-ray view. |
@@ -132,9 +132,10 @@ synced to every client; they can also be edited in game with a configuration man
 | Debug | LogGeometry | on | | One log line per kind of piece: colliders, size, weight. |
 | Debug | DumpKey | Ctrl+F8 | | Writes the structure under the hammer to `BepInEx/fysik-dump.txt`. |
 
-The console command `fysik stats`, `fysik recalc` or `fysik dump` (F5; the game must be started with
-`-console`) shows solver statistics, recalculates everything or writes the structure under the hammer
-to `BepInEx/fysik-dump.txt`.
+The console command `fysik stats`, `fysik recalc`, `fysik dump` or `fysik hash` (F5; the game must be
+started with `-console`) shows solver statistics, recalculates everything, writes the structure under
+the hammer to `BepInEx/fysik-dump.txt` or prints a fingerprint of its result, the same on every
+player's game when they calculate it alike.
 
 ## Compatibility
 
