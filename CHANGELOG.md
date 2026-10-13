@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.1.5: what holds a piece up
+
+- The hammer says what a piece rests on: a new line, *Rests on the ground*, on every piece that
+  touches something Fysik counts as ground, naming it: the ground, rock, a tree or a world building.
+  These pieces are the foundations of a structure; a piece without the line holds only through
+  others. The placement preview shows it too, so a foundation post tells you it really reaches the
+  ground, and so do chests and other objects standing on the ground. A piece resting on a tree or a
+  rock that can be mined falls if the tree is cut down or the rock mined away.
+- Badly damaged pieces say how weak they are: below half health the hammer adds *Damaged · 60%
+  strength*. Repairing them brings their strength back.
+- Fixed a false shear in pieces where loads met exactly at their middle, such as a wall carrying the
+  wall above it straight down to the ground: whether the two forces fell on the same side of the cut
+  at the centre came down to rounding. A stack of 4×2 stone walls cracked at its base at about 32 m
+  and now stands to about 100 m. The building guide's numbers do not change.
+- New console command `fysik hash`: aim at a structure and it prints the number of pieces, a
+  fingerprint of the result and the most loaded piece. Two players looking at the same structure
+  must see the same fingerprint; if they do not, their dumps show why. The dump shows the same line,
+  gains a last column with what each piece rests on and lists every point where the structure touches
+  the ground.
+- The mod page is shorter: how it works and a quick start come first, and the building guide, what
+  weighs, server notes and the FAQ moved to the
+  [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/).
+
 ## 0.1.4: players, carts, chests and snow
 
 - Players weigh on what they stand, sit or lie on: 80 kg plus their inventory. A loaded cart weighs

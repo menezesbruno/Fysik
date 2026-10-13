@@ -40,7 +40,8 @@ Little: structures are only recalculated when something changes, the heavy part 
 thread, and the rest is limited to 1.5 ms per frame (`Performance.FrameBudgetMs`).
 
 **Does it work in multiplayer and on dedicated servers?**
-Yes. The server and every player need Fysik, the same version; see **Server admins**.
+Yes. The server and every player need Fysik, the same version; see **Server admins**, which also
+shows how to check with `fysik hash` that two players calculate a structure the same way.
 
 **Which mods conflict with it?**
 Mods that change structural integrity, such as NoBuildIntegrity, Forever Build or Balrond Better
