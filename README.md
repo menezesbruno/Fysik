@@ -10,8 +10,10 @@ they fall, so there is time to shore them up.
 
 Gameplay references: Poly Bridge, Bridge Constructor.
 
-Players: installation, settings and a **building guide** with worked examples are in the
-[package README](package/README.md#building-guide).
+Players: installation and settings are in the [package README](package/README.md); the
+**building guide** with worked examples, what weighs, how to read the forces, server notes and a FAQ
+are in the [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/) (sources in
+[docs/wiki](docs/wiki)).
 
 > **Status: early access.** Fysik computes the forces, shows them (hammer colors, X-ray view,
 > placement preview) and decides what falls: overloaded pieces crack, then fall. Material values are
@@ -124,12 +126,15 @@ directly. Game and third-party DLLs are referenced in place and never committed.
 | `package/` | Thunderstore `manifest.json` template and the package README |
 | `art/` | `icon.png` and `banner.png` |
 | `docs/images/` | The building guide's pictures |
+| `docs/wiki/` | Sources of the Thunderstore wiki pages, one per file, in the order they appear |
 
 ### Releasing on Thunderstore
 
 Run the `Package` target and upload `dist/Fysik-<version>.zip`. The package is listed under
-**Mods**, **Tweaks**, **Server-side**, **Client-side** and **Building**. Update `CHANGELOG.md` before
-each release.
+**Mods**, **Tweaks**, **Server-side**, **Client-side**, **Building** and **Deep North Update**. Update
+`CHANGELOG.md` before each release. When a page in `docs/wiki/` changes, paste it into the package's
+wiki on Thunderstore: the first line, without the `#`, is the page title (numbered, since Thunderstore
+lists pages alphabetically), and the rest is its content.
 
 ## License
 
