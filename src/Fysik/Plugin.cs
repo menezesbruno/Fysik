@@ -88,6 +88,7 @@ namespace Fysik
                     StructureManager.Instance.Clear();
                     MovingLoads.Instance.Clear();
                 }
+                ArchFit.Clear();
                 return;
             }
             try
@@ -98,6 +99,14 @@ namespace Fysik
             catch (System.Exception e)
             {
                 Guard.Report("X-ray view", e);
+            }
+            try
+            {
+                ArchFit.Tick();
+            }
+            catch (System.Exception e)
+            {
+                Guard.Report("Stones fitted to arches", e);
             }
             try
             {

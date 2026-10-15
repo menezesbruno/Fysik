@@ -375,6 +375,21 @@ namespace Fysik.Game
 
         public void InvalidateContacts(PieceNode node) => Invalidate(node);
 
+        public void Reshape(WearNTear wnt)
+        {
+            if (_nodes.TryGetValue(wnt, out PieceNode node))
+            {
+                foreach (Contact c in node.Contacts)
+                    Invalidate(c.Other);
+                foreach (PieceNode attachment in node.Attached)
+                    Invalidate(attachment);
+                Invalidate(node);
+                _nodes.Remove(wnt);
+            }
+            _appeared.Enqueue(wnt);
+            Request(wnt);
+        }
+
         private void Reload(PieceNode node)
         {
             if (!node.Alive || !node.Structural || node.Anchored)
@@ -806,7 +821,7 @@ namespace Fysik.Game
                 if (_watchNext >= _watch.Count)
                     _watchNext = 0;
                 PieceNode node = _watch[_watchNext];
-                if (!node.Alive || !_nodes.ContainsKey(node.Wnt))
+                if (!node.Alive || !_nodes.TryGetValue(node.Wnt, out PieceNode current) || current != node)
                 {
                     _watch[_watchNext] = _watch[_watch.Count - 1];
                     _watch.RemoveAt(_watch.Count - 1);

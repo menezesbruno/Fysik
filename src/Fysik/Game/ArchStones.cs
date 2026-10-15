@@ -16,6 +16,7 @@ namespace Fysik.Game
         public int Span;
         public Voussoir Shape;
         public float Depth;
+        public float OuterGrow, InnerGrow, DepthGrow;
 
         public ArchStone(int span, int stones)
         {
@@ -126,6 +127,7 @@ namespace Fysik.Game
                     filter.sharedMesh = Reshape(filter.sharedMesh, stone, cube, root, filter.transform);
             foreach (LODGroup group in prefab.GetComponentsInChildren<LODGroup>(true))
                 group.RecalculateBounds();
+            Measure(prefab, stone);
             foreach (Transform child in prefab.GetComponentsInChildren<Transform>(true))
                 if (child.CompareTag("snappoint"))
                     UnityEngine.Object.DestroyImmediate(child.gameObject);
@@ -156,6 +158,25 @@ namespace Fysik.Game
             }
             PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, config));
             s_byPrefab[stone.Prefab] = stone;
+        }
+
+        private static void Measure(GameObject prefab, ArchStone stone)
+        {
+            Transform root = prefab.transform;
+            float top = (float)stone.Shape.Height / 2, half = stone.Depth / 2;
+            foreach (MeshFilter filter in prefab.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (filter.sharedMesh == null || !filter.sharedMesh.isReadable)
+                    continue;
+                Matrix4x4 toRoot = root.worldToLocalMatrix * filter.transform.localToWorldMatrix;
+                foreach (Vector3 v in filter.sharedMesh.vertices)
+                {
+                    Vector3 p = toRoot.MultiplyPoint3x4(v);
+                    stone.OuterGrow = Mathf.Max(stone.OuterGrow, p.y - top);
+                    stone.InnerGrow = Mathf.Max(stone.InnerGrow, -top - p.y);
+                    stone.DepthGrow = Mathf.Max(stone.DepthGrow, Mathf.Abs(p.z) - half);
+                }
+            }
         }
 
         private static Vector3 Reshape(Vector3 p, ArchStone stone, Vector3 cube)

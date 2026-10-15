@@ -244,6 +244,8 @@ namespace Fysik.Game
         {
             if (ArchStones.TryGet(c, out ArchStone _))
                 return box.Volume;
+            if (ArchFit.TryVolume(c, out float fitted))
+                return fitted;
             Vector3 s = box.Size;
             switch (c)
             {

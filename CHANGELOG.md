@@ -18,6 +18,10 @@
   piers or abutments. Aim at the top of a wall or pillar and the first stone
   appears tilted as the foot of the arch, snapped to it; then aim at a stone and the next one carries
   on the curve, up to the keystone. Worlds keep them only while Fysik is installed.
+- Stone blocks fit around arches: a stone wall, block or floor that runs into an arch stone is cut
+  along the arch's outer curve, its look, its collider and its weight, so a wall can be built on the
+  grid around an arch and close it in, the way masons cut the stones beside an arch. Blocks laid
+  before the arch are cut when its stones go in, and become whole again if they are taken out.
 - The dump lists the area of every joint and ground contact.
 - Fysik is now under the GNU General Public License v3.0 (it was MIT up to 0.1.5): anyone may use,
   change and share it, and whatever is built on it and distributed must stay open under the same
