@@ -18,6 +18,9 @@ namespace Fysik.Structure
         public double ShearStrength = 1e6;
 
         public double BucklingSlenderness = 60;
+
+        public bool Masonry;
+        public double Friction = 0.6;
     }
 
     public sealed class Body
@@ -34,6 +37,8 @@ namespace Fysik.Structure
 
         public double StrengthFactor = 1;
 
+        public bool Fitted;
+
         public Vec3 Axis(int i) => i == 0 ? AxisX : i == 1 ? AxisY : AxisZ;
 
     }
@@ -47,13 +52,17 @@ namespace Fysik.Structure
 
         public readonly Vec3 Point;
 
-        public Link(int a, int b, Vec3 point)
+        public readonly double[] SpanA, SpanB;
+
+        public Link(int a, int b, Vec3 point, double[] spanA = null, double[] spanB = null)
         {
             if (a < 0)
                 throw new ArgumentOutOfRangeException(nameof(a), "The first body of a link cannot be the ground");
             A = a;
             B = b;
             Point = point;
+            SpanA = spanA;
+            SpanB = spanB;
         }
 
         public bool IsGround => B == Ground;
@@ -71,9 +80,10 @@ namespace Fysik.Structure
             return Bodies.Count - 1;
         }
 
-        public void Connect(int a, int b, Vec3 point) => Links.Add(new Link(a, b, point));
+        public void Connect(int a, int b, Vec3 point, double[] spanA = null, double[] spanB = null) =>
+            Links.Add(new Link(a, b, point, spanA, spanB));
 
-        public void Ground(int a, Vec3 point) => Links.Add(new Link(a, Link.Ground, point));
+        public void Ground(int a, Vec3 point, double[] span = null) => Links.Add(new Link(a, Link.Ground, point, span));
     }
 
     public enum StressMode : byte
@@ -86,6 +96,9 @@ namespace Fysik.Structure
         Unsupported,
 
         Torsion,
+        Tipping,
+        Sliding,
+        Unstable,
     }
 
     public struct BodyResult

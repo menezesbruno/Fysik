@@ -24,6 +24,7 @@ namespace Fysik
             Config.SettingChanged += OnSettingChanged;
             SynchronizationManager.OnConfigurationSynchronized += OnConfigurationSynchronized;
             Texts.Register();
+            ArchStones.Register();
             CommandManager.Instance.AddConsoleCommand(new FysikCommand());
 
             ApplyPatches();
@@ -87,6 +88,7 @@ namespace Fysik
                     StructureManager.Instance.Clear();
                     MovingLoads.Instance.Clear();
                 }
+                ArchFit.Clear();
                 return;
             }
             try
@@ -97,6 +99,14 @@ namespace Fysik
             catch (System.Exception e)
             {
                 Guard.Report("X-ray view", e);
+            }
+            try
+            {
+                ArchFit.Tick();
+            }
+            catch (System.Exception e)
+            {
+                Guard.Report("Stones fitted to arches", e);
             }
             try
             {

@@ -9,6 +9,7 @@ namespace Fysik.Structure
         public Vec3 Force;
         public Vec3 Moment;
         public bool Ground;
+        public double[] Span;
     }
 
     public static class Mechanics
@@ -17,6 +18,8 @@ namespace Fysik.Structure
 
         private const double PlateAspect = 4.0;
         private const double MinSegmentLength = 0.05;
+
+        private const double FaceShare = 0.5;
 
         public static void AddSegmentCompliance(Body body, Vec3 point, double[] compliance)
         {
@@ -119,6 +122,14 @@ namespace Fysik.Structure
                 bool centre = true;
                 foreach (ContactLoad c in contacts)
                 {
+                    if (Spread(c, axis, half, eps, out double lo, out double hi))
+                    {
+                        cuts.Add(Clamp(lo, -half + eps, half - eps));
+                        cuts.Add(Clamp(hi, -half + eps, half - eps));
+                        if (hi - lo >= FaceShare * span)
+                            cuts.Add(Clamp((lo + hi) / 2, -half + eps, half - eps));
+                        continue;
+                    }
                     double t = Vec3.Dot(c.Point - body.Center, e);
                     if (Math.Abs(t) < eps)
                         centre = false;
@@ -139,6 +150,11 @@ namespace Fysik.Structure
                     Vec3 force = Vec3.Zero, moment = Vec3.Zero;
                     foreach (ContactLoad c in contacts)
                     {
+                        if (Spread(c, axis, half, eps, out double lo, out double hi))
+                        {
+                            AddSpread(c, body, e, lo, hi, t, origin, hi - lo >= FaceShare * span, ref force, ref moment);
+                            continue;
+                        }
                         if (Vec3.Dot(c.Point - body.Center, e) <= t)
                             continue;
                         force += c.Force;
@@ -239,5 +255,52 @@ namespace Fysik.Structure
         }
 
         private static double Clamp(double v, double lo, double hi) => v < lo ? lo : v > hi ? hi : v;
+
+        private static bool Spread(ContactLoad c, int axis, double half, double eps, out double lo, out double hi)
+        {
+            lo = hi = 0;
+            if (c.Span == null)
+                return false;
+            lo = Math.Max(c.Span[2 * axis], -half);
+            hi = Math.Min(c.Span[2 * axis + 1], half);
+            return hi - lo >= 2 * eps;
+        }
+
+        private static void AddSpread(ContactLoad c, Body body, Vec3 e, double lo, double hi, double t, Vec3 origin,
+                                      bool face, ref Vec3 force, ref Vec3 moment)
+        {
+            if (t >= hi)
+                return;
+            double tp = Vec3.Dot(c.Point - body.Center, e);
+            double tc = (lo + hi) / 2, length = hi - lo;
+            Vec3 centre = c.Point + e * (tc - tp);
+            Vec3 m = c.Moment - Vec3.Cross(e * (tc - tp), c.Force);
+            if (t <= lo)
+            {
+                force += c.Force;
+                moment += m + Vec3.Cross(centre - origin, c.Force);
+                return;
+            }
+            if (!face)
+            {
+                double fraction = (hi - t) / length;
+                Vec3 uniform = c.Force * fraction;
+                force += uniform;
+                moment += Vec3.Cross(centre + e * ((t + hi) / 2 - tc) - origin, uniform);
+                if (tc > t)
+                    moment += m;
+                return;
+            }
+            Vec3 along = e * Vec3.Dot(m, e);
+            Vec3 across = m - along;
+            double inertia = length * length * length / 12;
+            Vec3 g = Vec3.Cross(across, e) / inertia;
+            double a = t - tc, b = hi - tc;
+            double share = (hi - t) / length;
+            double j1 = (b * b - a * a) / 2, j2 = (b * b * b - a * a * a) / 3;
+            Vec3 part = c.Force * share + g * j1;
+            force += part;
+            moment += Vec3.Cross(centre - origin, part) + Vec3.Cross(e, c.Force * (j1 / length) + g * j2) + along * share;
+        }
     }
 }

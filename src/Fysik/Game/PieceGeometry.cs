@@ -58,6 +58,13 @@ namespace Fysik.Game
                     float diameter = 2 * sphere.radius * Mathf.Max(s.x, Mathf.Max(s.y, s.z));
                     return new Obb { Center = t.TransformPoint(sphere.center), Rotation = t.rotation, Size = Vector3.one * diameter };
                 }
+                case MeshCollider _ when ArchStones.TryGet(collider, out ArchStone stone):
+                    return new Obb
+                    {
+                        Center = t.position,
+                        Rotation = t.rotation,
+                        Size = Abs(Vector3.Scale(stone.BoxSize, t.lossyScale)),
+                    };
                 case MeshCollider mesh when mesh.sharedMesh != null:
                     Bounds b = mesh.sharedMesh.bounds;
                     return new Obb
@@ -149,6 +156,7 @@ namespace Fysik.Game
         public Recipe Recipe;
         public double SnowArea;
         public string Summary;
+        public bool Fitted;
 
         public double MaterialsMass => WeighsRecipe ? Recipe.Mass : 0;
 
@@ -177,6 +185,7 @@ namespace Fysik.Game
                     continue;
                 Obb box = Obb.Of(c);
                 float volume = hasBoxes && c is MeshCollider ? 0f : SolidVolume(c, box);
+                g.Fitted |= ArchFit.TryVolume(c, out float _);
                 switch (c)
                 {
                     case BoxCollider _: boxes++; break;
@@ -235,6 +244,10 @@ namespace Fysik.Game
 
         private static float SolidVolume(Collider c, Obb box)
         {
+            if (ArchStones.TryGet(c, out ArchStone _))
+                return box.Volume;
+            if (ArchFit.TryVolume(c, out float fitted))
+                return fitted;
             Vector3 s = box.Size;
             switch (c)
             {
@@ -282,6 +295,7 @@ namespace Fysik.Game
             Size = ToVec(Main.Size),
             Mass = MassFor(material),
             Material = material,
+            Fitted = Fitted,
         };
 
         private static bool IsObject(Piece piece)

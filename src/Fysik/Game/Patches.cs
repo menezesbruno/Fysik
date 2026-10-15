@@ -23,6 +23,8 @@ namespace Fysik.Game
             {
                 try { StructureManager.Instance.OnPieceDestroyed(__instance); }
                 catch (Exception e) { Guard.Report("Piece tracking (removed)", e); }
+                try { ArchFit.Destroyed(__instance); }
+                catch (Exception e) { Guard.Report("Stones fitted to arches (removed)", e); }
             }
         }
 
@@ -137,6 +139,8 @@ namespace Fysik.Game
         {
             private static void Postfix(Player __instance)
             {
+                try { ArchStones.Continue(__instance); }
+                catch (Exception e) { Guard.Report("Arch stone placement", e); }
                 try { Hooks.PlacementGhost(__instance); }
                 catch (Exception e) { Guard.Report("Placement preview", e); }
             }
@@ -157,8 +161,10 @@ namespace Fysik.Game
     {
         public static void PieceAppeared(WearNTear wnt)
         {
-            if (wnt.m_nview != null && wnt.m_nview.GetZDO() != null)
-                StructureManager.Instance.OnPieceAppeared(wnt);
+            if (wnt.m_nview == null || wnt.m_nview.GetZDO() == null)
+                return;
+            StructureManager.Instance.OnPieceAppeared(wnt);
+            ArchFit.Appeared(wnt);
         }
 
         public static bool Highlight(WearNTear wnt)

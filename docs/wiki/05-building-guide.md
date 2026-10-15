@@ -11,10 +11,10 @@ is squeezed and barely notices; a beam reaching out is bent, and the joint where
 carries the whole reach. The stress grows with the square of the length: half again as far out means
 more than twice the stress.
 
-- With 4 m core wood logs and floors on top, a balcony 8 m out is comfortable (46%), 12 m out is just
-  past the limit (101%) and 16 m out falls.
+- With 4 m core wood logs and floors on top, a balcony 8 m out is comfortable (43%), 12 m out is just
+  under the limit (97%) and 16 m out falls.
 - A **diagonal brace** turns the bending into a squeeze: two 45° logs from the ground to the first
-  joint bring the 12 m balcony back to 45%.
+  joint bring the 12 m balcony back to 44%.
 - The brace pushes back against whatever it stands on. Give the house a diagonal (or a solid wall),
   or the push bends its posts instead.
 
@@ -22,25 +22,24 @@ more than twice the stress.
 
 An arch turns the weight into a squeeze that follows its curve, so it spans far more than a flat
 beam. This bridge is 24 m long with 20 m clear underneath; hanging the deck from the arch takes it
-from 67% down to 43%.
+from 52% down to 42%.
 
 ![Tied-arch bridge, 24 m: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-tied-arch.png)
 
 - **Prop it while you build.** Until the arches close, the hangers and half arches hang on the deck
-  and the corner posts crack (118%). One plain pole under the middle of each side keeps everything
-  below 38%; remove the poles once both arches are closed.
+  and push the corner posts to 84%. One plain pole under the middle of each side keeps everything
+  below 36%; remove the poles once both arches are closed.
 - **Hold its feet.** An arch pushes outwards where it lands. Here the deck beams tie the two feet
-  together (in tension, about 46 kN); otherwise set the feet against the ground or a heavy wall.
+  together (in tension, about 47 kN); otherwise set the feet against the ground or a heavy wall.
 - **Hang the deck from it.** Poles from the arch down to the deck (hangers) carry the deck in tension.
-- **Two posts per corner.** A deck flexes, and a lone post glued under its end gets bent (87%); two
-  posts 2 m apart hold it straight (24%).
+- **Two posts per corner.** A deck flexes, and a lone post glued under its end gets bent (72%); two
+  posts 2 m apart hold it straight (16%).
 
 ![Tied-arch bridge with braced ends, 24 m: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-tied-arch-braced.png)
 
 - **Or brace the ends.** Two 45° logs from the foot of each post up to the deck close a triangle, and
-  the same bridge needs no scaffolding: nothing goes above 59% while it is built, as long as all the
-  beams meet before the floors go on. The deck then holds on its own (41%), so the arch is for looks.
-  A short brace from halfway up the post would bend the post instead (118%).
+  the same bridge needs no scaffolding: nothing goes above 56% while it is built, as long as all the
+  beams meet before the floors go on. The deck then holds on its own (38%), so the arch is for looks.
 
 ## Wider gaps and boats
 
@@ -50,41 +49,93 @@ pictures, temporary props are dashed: build with them, then take them away.
 ![Truss bridge, 24 m between stone abutments: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-truss.png)
 
 - **Truss.** A zigzag of 45° logs between the deck and a bottom chord 4 m below turns the weight into
-  squeeze and pull along the logs: worst piece 49% between stone abutments 24 m apart, where the deck
-  alone would reach 118% and fall. Build it out from both abutments, panel by panel: nothing goes above
-  54% on the way, so it needs no scaffolding.
+  squeeze and pull along the logs: worst piece 58% between stone abutments 24 m apart, where the deck
+  alone would reach 98%, right at its limit. Build it out from both abutments, panel by panel: nothing
+  goes above 60% on the way, so it needs no scaffolding.
 
 ![Arch bridge, 40 m clear between stone abutments: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-arch-bridge.png)
 
 - **Arch under the deck.** With heavy stone abutments to push against, a wooden arch leaves 40 m of
-  water clear, with about 11 m of headroom for boats in the middle: worst piece 45%. Without props
-  the arch cracks once it is 12 m out; a plain pole standing in the water under every joint from 10 m
-  out keeps it below 48%. Once closed it stands on its own (25%) and the props come out.
+  water clear, with about 11 m of headroom for boats in the middle: worst piece 54%. Without props the
+  arch reaches 97% once it is 12 m out and falls soon after; a plain pole standing in the water under
+  every joint from 10 m out keeps it below 54%. Once closed it stands on its own (22%) and the props
+  come out.
 
 ![Long crossing, three 32 m arches on stone piers: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-viaduct.png)
 
 - **Farther islands.** Repeat the span on stone piers standing in the water. Between two arches a
-  pier is pushed from both sides and only carries weight: three 32 m arches cross 100 m at 62%. Prop
-  each arch from 10 m out as it is built (it reaches 96% without), then move the props to the next span.
+  pier is pushed from both sides and only carries weight: three 32 m arches cross 100 m at 73%. Prop
+  each arch from 10 m out as it is built (it reaches 93% without), then move the props to the next span.
+
+## Stone is masonry
+
+Stone, black marble and grausten rest on each other like real masonry: they carry any squeeze, but a
+joint between two stones never pulls (the theory, with drawings, is in **How it works**). A stone stays where it is as long as the weight on it passes
+through the area where it touches the stones below; when the weight leans past that edge, the stone
+rocks on it, and when it is pushed sideways harder than friction holds, it slides.
+
+- **A stone needs something under its weight.** A block reaching out past the one below holds while
+  its weight stays over it: less than half its length out, and less still with more stones on its
+  outer end. Weigh down its back end with the stones above and a wall can step out course after course
+  (a corbel).
+- **What falls:** a stone stuck to the side of a wall, a slab with nothing under its edge, a block left
+  over a doorway with nothing under it, half an arch before its keystone. The hammer says
+  *Unstable · would fall*.
+- **Span an opening** with a lintel (a stone or a beam resting on both sides) or an arch.
+- **Lay walls in running bond**, each stone over the joint of the two below: the wall then works as
+  one. Stones stacked straight up stand as separate columns.
+- **Floors upstairs** need walls, pillars, arches or wooden beams under them. The stone floor is a
+  2 × 2 × 1 m block of 9.6 t: laid half on a 1 m wall and half over the room, its weight sits right
+  on the edge of the wall (close to 100%). Put a beam under its inner half, or use wooden floors.
+- *Tipping* and *Sliding* on the hammer tell how close a stone's worst joint is to rocking or slipping.
+
+## Building with arch stones
+
+The arch stones are wedge-shaped stones next to the stone arch in the hammer, one kind for each arch:
+half circles 4 to 16 m wide inside and about half as high.
+
+![Arch stones: the seven arches on the 1 m grid, where their supports go and how high they rise](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/arch-stones.png)
+
+- **Supports first:** two walls or pillars 1 m wide, their inner faces as far apart as the arch's
+  opening.
+- **Lay the stones:** aim the first stone at the top of a support and it sits as the foot of the
+  arch, snapped to it; then aim at that stone, and each next stone carries on the curve up to the
+  keystone. Do the same from the other support.
+- **Prop it until it closes:** half an arch tips over, so stand plain poles under its stones
+  (centering) and take them away once the keystone is in, or once the fill above it is up.
+- **Beyond 10 m** an arch pushes its supports hard: give it heavy piers or abutments, or fill over
+  its haunches.
+
+![A wall around an 8 m arch: the blocks laid on the grid and the same blocks cut to fit around the arch stones](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/arch-fitting.png)
+
+- **Close it in with a wall:** lay stone walls, blocks and floors on the grid around the arch. Where
+  one runs into an arch stone it is cut along the arch's curve, its look, its collider and its weight,
+  the way masons cut the stones beside an arch. Blocks laid before the arch are cut when its stones go
+  in, and become whole again if the arch stones are taken out.
 
 ## Stone bridges
 
-Stone is strong squeezed and weak pulled. A pair of stone arches (`stone_arch`) closes 4 m; wider
-arches are built out from the piers in steps and closed at the top with a pair of stone arches.
+A pair of stone arches (`stone_arch`) closes 4 m; wider arches are built of arch stones, the
+wedge-shaped stones next to the stone arch in the hammer.
 
 ![Stone arcade bridge: pillars every 4 m with pairs of stone arches; side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-stone-arcade.png)
 
-- Pillars every 4 m, a pair of stone arches between each two, stone floors on top: worst piece 23%.
-  At this span the arches are mostly for looks: the same floors laid straight on the pillars hold too
-  (22%). No scaffolding: the first stone arch of each pair stands on its pillar (17%) until the second
-  one closes it.
+- Pillars every 4 m, a pair of stone arches between each two, stone floors on top: worst piece 65%.
+  The same floors laid straight on the pillars read 83%.
+- The first stone arch of a pair rests on its pillar by one end only and tips off on its own: stand a
+  plain pole in the middle of the opening, its top where the two arches meet, and take it away once
+  the second arch closes the pair (59% while the first one rests its tip on it).
 
-![Roman bridge: three 8 m arches on 2 m piers; side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-roman-bridge.png)
+![Roman bridge: three 8 m arches of arch stones on 2 m piers; side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-roman-bridge.png)
 
-- With 8 m between the piers the arch does the work: worst piece 48%, while the same piers with a
-  flat deck reach 122% and the deck falls.
-- Each arch steps out 1 m and then 2 m from the piers and closes with two stone arches. Before the
-  arches close nothing goes above 39%, so no scaffolding is needed.
+- Three 8 m arches of arch stones on piers 2 m wide, two rings side by side, the space above them
+  filled with stone walls that are cut to fit around the arches: worst piece 71%. Leave out the few
+  blocks that would be cut down to a sliver.
+- **Build each arch on centering.** Until its keystone is in, half an arch tips over. A plain pole
+  under every arch stone from the fourth to the twelfth holds it: nothing goes above 82% while it is
+  built.
+- **Fill before you take the props away.** The bare arches read 90%; the stone over their haunches
+  presses them into shape and brings the bridge down to 71%.
 
 ## Snow
 
@@ -92,10 +143,11 @@ Snow weighs on whatever is left in the open, mostly roofs. With full snow at the
 26° roofs of wood:
 
 - A house up to 8 m wide with posts every 2 to 4 m under the eaves and the ridge stays below 40%.
-- A 12 m hall with posts every 4 m reaches about 75%. A 16 m hall with posts every 4 m under the eaves
-  and every 8 m under the ridge is already at 63% with no snow and gives way when the snow is half deep.
-- **Steep roofs shed snow:** the same 16 m hall with 45° roofs holds full snow at about 85%.
-- A roof sticking out from a wall with nothing under it holds one roof piece out (37%), not two (136%).
+- A 12 m hall with posts every 4 m reaches about 65%. A 16 m hall with posts every 4 m under the eaves
+  and every 8 m under the ridge is already at 47% with no snow and gives way when the snow is about
+  two thirds deep.
+- **Steep roofs shed snow:** the same 16 m hall with 45° roofs holds full snow at about 74%.
+- A roof sticking out from a wall with nothing under it holds one roof piece out (24%), not two (112%).
 - Shovel the roof when something starts to crack, or prop it from below.
 
 ## Carts on bridges
@@ -106,26 +158,26 @@ floors on top unless the row says otherwise:
 
 | Bridge | Empty | Wood | Ore | Bars |
 |---|---|---|---|---|
-| Posts every 4 m | 8% | 17% | 42% | 50% |
-| Posts every 8 m | 20% | 32% | 56% | 64% |
-| Floors on 2 m wood beams, posts every 4 m | 9% | 28% | 64% | 75% |
-| 12 m span, posts only at the ends | 43% | 60% | 93% | 103% |
-| 16 m span, posts only at the ends | 76% | 98% | 141% | 154% |
-| Tied arch, 24 m (above) | 16% | 20% | 50% | 59% |
-| Truss, 24 m (above) | 49% | 53% | 70% | 76% |
-| Arch under the deck, 40 m (above) | 45% | 54% | 79% | 87% |
+| Posts every 4 m | 6% | 17% | 39% | 46% |
+| Posts every 8 m | 13% | 22% | 43% | 50% |
+| Floors on 2 m wood beams, posts every 4 m | 8% | 24% | 54% | 63% |
+| 12 m span, posts only at the ends | 29% | 40% | 62% | 69% |
+| 16 m span, posts only at the ends | 49% | 63% | 101% | 113% |
+| Tied arch, 24 m (above) | 14% | 18% | 37% | 44% |
+| Truss, 24 m (above) | 58% | 61% | 75% | 78% |
+| Arch under the deck, 40 m (above) | 54% | 71% | 85% | 85% |
 
 - A bridge with posts every 4 to 8 m, or any of the bridges above, carries any cart.
-- Long spans resting only on their ends are where carts matter: wood gets across a 16 m span just
-  under the limit, ore and metal bring it down. For heavy loads, put a post in the middle, a truss
-  under the deck or an arch.
+- Long spans resting only on their ends are where carts matter: wood crosses a 16 m span easily, ore
+  and metal bars take it just past its limit. For heavy loads, put a post in the middle, a truss under
+  the deck or an arch.
 - A cart that stops on an overloaded bridge brings it down. Moving, it may make it across a bridge
   that is only just too weak, while the pieces under it crack and stop again behind it.
 
 ## Materials
 
 - **Stone** is very strong squeezed and weak pulled: use it for walls, pillars and arches, not for
-  beams or overhangs. Span an opening in a stone wall with an arch or a wooden beam.
+  beams or overhangs, and give every stone something under its weight (see **Stone is masonry**).
 - **Core wood** (logs) is stronger than wood; **iron** is strong in every direction.
 - Long, thin pieces buckle: a slender post carries less than its material alone would allow.
 
@@ -138,6 +190,6 @@ floors on top unless the row says otherwise:
 - Before taking a loaded cart across a bridge, look at the bridge with the X-ray, and keep moving.
 - Badly damaged pieces (below half health) are weaker; repair them.
 - Big bases: structures up to `Structure.MaxFrameBodies` pieces (2000) get the full calculation.
-  Larger ones use a simpler model that does not recognise arches; raise the limit (up to 5000) if you
-  build arches into a big base.
+  Larger ones use a simpler model that does not recognise arches or masonry; raise the limit (up to
+  5000) if you build arches into a big base.
 - Too hard or too easy? Ask your server admin about `Structure.Difficulty`.

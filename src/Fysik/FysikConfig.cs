@@ -37,6 +37,7 @@ namespace Fysik
         internal static ConfigEntry<bool> DamageWeakens { get; private set; }
         internal static ConfigEntry<int> MaxFrameBodies { get; private set; }
         internal static ConfigEntry<Difficulty> StructureDifficulty { get; private set; }
+        internal static ConfigEntry<bool> MasonryJoints { get; private set; }
 
         internal static double StrengthMultiplier =>
             StructureDifficulty.Value == Difficulty.Relaxed ? 1.5 : StructureDifficulty.Value == Difficulty.Strict ? 0.7 : 1.0;
@@ -119,6 +120,14 @@ namespace Fysik
                 "Structure", "Difficulty", Difficulty.Normal,
                 Server("Relaxed: materials 50% stronger (longer spans and cantilevers). Normal. " +
                        "Strict: materials 30% weaker (structures need more thought).", null));
+
+            MasonryJoints = config.Bind(
+                "Structure", "MasonryJoints", true,
+                Server("Stone, black marble and grausten pieces rest on each other like real masonry: the joint between " +
+                       "two of them cannot pull, so it opens or rocks on its edge when the weight above is off-centre, and " +
+                       "slides when pushed sideways harder than friction holds. A stone needs something under its weight, " +
+                       "and an arch stands only once its keystone is in. Off: these joints hold like glue, as up to 0.1.5.",
+                       null));
 
             const string objects = "Objects (furniture, crafting stations, chests, torches, lighting, decor) weigh the " +
                                    "materials they are made of, not their volume.";

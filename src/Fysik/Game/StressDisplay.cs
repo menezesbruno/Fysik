@@ -75,9 +75,9 @@ namespace Fysik.Game
 
             string headline = p.Ghost.Mode == StressMode.Unsupported
                 ? $"{L("$fysik_preview")}: {L("$fysik_unsupported")}"
-                : $"{L("$fysik_preview")}: {L(ModeToken(p.Ghost.Mode))} {Percent(p.Ghost.Utilization)}";
+                : $"{L("$fysik_preview")}: {Headline(p.Ghost)}";
             if (p.Ghost.Mode != StressMode.Unsupported && p.Ghost.Utilization >= 1)
-                headline += " · " + L("$fysik_overloaded");
+                headline += " · " + L(Verdict(p.Ghost));
             string details = Details(ghostName, p.MaterialName, p.GhostMass, p.Ghost.HeldWeight / Gravity, 0,
                                      p.Ghost.MemberForce, p.GhostSize, null) + RestsOnLine(p.RestsOn);
             string text = $"<color=#{ColorUtility.ToHtmlStringRGB(ForPreview(p))}>{headline}</color>\n{details}";
@@ -92,6 +92,11 @@ namespace Fysik.Game
         }
 
         private static string Percent(double u) => $"{Mathf.RoundToInt((float)(u * 100))}%";
+
+        private static string Headline(BodyResult r) =>
+            r.Mode == StressMode.Unstable ? L(ModeToken(r.Mode)) : $"{L(ModeToken(r.Mode))} {Percent(r.Utilization)}";
+
+        private static string Verdict(BodyResult r) => r.Mode == StressMode.Unstable ? "$fysik_would_fall" : "$fysik_overloaded";
 
         public static string HoverText(PieceNode node)
         {
@@ -114,13 +119,11 @@ namespace Fysik.Game
 
             BodyResult r = node.Result;
             Color color = For(node);
-            string headline = r.Mode == StressMode.Unsupported
-                ? L("$fysik_unsupported")
-                : $"{L(ModeToken(r.Mode))} {Mathf.RoundToInt((float)(r.Utilization * 100))}%";
+            string headline = r.Mode == StressMode.Unsupported ? L("$fysik_unsupported") : Headline(r);
             if (node.CrackTicks != 0)
                 headline += " · " + L("$fysik_cracking");
             else if (r.Mode != StressMode.Unsupported && r.Utilization >= 1)
-                headline += " · " + L("$fysik_overloaded");
+                headline += " · " + L(Verdict(r));
 
             string note = node.Island != null && node.Island.Solver == SolverKind.LoadPath ? L("$fysik_loadpath") : null;
             string details = Details(PieceName(node), node.MaterialName, node.Mass, node.Holds, node.Snow, r.MemberForce,
@@ -198,6 +201,9 @@ namespace Fysik.Game
                 case StressMode.Bending: return "$fysik_bending";
                 case StressMode.Shear: return "$fysik_shear";
                 case StressMode.Torsion: return "$fysik_torsion";
+                case StressMode.Tipping: return "$fysik_tipping";
+                case StressMode.Sliding: return "$fysik_sliding";
+                case StressMode.Unstable: return "$fysik_unstable";
                 default: return "$fysik_stress";
             }
         }
