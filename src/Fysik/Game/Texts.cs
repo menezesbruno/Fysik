@@ -9,7 +9,7 @@ namespace Fysik.Game
         public static void Register()
         {
             CustomLocalization localization = LocalizationManager.Instance.GetLocalization();
-            localization.AddTranslation("English", new Dictionary<string, string>
+            var texts = new Dictionary<string, string>
             {
                 { "fysik_compression", "Compression" },
                 { "fysik_tension", "Tension" },
@@ -49,7 +49,16 @@ namespace Fysik.Game
                 { "fysik_mat_iron", "iron" },
                 { "fysik_mat_ice", "ice" },
                 { "fysik_mat_unknown", "unknown material" },
-            });
+            };
+            foreach (ArchStone stone in ArchStones.All)
+            {
+                texts[stone.Token] = $"Arch stone, {stone.Span} m arch";
+                texts[stone.Token + "_description"] =
+                    $"A stone cut as a wedge for arches: {stone.Shape.Stones} make a half circle {stone.Span} m wide and " +
+                    $"{stone.Span / 2} m high inside, standing on supports 1 m wide. Aim at the top of a wall or pillar to " +
+                    "set the first one, then aim at a stone to lay the next one along the curve.";
+            }
+            localization.AddTranslation("English", texts);
         }
     }
 }

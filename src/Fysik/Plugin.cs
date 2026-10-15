@@ -24,6 +24,7 @@ namespace Fysik
             Config.SettingChanged += OnSettingChanged;
             SynchronizationManager.OnConfigurationSynchronized += OnConfigurationSynchronized;
             Texts.Register();
+            ArchStones.Register();
             CommandManager.Instance.AddConsoleCommand(new FysikCommand());
 
             ApplyPatches();

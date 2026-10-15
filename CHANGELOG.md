@@ -11,6 +11,13 @@
   the stone abutments of the arch bridges from 45% to 18%, and houses read a few points lower.
 - The ground under a piece is one support per patch of ground it touches, instead of up to sixteen
   separate points: a log lying across a ditch still rests on both banks.
+- Arch stones: seven new stones at the stonecutter, next to the stone arch, cut as wedges from the 1x1
+  stone, so arches can be built from stones that touch face to face, sized to the building grid: half
+  circles 4, 6, 8, 10, 12, 14 and 16 m wide inside and half as high, from 9 to 29 stones, all
+  standing on walls or pillars 1 m wide. Beyond 10 m the arch pushes its supports hard: give it heavy
+  piers or abutments. Aim at the top of a wall or pillar and the first stone
+  appears tilted as the foot of the arch, snapped to it; then aim at a stone and the next one carries
+  on the curve, up to the keystone. Worlds keep them only while Fysik is installed.
 - The dump lists the area of every joint and ground contact.
 - Fysik is now under the GNU General Public License v3.0 (it was MIT up to 0.1.5): anyone may use,
   change and share it, and whatever is built on it and distributed must stay open under the same

@@ -137,6 +137,8 @@ namespace Fysik.Game
         {
             private static void Postfix(Player __instance)
             {
+                try { ArchStones.Continue(__instance); }
+                catch (Exception e) { Guard.Report("Arch stone placement", e); }
                 try { Hooks.PlacementGhost(__instance); }
                 catch (Exception e) { Guard.Report("Placement preview", e); }
             }
