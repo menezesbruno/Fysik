@@ -41,7 +41,8 @@ version. Players without it, or with another version, cannot join.
 - **A beam reaching out bends**, and the longer it reaches, the worse. A diagonal brace under it
   turns the bending into a squeeze.
 - **Stone** is strong squeezed and weak pulled: use it for walls, pillars and arches, not for beams
-  or overhangs.
+  or overhangs. Stones rest on each other like real masonry, so each one needs something under its
+  weight: span a doorway with a lintel or an arch, and prop an arch until its keystone is in.
 - **When something cracks** you have a few seconds, fewer the more it is overloaded: add a post or a
   brace under it, or take the load off.
 

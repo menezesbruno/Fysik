@@ -24,6 +24,14 @@ fall (Sandbox or DisplayOnly mode, or a world where buildings never fall).
 Either it was twice its limit or more, it had no path to the ground left, or something in the same
 structure had just given way (for 3 s after a fall, overloaded pieces fall at once).
 
+**My stone fell, but nothing was overloaded.**
+Stone, black marble and grausten rest on each other like real masonry: their joints cannot pull. A
+stone that only touches the side of another, sticks out past the one below it with its weight beyond
+the edge, or sits over a doorway with nothing under it tips or slides off (*Unstable · would fall*).
+Put something under its weight, weigh down its back end with the stones above, span the opening with
+a lintel or an arch, and prop arches until the keystone is in. The server can glue stone joints again
+with `Structure.MasonryJoints = false`.
+
 **Why does my roof crack in the Deep North?**
 Snow piles up on it and weighs. Shovel it off, prop the roof from below, or build steeper roofs:
 from 30° snow starts to slide off, from 60° none stays. Tarred roofs are protected from snow.

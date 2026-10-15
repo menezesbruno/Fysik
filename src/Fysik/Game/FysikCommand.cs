@@ -142,31 +142,31 @@ namespace Fysik.Game
             sb.AppendLine("Last solve: " + StructureManager.Instance.LastSolve);
             sb.AppendLine();
             sb.AppendLine("# index; prefab; zdo; material; mass kg; center; size; rotation (euler, degrees); ground points; " +
-                          "mode; utilization; axial N; moment N·m; torque N·m; carried kg; holds kg; snow kg; riding kg; rests on");
+                          "mode; utilization; axial N; moment N·m; torque N·m; carried kg; holds kg; snow kg; riding kg; rests on; shape");
             for (int i = 0; i < island.Members.Count; i++)
             {
                 PieceNode m = island.Members[i];
                 Obb box = m.Geometry.Main;
-                sb.AppendLine(string.Format(inv, "{0}; {1}; {2}; {3}; {4:0.0}; {5}; {6}; {7}; {8}; {9}; {10:0.000}; {11:0}; {12:0}; {13:0}; {14:0.0}; {15:0.0}; {16:0.0}; {17:0.0}; {18}",
+                sb.AppendLine(string.Format(inv, "{0}; {1}; {2}; {3}; {4:0.0}; {5}; {6}; {7}; {8}; {9}; {10:0.000}; {11:0}; {12:0}; {13:0}; {14:0.0}; {15:0.0}; {16:0.0}; {17:0.0}; {18}; {19}",
                     i, m.Name, m.Id, m.MaterialName, m.Mass, Format(box.Center), Format(box.Size),
-                    Format(box.Rotation.eulerAngles), m.GroundPoints.Count, m.Result.Mode, m.Result.Utilization,
+                    Format(box.Rotation.eulerAngles), m.GroundContacts.Count, m.Result.Mode, m.Result.Utilization,
                     m.Result.AxialForce, m.Result.BendingMoment, m.Result.Torque, m.Carried, m.Holds, m.Snow, m.Riding,
-                    m.RestsOn));
+                    m.RestsOn, m.Geometry.Fitted ? "fitted" : "box"));
             }
             sb.AppendLine();
-            sb.AppendLine("# joints: index; index; point");
+            sb.AppendLine("# joints: index; index; point; span on the first (x, y, z: from to); span on the second");
             for (int i = 0; i < island.Members.Count; i++)
                 foreach (Contact c in island.Members[i].Contacts)
                 {
                     int j = island.Members.IndexOf(c.Other);
                     if (j > i)
-                        sb.AppendLine($"{i}; {j}; {Format(c.Point)}");
+                        sb.AppendLine($"{i}; {j}; {Format(c.Point)}; {Format(c.Span)}; {Format(c.OtherSpan)}");
                 }
             sb.AppendLine();
-            sb.AppendLine("# ground: index; point");
+            sb.AppendLine("# ground: index; point; span (x, y, z: from to)");
             for (int i = 0; i < island.Members.Count; i++)
-                foreach (Vector3 p in island.Members[i].GroundPoints)
-                    sb.AppendLine($"{i}; {Format(p)}");
+                foreach (GroundContact g in island.Members[i].GroundContacts)
+                    sb.AppendLine($"{i}; {Format(g.Point)}; {Format(g.Span)}");
 
             string path = Path.Combine(BepInEx.Paths.BepInExRootPath, "fysik-dump.txt");
             File.WriteAllText(path, sb.ToString());
@@ -176,6 +176,12 @@ namespace Fysik.Game
 
         private static string Format(Vector3 v) =>
             string.Format(CultureInfo.InvariantCulture, "({0:0.###} {1:0.###} {2:0.###})", v.x, v.y, v.z);
+
+        private static string Format(double[] span) =>
+            span == null
+                ? "point"
+                : string.Format(CultureInfo.InvariantCulture, "({0:0.###} {1:0.###} {2:0.###} {3:0.###} {4:0.###} {5:0.###})",
+                                span[0], span[1], span[2], span[3], span[4], span[5]);
 
         private static void Print(string text)
         {

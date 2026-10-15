@@ -20,7 +20,8 @@ limit:
 Aim at a piece with the hammer. Next to the crosshair, one fact per line:
 
 1. **Stress**: how close the piece is to its limit and how it is loaded, e.g. *Compression 72%*. Past
-   100% it adds *would break*, and *cracking!* while it cracks.
+   100% it adds *would break* (*would fall* for a stone that would tip or slide off), and *cracking!*
+   while it cracks.
 2. **Name · material · own weight**, e.g. *Wood floor · wood · 260 kg*. A very big structure adds
    *simplified model* (see **Server admins**).
 3. **Holds**: the weight it holds up, that is whatever rests on it and everything above, e.g.
@@ -45,9 +46,13 @@ The stress line names what is closest to breaking the piece:
 | Bending | bent across | beams, floors, cantilevers |
 | Shear | cut across, close to a support | short beams carrying a lot |
 | Torsion | twisted | beams held from one side |
+| Tipping | resting on a joint whose force leans towards the edge of the contact (stone) | arches, corbels, stones overhanging the one below |
+| Sliding | pushed sideways along a joint, close to slipping (stone) | the feet of an arch, stones leaning on a slope |
+| Unstable | free to tip or slide away: it will fall (stone) | a stone hung on the side of a wall, an arch without its keystone |
 
 A piece is much stronger squeezed or pulled than bent, which is why braces, trusses and arches
-work. Long, thin pieces buckle, so a slender post carries less in compression than its material
+work. Stone, black marble and grausten rest on each other like masonry: their joints never pull, so
+a stone needs something under its weight (see **How it works**). Long, thin pieces buckle, so a slender post carries less in compression than its material
 alone would allow.
 
 Aiming at a chest, a torch, a pile or another object that holds nothing up shows its name and

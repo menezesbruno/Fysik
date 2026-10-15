@@ -5,7 +5,7 @@
 **Structural physics for Valheim building.** Fysik ("physics" in Swedish and Danish) replaces Valheim's
 vanilla structural integrity, where a piece only cares about its distance to the ground, with a force
 calculation in which the **shape** of a build matters: arches work in compression, triangulated
-trusses stay rigid, cantilevers bend. Overloaded pieces crack, shake and creak for a few seconds before
+trusses stay rigid, cantilevers bend, and stone rests on stone like real masonry. Overloaded pieces crack, shake and creak for a few seconds before
 they fall, so there is time to shore them up.
 
 Gameplay references: Poly Bridge, Bridge Constructor.
@@ -27,9 +27,19 @@ are in the [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/) 
   joint is an elastic connection whose stiffness comes from the two pieces' cross-sections between
   their centres and the contact point, each segment treated as a Timoshenko cantilever (stretching,
   shear, bending and twisting, with the rotation a sideways push causes). The contact point is the
-  centre of the overlap between the two pieces. Stresses are then checked on cuts across every piece,
-  so a beam resting on a post in the middle still sees its own bending.
-- **Connections:** every pair of touching pieces is a rigid joint. Walls and floors are approximated
+  centre of the overlap between the two pieces, and the force a joint carries is spread over that
+  overlap: across a face or along an edge (a wall on a wall, a floor on a beam, a piece on the ground)
+  the pressure varies linearly, as in a real bearing; over a short contact it is spread evenly. The
+  ground under a piece is one support per contiguous patch it touches. Stresses are then checked on
+  cuts across every piece, so a beam resting on a post in the middle still sees its own bending.
+- **Connections:** every pair of touching pieces is a rigid joint, except stone on stone (stone,
+  black marble, grausten), which is a masonry joint: it carries no tension, carries compression only
+  while the resultant stays inside the contact area, and holds sideways by friction (0.6). The solver
+  repeats the calculation, opening joints in tension, turning joints whose resultant leaves the
+  contact into hinges at the edge and letting overpushed joints slip, until nothing changes; a part
+  that can then move freely (detected by solving again with the released joints ten times softer:
+  only a mechanism moves ten times more) is unstable and falls, while the rest is solved without it.
+  Stone on other materials and on the ground stays rigid. Walls and floors are approximated
   as equivalent beams. Loads: self-weight, plus what rests on a piece. Pieces the game tags as
   structure (building, floor, wall, roof, architecture, stairs, doors) weigh their volume times their
   material's density; pieces it tags as objects (furniture, crafting, lighting, decor, storage,
@@ -79,11 +89,11 @@ are in the [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/) 
 
 Next:
 
-- Masonry: stone blocks that only hold by pressing on each other, interlocking walls, arches built on wooden centering
+- More arch stones (cut from the 2×1 stone), and grausten and black marble blocks cut around arches
+- Creatures' weight (tamed lox, trolls) on bridges and floors
 
 Later:
 
-- Creatures' weight (tamed lox, trolls) on bridges and floors
 - Calibration with player builds (feedback welcome)
 - Faster recalculation for very large bases
 - Translations into every language Valheim supports
@@ -138,4 +148,7 @@ lists pages alphabetically), and the rest is its content.
 
 ## License
 
-[MIT](LICENSE)
+Copyright (c) 2026 Bruno Menezes. Fysik is free software under the [GNU General Public License
+v3.0](LICENSE): you may use, change and share it, and whatever you distribute that is built on it must
+be released under the same license, with its source code. Versions up to 0.1.5 were released under
+the MIT license.

@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.2.0: masonry and arch stones
+
+**Updating from 0.1.x:** stone now rests on stone like real masonry (below), so stone that only held
+because it was glued falls: overhangs past the stone below, slabs held only by the side of a wall,
+blocks over a doorway with nothing under them, half-built arches. Back up your world before updating
+and look over your stone builds with the X-ray, or have the server set
+`Structure.MasonryJoints = false` to keep stone glued as before.
+
+- Stone stands like real masonry. Stone, black marble and grausten pieces now rest on each other
+  instead of being glued: the joint between two of them cannot pull, so it opens, or rocks on its
+  edge, when the weight on it leans past the edge of the area where they touch, and it slips when
+  pushed sideways harder than friction holds. A stone needs something under its weight: a block hung
+  on the side of a wall, a block left over a doorway with nothing under it, a slab pushed past its
+  support or a half-built arch without its keystone tips over and falls (*Unstable · would fall*),
+  while walls, columns, corbels and finished arches stand on the thrust they pass from stone to
+  stone. Two new stresses on stone: *Tipping*, how far the load on a joint has moved towards the
+  edge of the contact (at 100% it would rock), and *Sliding*, how close it is to slipping. A joint
+  that opens is not a failure in itself: an arch can crack open at its crown and still stand; it
+  falls only when enough joints open to let it move. Stone resting on wood, iron or the ground, and
+  every wooden joint, holds as before. The server setting `Structure.MasonryJoints = false` glues
+  stone joints again, as up to 0.1.5.
+- Pieces now press on each other over the whole area where they touch, not at one point. A wall
+  standing on another wall bears on its full length, a floor resting on a beam along its whole edge,
+  and a piece standing on the ground on all of the ground under it, with the pressure stronger on the
+  side the load leans towards, as in a real bearing. Pieces read lower where their supports are wide:
+  stacked stone no longer cracks at its base (a stack of stone walls or blocks stands far beyond 100 m
+  and is only squeezed), a log deck resting on posts 16 m apart went from 76% to 49%, and houses read
+  a few points lower.
+- The ground under a piece is one support per patch of ground it touches, instead of up to sixteen
+  separate points: a log lying across a ditch still rests on both banks.
+- Arch stones: seven new stones at the stonecutter, next to the stone arch, cut as wedges from the 1x1
+  stone, so arches can be built from stones that touch face to face, sized to the building grid: half
+  circles 4, 6, 8, 10, 12, 14 and 16 m wide inside and half as high, from 9 to 29 stones, all
+  standing on walls or pillars 1 m wide. Beyond 10 m the arch pushes its supports hard: give it heavy
+  piers or abutments. Aim at the top of a wall or pillar and the first stone
+  appears tilted as the foot of the arch, snapped to it; then aim at a stone and the next one carries
+  on the curve, up to the keystone. Worlds keep them only while Fysik is installed.
+- Stone blocks fit around arches: a stone wall, block or floor that runs into an arch stone is cut
+  along the arch's outer curve, its look, its collider and its weight, so a wall can be built on the
+  grid around an arch and close it in, the way masons cut the stones beside an arch. Blocks laid
+  before the arch are cut when its stones go in, and become whole again if they are taken out.
+- The building guide has new numbers throughout, a section on stone masonry, a Roman bridge built of
+  arch stones on centering, and props for the first stone arch of each pair in the stone arcade.
+- The dump lists the area of every joint and ground contact.
+- Fysik is now under the GNU General Public License v3.0 (it was MIT up to 0.1.5): anyone may use,
+  change and share it, and whatever is built on it and distributed must stay open under the same
+  license.
+
 ## 0.1.5: what holds a piece up
 
 - The hammer says what a piece rests on: a new line, *Rests on the ground*, on every piece that

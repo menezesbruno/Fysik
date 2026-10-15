@@ -31,6 +31,10 @@ a structure, weight or material setting recalculates every structure. The ones w
 
 - `Structure.Mode`: Physics, Sandbox or DisplayOnly (see **Getting started**).
 - `Structure.Difficulty`: Relaxed makes materials 50% stronger, Strict 30% weaker.
+- `Structure.MasonryJoints`: off, stone, black marble and grausten joints are glued instead of
+  resting on each other like masonry (as up to 0.1.5): stone can hang off a wall or overhang freely.
+  Turn it off for a while on a world whose old stone builds were made for 0.1.x, if they need time to
+  be shored up.
 - `Failure.CrackWarningSeconds`: the warning before a piece just past its limit falls (5 s).
 - `Failure.DamageWeakens`: off, damage never changes a piece's strength.
 - `Structure.WorldBuildings`: whether world buildings are simulated (below).
