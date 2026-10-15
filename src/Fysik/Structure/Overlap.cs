@@ -18,10 +18,12 @@ namespace Fysik.Structure
         private const double SamePoint = 1e-12;
         private const double MinVolume = 1e-12;
 
-        public static bool Of(OrientedBox a, OrientedBox b, out Vec3 centroid, out double volume)
+        public static bool Of(OrientedBox a, OrientedBox b, out Vec3 centroid, out double volume,
+                              List<Vec3> vertices = null)
         {
             centroid = Vec3.Zero;
             volume = 0;
+            vertices?.Clear();
             Vec3 origin = a.Center;
             List<List<Vec3>> faces = Faces(a, origin);
             for (int axis = 0; axis < 3; axis++)
@@ -38,6 +40,10 @@ namespace Fysik.Structure
             if (!Measure(faces, out Vec3 local, out volume))
                 return false;
             centroid = local + origin;
+            if (vertices != null)
+                foreach (List<Vec3> face in faces)
+                    foreach (Vec3 v in face)
+                        vertices.Add(v + origin);
             return true;
         }
 

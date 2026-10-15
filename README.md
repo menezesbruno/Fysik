@@ -27,8 +27,11 @@ are in the [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/) 
   joint is an elastic connection whose stiffness comes from the two pieces' cross-sections between
   their centres and the contact point, each segment treated as a Timoshenko cantilever (stretching,
   shear, bending and twisting, with the rotation a sideways push causes). The contact point is the
-  centre of the overlap between the two pieces. Stresses are then checked on cuts across every piece,
-  so a beam resting on a post in the middle still sees its own bending.
+  centre of the overlap between the two pieces, and the force a joint carries is spread over that
+  overlap: across a face or along an edge (a wall on a wall, a floor on a beam, a piece on the ground)
+  the pressure varies linearly, as in a real bearing; over a short contact it is spread evenly. The
+  ground under a piece is one support per contiguous patch it touches. Stresses are then checked on
+  cuts across every piece, so a beam resting on a post in the middle still sees its own bending.
 - **Connections:** every pair of touching pieces is a rigid joint. Walls and floors are approximated
   as equivalent beams. Loads: self-weight, plus what rests on a piece. Pieces the game tags as
   structure (building, floor, wall, roof, architecture, stairs, doors) weigh their volume times their

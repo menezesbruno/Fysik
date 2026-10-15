@@ -148,10 +148,11 @@ namespace Fysik.Structure
                 Vec3 force = new Vec3(Row(li, 0, deformation), Row(li, 1, deformation), Row(li, 2, deformation));
                 Vec3 moment = new Vec3(Row(li, 3, deformation), Row(li, 4, deformation), Row(li, 5, deformation));
                 Vec3 point = _model.Bodies[l.A].Center + l.ArmA;
+                Link link = _model.Links[li];
 
-                loads[l.A].Add(new ContactLoad { Point = point, Force = force, Moment = moment, Ground = l.B < 0 });
+                loads[l.A].Add(new ContactLoad { Point = point, Force = force, Moment = moment, Ground = l.B < 0, Span = link.SpanA });
                 if (l.B >= 0)
-                    loads[l.B].Add(new ContactLoad { Point = point, Force = -force, Moment = -moment });
+                    loads[l.B].Add(new ContactLoad { Point = point, Force = -force, Moment = -moment, Span = link.SpanB });
             }
             return loads;
         }

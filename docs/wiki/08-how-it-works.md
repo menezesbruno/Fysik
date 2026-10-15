@@ -6,8 +6,14 @@ Every piece is a rigid block, and every pair of touching pieces is joined at the
 where they touch. The joint is elastic: it stretches, shears, bends and twists as much as the two
 pieces would between their centres and that point, each treated as a short beam. A thin floor glued
 on a thick beam is therefore much softer than the beam, and leaves the load to it, as in a real
-building. Pieces resting on the ground, rocks or trees are joined to the ground; pieces buried up to
-2 m count as resting on it.
+building. Pieces resting on the ground, rocks or trees are joined to the ground, once per patch of
+ground they touch; pieces buried up to 2 m count as resting on it.
+
+A joint carries its force over the whole area where the pieces touch, not at one point. Where two
+pieces meet face to face or along an edge (a wall on a wall, a floor along a beam, a piece on the
+ground), the pressure varies in a straight line across that area, stronger on the side the load
+leans towards, as in a real bearing; a stack of walls is therefore only squeezed, however tall. Over
+a short contact, such as the end of a post, the force is spread evenly.
 
 All joints are rigid: a rectangle of posts and beams holds on its own, and triangles and braces
 relieve it by carrying the load along their length.

@@ -61,7 +61,9 @@ namespace Fysik.Game
         public bool ScanTrusted;
 
         public readonly List<Contact> Contacts = new List<Contact>();
-        public readonly List<Vector3> GroundPoints = new List<Vector3>();
+        public readonly List<GroundContact> GroundContacts = new List<GroundContact>();
+
+        public int GroundSamples;
 
         public GroundKind GroundKinds;
 
@@ -81,7 +83,7 @@ namespace Fysik.Game
         {
             get
             {
-                if (GroundPoints.Count > 0)
+                if (GroundContacts.Count > 0)
                     return true;
                 foreach (Contact c in Contacts)
                     if (c.Other.Anchored && c.Other.Alive)
@@ -160,6 +162,14 @@ namespace Fysik.Game
     {
         public PieceNode Other;
         public Vector3 Point;
+        public double[] Span;
+        public double[] OtherSpan;
+    }
+
+    internal struct GroundContact
+    {
+        public Vector3 Point;
+        public double[] Span;
     }
 
     internal sealed class Island
@@ -260,7 +270,10 @@ namespace Fysik.Game
 
         private static int s_terrainMask;
         private static readonly HashSet<Collider> s_groundColliders = new HashSet<Collider>();
-        private readonly List<Vector3> _scratchGround = new List<Vector3>();
+        private static readonly List<Vec3> s_region = new List<Vec3>();
+        private static readonly bool[] s_cellHit = new bool[ContactSpan.GridSide * ContactSpan.GridSide];
+        private static readonly int[] s_cellPatch = new int[ContactSpan.GridSide * ContactSpan.GridSide];
+        private static readonly Vector3[] s_cellCenter = new Vector3[ContactSpan.GridSide * ContactSpan.GridSide];
         private static readonly HashSet<string> s_describedPrefabs = new HashSet<string>();
         private static int s_rayMask;
         private static int s_terrainLayer = -1;
@@ -585,7 +598,7 @@ namespace Fysik.Game
                 return;
 
             var g = new GhostPiece { Geometry = geometry, Material = MaterialTable.For(ghost) };
-            g.GroundKinds = FindContacts(geometry, ghost, g.Contacts, g.GroundPoints);
+            g.GroundKinds = FindContacts(geometry, ghost, g.Contacts, g.GroundContacts, out _);
             var seeds = new List<PieceNode>();
             foreach (Contact c in g.Contacts)
                 seeds.Add(c.Other);
@@ -700,12 +713,19 @@ namespace Fysik.Game
             public double Weight;
         }
 
-        private readonly Dictionary<PieceNode, List<WeightedPoint>> _contactPoints = new Dictionary<PieceNode, List<WeightedPoint>>();
+        private sealed class Touch
+        {
+            public readonly List<WeightedPoint> Points = new List<WeightedPoint>();
+            public readonly double[] Span = ContactSpan.Open();
+            public readonly double[] OtherSpan = ContactSpan.Open();
+        }
+
+        private readonly Dictionary<PieceNode, Touch> _touches = new Dictionary<PieceNode, Touch>();
 
         private void ScanContacts(PieceNode node)
         {
             node.ScanTrusted = Readiness.Settled(node.Wnt);
-            node.GroundKinds = FindContacts(node.Geometry, node.Wnt, node.Contacts, node.GroundPoints);
+            node.GroundKinds = FindContacts(node.Geometry, node.Wnt, node.Contacts, node.GroundContacts, out node.GroundSamples);
             node.ContactsValid = true;
             if (node.WorldBuilt)
                 return;
@@ -799,7 +819,7 @@ namespace Fysik.Game
                     if (node.ContactsValid)
                         ScanAttachment(node);
                 }
-                else if (node.ContactsValid && CountGround(node.Geometry) != node.GroundPoints.Count)
+                else if (node.ContactsValid && CountGround(node.Geometry) != node.GroundSamples)
                 {
                     Invalidate(node);
                     Request(node.Wnt);
@@ -825,12 +845,12 @@ namespace Fysik.Game
         private int CountGround(PieceGeometry geometry)
         {
             EnsureMasks();
-            _scratchGround.Clear();
             s_groundColliders.Clear();
             Vector3 center = geometry.Main.Center;
+            int samples = 0;
             foreach (Obb box in geometry.Boxes)
             {
-                AddBottomSamples(box, null, _scratchGround);
+                samples += AddBottomSamples(box, null, default, null);
                 int count = Physics.OverlapBoxNonAlloc(box.Center, box.Size * 0.5f + Vector3.one * ContactMargin,
                                                        s_hits, box.Rotation, s_rayMask);
                 for (int i = 0; i < count; i++)
@@ -839,28 +859,30 @@ namespace Fysik.Game
                     if (c.isTrigger || c.attachedRigidbody != null || geometry.Colliders.Contains(c) ||
                         c.gameObject.layer == s_terrainLayer || c.GetComponentInParent<WearNTear>() != null)
                         continue;
-                    AddStaticGround(c, box, center, _scratchGround);
+                    samples += AddStaticGround(c, box, center, default, null);
                 }
             }
-            return Math.Min(_scratchGround.Count, MaxGroundPoints);
+            return samples;
         }
 
-        private GroundKind FindContacts(PieceGeometry geometry, WearNTear self, List<Contact> contacts, List<Vector3> ground)
+        private GroundKind FindContacts(PieceGeometry geometry, WearNTear self, List<Contact> contacts,
+                                        List<GroundContact> ground, out int samples)
         {
             EnsureMasks();
-            foreach (List<WeightedPoint> list in _contactPoints.Values)
-                list.Clear();
+            _touches.Clear();
             ground.Clear();
             s_groundColliders.Clear();
             Vector3 center = geometry.Main.Center;
+            OrientedBox frame = geometry.Main.Grown(0);
             GroundKind kinds = GroundKind.None;
+            samples = 0;
 
             foreach (Obb box in geometry.Boxes)
             {
-                int before = ground.Count;
-                AddBottomSamples(box, null, ground);
-                if (ground.Count > before)
+                int hits = AddBottomSamples(box, null, frame, ground);
+                if (hits > 0)
                     kinds |= GroundKind.Terrain;
+                samples += hits;
                 OrientedBox grown = box.Grown(ContactMargin);
 
                 int count = Physics.OverlapBoxNonAlloc(box.Center, box.Size * 0.5f + Vector3.one * ContactMargin,
@@ -874,8 +896,10 @@ namespace Fysik.Game
                     WearNTear other = c.GetComponentInParent<WearNTear>();
                     if (other == null)
                     {
-                        if (AddStaticGround(c, box, center, ground))
+                        int added = AddStaticGround(c, box, center, frame, ground);
+                        if (added > 0)
                             kinds |= KindOf(c);
+                        samples += added;
                         continue;
                     }
                     if (other == self || !other.m_supports)
@@ -884,22 +908,29 @@ namespace Fysik.Game
                     if (otherNode == null || !otherNode.Structural)
                         continue;
 
-                    if (!Overlap.Of(grown, Obb.Of(c).Grown(ContactMargin), out Vec3 centroid, out double volume))
+                    if (!Overlap.Of(grown, Obb.Of(c).Grown(ContactMargin), out Vec3 centroid, out double volume, s_region))
                         continue;
-                    if (!_contactPoints.TryGetValue(otherNode, out List<WeightedPoint> points))
-                        _contactPoints[otherNode] = points = new List<WeightedPoint>();
-                    points.Add(new WeightedPoint { Point = centroid, Weight = volume });
+                    if (!_touches.TryGetValue(otherNode, out Touch touch))
+                        _touches[otherNode] = touch = new Touch();
+                    touch.Points.Add(new WeightedPoint { Point = centroid, Weight = volume });
+                    ContactSpan.Include(touch.Span, frame, s_region);
+                    ContactSpan.Include(touch.OtherSpan, otherNode.Geometry.Main.Grown(0), s_region);
                 }
             }
 
             contacts.Clear();
-            foreach (KeyValuePair<PieceNode, List<WeightedPoint>> kv in _contactPoints)
-                if (kv.Value.Count > 0)
-                    contacts.Add(new Contact { Other = kv.Key, Point = Centroid(kv.Value) });
+            foreach (KeyValuePair<PieceNode, Touch> kv in _touches)
+                contacts.Add(new Contact
+                {
+                    Other = kv.Key,
+                    Point = Centroid(kv.Value.Points),
+                    Span = ContactSpan.Close(kv.Value.Span, frame, ContactMargin),
+                    OtherSpan = ContactSpan.Close(kv.Value.OtherSpan, kv.Key.Geometry.Main.Grown(0), ContactMargin),
+                });
             contacts.Sort((a, b) => PieceNode.Compare(a.Other, b.Other));
-            _contactPoints.Clear();
+            _touches.Clear();
 
-            SortPoints(ground);
+            ground.Sort((a, b) => ComparePoints(a.Point, b.Point));
             if (ground.Count > MaxGroundPoints)
             {
                 for (int i = 0; i < MaxGroundPoints; i++)
@@ -917,7 +948,7 @@ namespace Fysik.Game
                 : GroundKind.Rock;
         }
 
-        private static void AddBottomSamples(Obb box, Collider only, List<Vector3> output)
+        private static int AddBottomSamples(Obb box, Collider only, OrientedBox frame, List<GroundContact> output)
         {
             Vector3 x = box.Rotation * Vector3.right, y = box.Rotation * Vector3.up, z = box.Rotation * Vector3.forward;
             Vector3 half = box.Size * 0.5f;
@@ -926,59 +957,88 @@ namespace Fysik.Game
             if (Mathf.Abs(dx) >= Mathf.Abs(dy) && Mathf.Abs(dx) >= Mathf.Abs(dz))
             {
                 normal = x * (Mathf.Sign(dx) * half.x);
-                u = y * (half.y * 0.9f);
-                v = z * (half.z * 0.9f);
+                u = y * half.y;
+                v = z * half.z;
             }
             else if (Mathf.Abs(dy) >= Mathf.Abs(dz))
             {
                 normal = y * (Mathf.Sign(dy) * half.y);
-                u = x * (half.x * 0.9f);
-                v = z * (half.z * 0.9f);
+                u = x * half.x;
+                v = z * half.z;
             }
             else
             {
                 normal = z * (Mathf.Sign(dz) * half.z);
-                u = x * (half.x * 0.9f);
-                v = y * (half.y * 0.9f);
+                u = x * half.x;
+                v = y * half.y;
             }
             Vector3 face = box.Center + normal;
             float distance = BuriedDepth + ContactMargin;
+            int hits = 0;
             for (int i = -1; i <= 1; i++)
             {
                 for (int j = -1; j <= 1; j++)
                 {
-                    Vector3 p = face + u * i + v * j;
+                    int k = (i + 1) * ContactSpan.GridSide + j + 1;
+                    Vector3 p = face + u * (0.9f * i) + v * (0.9f * j);
                     var ray = new Ray(p + Vector3.up * BuriedDepth, Vector3.down);
                     bool hit = only != null
                         ? only.Raycast(ray, out RaycastHit _, distance)
                         : Physics.Raycast(ray, distance, s_terrainMask, QueryTriggerInteraction.Ignore);
+                    s_cellHit[k] = hit;
+                    s_cellCenter[k] = face + u * (2f / 3f * i) + v * (2f / 3f * j);
                     if (hit)
-                        output.Add(p);
+                        hits++;
                 }
             }
+            if (output == null || hits == 0)
+                return hits;
+
+            int patches = ContactSpan.Patches(s_cellHit, s_cellPatch);
+            Vector3 du = u * (1f / 3f), dv = v * (1f / 3f);
+            for (int patch = 0; patch < patches; patch++)
+            {
+                double[] span = ContactSpan.Open();
+                Vector3 sum = Vector3.zero;
+                int cells = 0;
+                for (int k = 0; k < s_cellPatch.Length; k++)
+                {
+                    if (s_cellPatch[k] != patch)
+                        continue;
+                    Vector3 c = s_cellCenter[k];
+                    sum += c;
+                    cells++;
+                    ContactSpan.Include(span, frame, PieceGeometry.ToVec(c - du - dv));
+                    ContactSpan.Include(span, frame, PieceGeometry.ToVec(c - du + dv));
+                    ContactSpan.Include(span, frame, PieceGeometry.ToVec(c + du - dv));
+                    ContactSpan.Include(span, frame, PieceGeometry.ToVec(c + du + dv));
+                }
+                output.Add(new GroundContact { Point = sum / cells, Span = ContactSpan.Close(span, frame, 0) });
+            }
+            return hits;
         }
 
-        private static bool AddStaticGround(Collider c, Obb box, Vector3 center, List<Vector3> ground)
+        private static int AddStaticGround(Collider c, Obb box, Vector3 center, OrientedBox frame, List<GroundContact> ground)
         {
             if (!s_groundColliders.Add(c))
-                return false;
+                return 0;
             bool closestPointSupported = c is BoxCollider || c is SphereCollider || c is CapsuleCollider ||
                                          (c is MeshCollider mesh && mesh.convex);
             if (closestPointSupported)
             {
                 Vector3 q = c.ClosestPoint(center);
-                ground.Add((q + box.ClosestPoint(q)) * 0.5f);
-                return true;
+                ground?.Add(new GroundContact { Point = (q + box.ClosestPoint(q)) * 0.5f });
+                return 1;
             }
-            int before = ground.Count;
-            AddBottomSamples(box, c, ground);
-            if (ground.Count == before)
-                ground.Add(box.ClosestPoint(c.bounds.ClosestPoint(center)));
-            return true;
+            int hits = AddBottomSamples(box, c, frame, ground);
+            if (hits > 0)
+                return hits;
+            ground?.Add(new GroundContact { Point = box.ClosestPoint(c.bounds.ClosestPoint(center)) });
+            return 1;
         }
 
-        private static void SortPoints(List<Vector3> points) =>
-            points.Sort((a, b) => a.x != b.x ? a.x.CompareTo(b.x) : a.y != b.y ? a.y.CompareTo(b.y) : a.z.CompareTo(b.z));
+        private static int ComparePoints(Vector3 a, Vector3 b) =>
+            a.x != b.x ? a.x.CompareTo(b.x) : a.y != b.y ? a.y.CompareTo(b.y) : a.z.CompareTo(b.z);
 
         private static Vector3 Centroid(List<WeightedPoint> points)
         {
@@ -1003,7 +1063,7 @@ namespace Fysik.Game
             public MaterialProps Material;
             public GroundKind GroundKinds;
             public readonly List<Contact> Contacts = new List<Contact>();
-            public readonly List<Vector3> GroundPoints = new List<Vector3>();
+            public readonly List<GroundContact> GroundContacts = new List<GroundContact>();
         }
 
         private sealed class Job
@@ -1121,7 +1181,7 @@ namespace Fysik.Game
                     Model.AddBody(body);
                 }
 
-                var joints = new SortedDictionary<long, Vector3>();
+                var joints = new SortedDictionary<long, Contact>();
                 for (int i = 0; i < Members.Count; i++)
                 {
                     foreach (Contact c in Members[i].Contacts)
@@ -1129,22 +1189,23 @@ namespace Fysik.Game
                         if (!index.TryGetValue(c.Other, out int j))
                             continue;
                         long key = (long)Math.Min(i, j) * Members.Count + Math.Max(i, j);
-                        if (!joints.ContainsKey(key) || i < j)
-                            joints[key] = c.Point;
+                        if (joints.ContainsKey(key) && i > j)
+                            continue;
+                        joints[key] = i < j ? c : new Contact { Point = c.Point, Span = c.OtherSpan, OtherSpan = c.Span };
                     }
                 }
-                foreach (KeyValuePair<long, Vector3> kv in joints)
+                foreach (KeyValuePair<long, Contact> kv in joints)
                 {
                     int a = (int)(kv.Key / Members.Count), b = (int)(kv.Key % Members.Count);
-                    Model.Connect(a, b, PieceGeometry.ToVec(kv.Value));
+                    Model.Connect(a, b, PieceGeometry.ToVec(kv.Value.Point), kv.Value.Span, kv.Value.OtherSpan);
                 }
                 for (int i = 0; i < Members.Count; i++)
                 {
-                    foreach (Vector3 p in Members[i].GroundPoints)
-                        Model.Ground(i, PieceGeometry.ToVec(p));
+                    foreach (GroundContact g in Members[i].GroundContacts)
+                        Model.Ground(i, PieceGeometry.ToVec(g.Point), g.Span);
                     foreach (Contact c in Members[i].Contacts)
                         if (c.Other.Anchored && c.Other.Alive)
-                            Model.Ground(i, PieceGeometry.ToVec(c.Point));
+                            Model.Ground(i, PieceGeometry.ToVec(c.Point), c.Span);
                 }
 
                 if (_ghost != null)
@@ -1155,16 +1216,16 @@ namespace Fysik.Game
                     {
                         if (index.TryGetValue(c.Other, out int j))
                         {
-                            Model.Connect(g, j, PieceGeometry.ToVec(c.Point));
+                            Model.Connect(g, j, PieceGeometry.ToVec(c.Point), c.Span, c.OtherSpan);
                         }
                         else if (c.Other.Anchored && c.Other.Alive)
                         {
-                            Model.Ground(g, PieceGeometry.ToVec(c.Point));
+                            Model.Ground(g, PieceGeometry.ToVec(c.Point), c.Span);
                             GhostRestsOn |= GroundKind.WorldBuilding;
                         }
                     }
-                    foreach (Vector3 p in _ghost.GroundPoints)
-                        Model.Ground(g, PieceGeometry.ToVec(p));
+                    foreach (GroundContact contact in _ghost.GroundContacts)
+                        Model.Ground(g, PieceGeometry.ToVec(contact.Point), contact.Span);
                 }
 
                 Analysis = new StructureAnalysis(Model, FysikConfig.MaxFrameBodies.Value);

@@ -2,6 +2,16 @@
 
 ## 0.2.0
 
+- Pieces now press on each other over the whole area where they touch, not at one point. A wall
+  standing on another wall bears on its full length, a floor resting on a beam along its whole edge,
+  and a piece standing on the ground on all of the ground under it, with the pressure stronger on the
+  side the load leans towards, as in a real bearing. Pieces read lower where their supports are wide:
+  stacked stone no longer cracks at its base (a stack of stone walls or blocks stands far beyond 100 m
+  and is only squeezed), a stone foundation under two storeys of walls went from about 70% to 12%,
+  the stone abutments of the arch bridges from 45% to 18%, and houses read a few points lower.
+- The ground under a piece is one support per patch of ground it touches, instead of up to sixteen
+  separate points: a log lying across a ditch still rests on both banks.
+- The dump lists the area of every joint and ground contact.
 - Fysik is now under the GNU General Public License v3.0 (it was MIT up to 0.1.5): anyone may use,
   change and share it, and whatever is built on it and distributed must stay open under the same
   license.
