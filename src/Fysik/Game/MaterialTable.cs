@@ -35,10 +35,15 @@ namespace Fysik.Game
                 TensileStrength = entries.Tension.Value * 1e6 * FysikConfig.StrengthMultiplier,
                 ShearStrength = entries.Shear.Value * 1e6 * FysikConfig.StrengthMultiplier,
                 BucklingSlenderness = entries.Slenderness.Value,
+                Masonry = FysikConfig.MasonryJoints.Value && IsMasonry(wnt.m_materialType),
             };
             s_cache[key] = props;
             return props;
         }
+
+        private static bool IsMasonry(WearNTear.MaterialType type) =>
+            type == WearNTear.MaterialType.Stone || type == WearNTear.MaterialType.Marble ||
+            type == WearNTear.MaterialType.Ashstone;
 
         private static void Stiffness(WearNTear.MaterialType type, out double elasticity, out double shearRatio)
         {

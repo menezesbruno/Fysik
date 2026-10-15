@@ -142,16 +142,16 @@ namespace Fysik.Game
             sb.AppendLine("Last solve: " + StructureManager.Instance.LastSolve);
             sb.AppendLine();
             sb.AppendLine("# index; prefab; zdo; material; mass kg; center; size; rotation (euler, degrees); ground points; " +
-                          "mode; utilization; axial N; moment N·m; torque N·m; carried kg; holds kg; snow kg; riding kg; rests on");
+                          "mode; utilization; axial N; moment N·m; torque N·m; carried kg; holds kg; snow kg; riding kg; rests on; shape");
             for (int i = 0; i < island.Members.Count; i++)
             {
                 PieceNode m = island.Members[i];
                 Obb box = m.Geometry.Main;
-                sb.AppendLine(string.Format(inv, "{0}; {1}; {2}; {3}; {4:0.0}; {5}; {6}; {7}; {8}; {9}; {10:0.000}; {11:0}; {12:0}; {13:0}; {14:0.0}; {15:0.0}; {16:0.0}; {17:0.0}; {18}",
+                sb.AppendLine(string.Format(inv, "{0}; {1}; {2}; {3}; {4:0.0}; {5}; {6}; {7}; {8}; {9}; {10:0.000}; {11:0}; {12:0}; {13:0}; {14:0.0}; {15:0.0}; {16:0.0}; {17:0.0}; {18}; {19}",
                     i, m.Name, m.Id, m.MaterialName, m.Mass, Format(box.Center), Format(box.Size),
                     Format(box.Rotation.eulerAngles), m.GroundContacts.Count, m.Result.Mode, m.Result.Utilization,
                     m.Result.AxialForce, m.Result.BendingMoment, m.Result.Torque, m.Carried, m.Holds, m.Snow, m.Riding,
-                    m.RestsOn));
+                    m.RestsOn, m.Geometry.Fitted ? "fitted" : "box"));
             }
             sb.AppendLine();
             sb.AppendLine("# joints: index; index; point; span on the first (x, y, z: from to); span on the second");

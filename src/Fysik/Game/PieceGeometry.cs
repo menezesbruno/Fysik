@@ -156,6 +156,7 @@ namespace Fysik.Game
         public Recipe Recipe;
         public double SnowArea;
         public string Summary;
+        public bool Fitted;
 
         public double MaterialsMass => WeighsRecipe ? Recipe.Mass : 0;
 
@@ -184,6 +185,7 @@ namespace Fysik.Game
                     continue;
                 Obb box = Obb.Of(c);
                 float volume = hasBoxes && c is MeshCollider ? 0f : SolidVolume(c, box);
+                g.Fitted |= ArchFit.TryVolume(c, out float _);
                 switch (c)
                 {
                     case BoxCollider _: boxes++; break;
@@ -293,6 +295,7 @@ namespace Fysik.Game
             Size = ToVec(Main.Size),
             Mass = MassFor(material),
             Material = material,
+            Fitted = Fitted,
         };
 
         private static bool IsObject(Piece piece)

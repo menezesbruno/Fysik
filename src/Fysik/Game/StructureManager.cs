@@ -704,7 +704,7 @@ namespace Fysik.Game
             string worstText = worst < 0 ? "" :
                 $"; worst {job.Members[worst].Name} {Describe(results[worst])}";
             LastSolve = $"{job.Members.Count} pieces, {island.Solver}" +
-                        (island.Solver == SolverKind.Frame ? $" ({job.Analysis.Iterations} iterations{(job.Analysis.Converged ? "" : ", not converged")})" : "") +
+                        (island.Solver == SolverKind.Frame ? $" ({job.Analysis.Iterations} iterations{(job.Analysis.MasonryRounds > 0 ? $", {job.Analysis.MasonryRounds} masonry rounds" : "")}{(job.Analysis.MasonrySettled ? "" : ", masonry not settled")}{(job.Analysis.Converged ? "" : ", not converged")})" : "") +
                         $", {ms:0.0} ms of frame time over {job.Frames} frames, {wall:0} ms in all{worstText}";
             if (FysikConfig.LogSolves.Value)
                 Plugin.Log.LogInfo("Solved " + LastSolve);

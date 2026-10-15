@@ -3,8 +3,23 @@ using System.Collections.Generic;
 
 namespace Fysik.Structure
 {
+    public struct JointRelease
+    {
+        public bool Open;
+        public bool Moved;
+        public Vec3 Point;
+        public Vec3 HingeA;
+        public Vec3 HingeB;
+        public Vec3 SlipA;
+        public Vec3 SlipB;
+        public double[] SpanA;
+        public double[] SpanB;
+    }
+
     public sealed class FrameAnalysis
     {
+        public const double DefaultResidual = 1e-4;
+
         private const int Dof = 6;
         private const int Block = Dof * Dof;
 
@@ -30,6 +45,8 @@ namespace Fysik.Structure
                                   _dta = new double[Block], _dtb = new double[Block], _tmp = new double[Block],
                                   _compliance = new double[Block], _factor = new double[Block];
         private readonly double[] _unit = new double[Dof], _column = new double[Dof];
+        private readonly JointRelease[] _releases;
+        private readonly double _residual;
 
         public int Iterations { get; private set; }
         public bool Converged { get; private set; }
@@ -42,9 +59,13 @@ namespace Fysik.Structure
             public Vec3 ArmA, ArmB;
         }
 
-        public FrameAnalysis(StructureModel model, double tolerance = 1e-6, int maxIterations = 0)
+        public FrameAnalysis(StructureModel model, double tolerance = 1e-6, int maxIterations = 0,
+                             JointRelease[] releases = null, double[] start = null, double residual = DefaultResidual,
+                             bool[] weightless = null)
         {
             _model = model;
+            _releases = releases;
+            _residual = residual;
             _n = model.Bodies.Count;
             _tolerance = tolerance;
             _maxIterations = maxIterations > 0 ? maxIterations : Math.Max(500, 4 * Dof * _n);
@@ -63,11 +84,57 @@ namespace Fysik.Structure
 
             for (int i = 0; i < _n; i++)
             {
+                if (weightless != null && weightless[i])
+                    continue;
                 Vec3 w = model.Gravity * model.Bodies[i].Mass;
                 _f[i * Dof + 0] = w.X;
                 _f[i * Dof + 1] = w.Y;
                 _f[i * Dof + 2] = w.Z;
             }
+            if (start != null && start.Length == _x.Length)
+                Array.Copy(start, _x, _x.Length);
+        }
+
+        public double[] Solution => _x;
+
+        public double Residual => _residual;
+
+        public Vec3 TranslationOf(int body) => Translation(body);
+
+        public Vec3 RotationOf(int body) => Rotation(body);
+
+        public void LinkMotion(int li, out Vec3 delta, out Vec3 turn)
+        {
+            LinkData l = _links[li];
+            Vec3 ua = Translation(l.A), ta = Rotation(l.A);
+            delta = -(ua + Vec3.Cross(ta, l.ArmA));
+            turn = -ta;
+            if (l.B >= 0)
+            {
+                Vec3 ub = Translation(l.B), tb = Rotation(l.B);
+                delta += ub + Vec3.Cross(tb, l.ArmB);
+                turn += tb;
+            }
+        }
+
+        public ContactLoad LinkLoad(int li)
+        {
+            LinkData l = _links[li];
+            var deformation = new double[Dof];
+            LinkMotion(li, out Vec3 delta, out Vec3 dTheta);
+            deformation[0] = delta.X;
+            deformation[1] = delta.Y;
+            deformation[2] = delta.Z;
+            deformation[3] = dTheta.X;
+            deformation[4] = dTheta.Y;
+            deformation[5] = dTheta.Z;
+            return new ContactLoad
+            {
+                Point = _model.Bodies[l.A].Center + l.ArmA,
+                Force = new Vec3(Row(li, 0, deformation), Row(li, 1, deformation), Row(li, 2, deformation)),
+                Moment = new Vec3(Row(li, 3, deformation), Row(li, 4, deformation), Row(li, 5, deformation)),
+                Ground = l.B < 0,
+            };
         }
 
         public bool Iterate(int steps)
@@ -149,10 +216,16 @@ namespace Fysik.Structure
                 Vec3 moment = new Vec3(Row(li, 3, deformation), Row(li, 4, deformation), Row(li, 5, deformation));
                 Vec3 point = _model.Bodies[l.A].Center + l.ArmA;
                 Link link = _model.Links[li];
+                double[] spanA = link.SpanA, spanB = link.SpanB;
+                if (_releases != null && (_releases[li].Open || _releases[li].Moved))
+                {
+                    spanA = _releases[li].SpanA;
+                    spanB = _releases[li].SpanB;
+                }
 
-                loads[l.A].Add(new ContactLoad { Point = point, Force = force, Moment = moment, Ground = l.B < 0, Span = link.SpanA });
+                loads[l.A].Add(new ContactLoad { Point = point, Force = force, Moment = moment, Ground = l.B < 0, Span = spanA });
                 if (l.B >= 0)
-                    loads[l.B].Add(new ContactLoad { Point = point, Force = -force, Moment = -moment, Span = link.SpanB });
+                    loads[l.B].Add(new ContactLoad { Point = point, Force = -force, Moment = -moment, Span = spanB });
             }
             return loads;
         }
@@ -194,19 +267,22 @@ namespace Fysik.Structure
         private void AssembleLink(int li)
         {
             Link link = _model.Links[li];
+            JointRelease release = _releases != null ? _releases[li] : default;
+            Vec3 point = release.Moved ? release.Point : link.Point;
             Body a = _model.Bodies[link.A];
-            var data = new LinkData { A = link.A, B = link.B, ArmA = link.Point - a.Center };
+            var data = new LinkData { A = link.A, B = link.B, ArmA = point - a.Center };
 
             Array.Clear(_compliance, 0, Block);
-            Mechanics.AddSegmentCompliance(a, link.Point, _compliance);
+            Mechanics.AddSegmentCompliance(a, point, _compliance);
             if (!link.IsGround)
             {
                 Body b = _model.Bodies[link.B];
-                data.ArmB = link.Point - b.Center;
-                Mechanics.AddSegmentCompliance(b, link.Point, _compliance);
+                data.ArmB = point - b.Center;
+                Mechanics.AddSegmentCompliance(b, point, _compliance);
             }
             _links[li] = data;
             InvertSymmetric(_compliance, _linkStiffness, li * Block);
+            Release(li * Block, release);
 
             Array.Clear(_ta, 0, Block);
             SetBlock(_ta, 0, 0, -Mat3.Identity);
@@ -230,6 +306,36 @@ namespace Fysik.Structure
                 MulT6(_ta, _dtb, _tmp);
                 Array.Copy(_tmp, 0, _offDiagonal, li * Block, Block);
             }
+        }
+
+        private void Release(int offset, JointRelease release)
+        {
+            if (release.Open)
+            {
+                for (int k = 0; k < Block; k++)
+                    _linkStiffness[offset + k] *= _residual;
+                return;
+            }
+            Free(offset, release.HingeA, 3);
+            Free(offset, release.HingeB, 3);
+            Free(offset, release.SlipA, 0);
+            Free(offset, release.SlipB, 0);
+        }
+
+        private void Free(int offset, Vec3 axis, int first)
+        {
+            if (axis.LengthSquared < 1e-12)
+                return;
+            for (int r = 0; r < Dof; r++)
+                _column[r] = _linkStiffness[offset + r * Dof + first] * axis.X + _linkStiffness[offset + r * Dof + first + 1] * axis.Y +
+                             _linkStiffness[offset + r * Dof + first + 2] * axis.Z;
+            double stiffness = _column[first] * axis.X + _column[first + 1] * axis.Y + _column[first + 2] * axis.Z;
+            if (stiffness <= 0)
+                return;
+            double scale = (1 - _residual) / stiffness;
+            for (int r = 0; r < Dof; r++)
+                for (int c = 0; c < Dof; c++)
+                    _linkStiffness[offset + r * Dof + c] -= _column[r] * _column[c] * scale;
         }
 
         private void InvertSymmetric(double[] m, double[] target, int offset)

@@ -18,6 +18,9 @@ namespace Fysik.Structure
         public double ShearStrength = 1e6;
 
         public double BucklingSlenderness = 60;
+
+        public bool Masonry;
+        public double Friction = 0.6;
     }
 
     public sealed class Body
@@ -33,6 +36,8 @@ namespace Fysik.Structure
         public MaterialProps Material;
 
         public double StrengthFactor = 1;
+
+        public bool Fitted;
 
         public Vec3 Axis(int i) => i == 0 ? AxisX : i == 1 ? AxisY : AxisZ;
 
@@ -91,6 +96,9 @@ namespace Fysik.Structure
         Unsupported,
 
         Torsion,
+        Tipping,
+        Sliding,
+        Unstable,
     }
 
     public struct BodyResult
