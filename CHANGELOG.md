@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0
+## 0.2.0: masonry and arch stones
 
 **Updating from 0.1.x:** stone now rests on stone like real masonry (below), so stone that only held
 because it was glued falls: overhangs past the stone below, slabs held only by the side of a wall,
