@@ -15,8 +15,40 @@ ground), the pressure varies in a straight line across that area, stronger on th
 leans towards, as in a real bearing; a stack of walls is therefore only squeezed, however tall. Over
 a short contact, such as the end of a post, the force is spread evenly.
 
-All joints are rigid: a rectangle of posts and beams holds on its own, and triangles and braces
-relieve it by carrying the load along their length.
+Joints of wood, iron and every other material are rigid: a rectangle of posts and beams holds on
+its own, and triangles and braces relieve it by carrying the load along their length.
+
+![How wood works: squeeze, pull and bend, cantilevers and braces, rectangles and triangles, buckling](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/wood-theory.png)
+
+## Masonry
+
+Stone does not work like that. A mason's wall is stones resting on stones, and the theory masons
+and engineers use for it (Jacques Heyman's) takes three things as given: the joints carry no
+tension, the stone never runs out of compressive strength, and friction stops the stones sliding.
+What matters is where the force goes through each joint: while it stays inside the area where two
+stones touch, they press on each other and stay put; when it reaches the edge, the joint opens on the
+other side and the stones rock on that edge like a hinge. A few hinges are harmless (an arch whose
+supports spread a little cracks open at the crown and stands for centuries), but once there are
+enough of them for the stones to move, the structure falls: an arch with four hinges collapses.
+
+![How stone works: where the force passes through a joint, the line of thrust in an arch, bonded courses over an opening, buttress and pinnacle](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/masonry-theory.png)
+
+Fysik applies this to every joint between two stone, black marble or grausten pieces:
+
+- It solves the structure as if every joint were glued, then looks at each stone joint: a joint
+  pulled apart opens, a joint whose force passes outside the contact becomes a hinge on the edge it
+  leans on, and a joint pushed sideways more than friction holds (0.6 of the squeeze) slips. It
+  solves again, and repeats until no joint changes.
+- If some stones can then move freely, they fall (*Unstable*). To tell, Fysik solves once more with
+  the open joints ten times softer still: a part that is really held moves the same, a part that is
+  loose moves ten times more. Where the stones of a loose part would press into a neighbour as they
+  move, that contact is closed again before deciding, since it would catch them.
+- The hammer shows, for each stone, how far the force in its worst joint has moved towards the edge
+  of the contact (*Tipping*: 0% in the middle, 100% at the edge) and how close the joint is to
+  slipping (*Sliding*), when either is higher than the stress inside the stone itself.
+
+Stone resting on wood, iron or the ground is still joined rigidly, and two stones that only touch
+corner to corner along an edge do not hold each other at all.
 
 ## The calculation
 
@@ -32,8 +64,8 @@ as a percentage of what the piece can take.
 - Long, thin pieces buckle: their limit in compression drops with their slenderness.
 - Damaged pieces are weaker below half health.
 - Materials are about a tenth as strong as the real ones, so that builds at Valheim's scale reach
-  their limits: a balcony of 4 m core wood logs is comfortable 8 m out (46%) and breaks 12 m out
-  (101%).
+  their limits: a balcony of 4 m core wood logs is comfortable 8 m out (43%) and reaches its limit
+  12 m out (97%).
 
 ## When it calculates
 

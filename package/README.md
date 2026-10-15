@@ -7,7 +7,7 @@ Bridge Constructor.
 ![A 24 m tied-arch bridge with braced ends, every piece colored by its computed stress: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-tied-arch-braced.png)
 
 *A 24 m bridge from the building guide, every piece colored by the stress Fysik computes: the worst
-is at 44%, and it goes up without scaffolding. The parts list and building order are in the picture.*
+is at 42%, and it goes up without scaffolding. The parts list and building order are in the picture.*
 
 ## How it works
 
@@ -16,6 +16,8 @@ is at 44%, and it goes up without scaffolding. The parts list and building order
 - **Shape matters.** Arches carry their load in compression and span gaps a flat beam cannot. Braces
   and triangles carry load along their length instead of bending. Cantilevers bend, more the further
   they reach.
+- **Stone is masonry.** Stones rest on each other and cannot pull: each needs something under its
+  weight, and an arch of the new wedge-shaped arch stones stands once its keystone is in.
 - **Colors show the stress**: blue is relaxed, green is fine, yellow is getting close, red is at the
   limit.
 - **Overloaded pieces crack before they fall**: they turn red, shake and creak for a few seconds,
@@ -50,6 +52,24 @@ Worked examples, every number explained and answers to common questions are in t
 > Buildings that come with the world (stone towers, abandoned houses, villages, ruins) are **not**
 > simulated: they keep vanilla support, unless the server sets `Structure.WorldBuildings = Physics`
 > (see *Server admins* in the [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/)).
+>
+> **Updating from 0.1.x?** Since 0.2.0 stone, black marble and grausten rest on each other like real
+> masonry instead of being glued. Stone that only held because it was glued **falls**: overhangs past
+> the stone below, slabs held only by the side of a wall, blocks over a doorway with nothing under
+> them, half-built arches. Back up your world before updating and look over your stone builds with
+> the X-ray (F7), or have the server set `Structure.MasonryJoints = false` to keep stone glued as before.
+>
+> The arch stones are Fysik's own pieces: a world keeps them only while Fysik is installed.
+
+## The physics
+
+Wood and iron follow beam theory: a piece is strong squeezed or pulled along its length and much
+weaker bent across it, so braces, trusses and arches beat long beams. Stone follows masonry theory:
+blocks rest on each other, and what counts is where the force passes through the joints between them.
+
+![How wood works: squeeze, pull and bend, cantilevers and braces, rectangles and triangles, buckling](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/wood-theory.png)
+
+![How stone works: where the force passes through a joint, the line of thrust in an arch, bonded courses over an opening, buttress and pinnacle](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/masonry-theory.png)
 
 ## Status
 
@@ -80,8 +100,8 @@ Everything else is in the [wiki](https://thunderstore.io/c/valheim/p/menezesbrun
 - **Reading the forces**: the colors, every line next to the crosshair, the X-ray, the placement
   preview and how cracking works.
 - **What weighs**: pieces, furniture, piles, chests, players, carts and snow, with typical weights.
-- **Building guide**: balconies, arches, trusses, stone bridges, snow on roofs and carts on bridges,
-  with worked examples.
+- **Building guide**: balconies, arches, trusses, stone masonry and stone bridges, snow on roofs and
+  carts on bridges, with worked examples.
 - **Server admins**: multiplayer, versions, world buildings, big bases and the settings worth knowing.
 - **FAQ**: common questions, and how to send a build that behaves strangely.
 - **How it works**: the calculation behind it.
@@ -90,11 +110,11 @@ Everything else is in the [wiki](https://thunderstore.io/c/valheim/p/menezesbrun
 
 Next:
 
-- Masonry: stone blocks that only hold by pressing on each other, interlocking walls, arches built on wooden centering
+- More arch stones (cut from the 2×1 stone), and grausten and black marble blocks cut around arches
+- Creatures' weight (tamed lox, trolls) on bridges and floors
 
 Later:
 
-- Creatures' weight (tamed lox, trolls) on bridges and floors
 - Calibration with player builds (feedback welcome)
 - Faster recalculation for very large bases
 - Translations into every language Valheim supports
@@ -112,7 +132,8 @@ synced to every client; they can also be edited in game with a configuration man
 | Failure | CrackWarningSeconds (*server*) | 5 | 0–60 | Seconds an overloaded piece stays cracked before it falls, when it is just past its limit (up to 110%); shorter the further past, none at twice its limit. |
 | Failure | DamageWeakens (*server*) | on | | Pieces below half health are weaker, down to 25% strength at the brink of breaking; rain wear alone never weakens them. Off: damage never changes strength. |
 | Structure | Difficulty (*server*) | Normal | Relaxed, Normal, Strict | Relaxed: materials 50% stronger (longer spans and cantilevers). Strict: 30% weaker. |
-| Structure | MaxFrameBodies (*server*) | 2000 | 500–5000 | Largest structure solved with the full frame analysis; bigger ones use a simplified model that does not recognise arches. Higher values take longer to update (about 0.5 s for 2000 pieces, 2 s for 5000). |
+| Structure | MasonryJoints (*server*) | on | | Stone, black marble and grausten rest on each other like real masonry: their joints cannot pull, they open or rock on an edge when the weight above is off-centre and slip when pushed sideways harder than friction holds; a stone needs something under its weight. Off: these joints are glued, as up to 0.1.5. |
+| Structure | MaxFrameBodies (*server*) | 2000 | 500–5000 | Largest structure solved with the full frame analysis; bigger ones use a simplified model that does not recognise arches or masonry. Higher values take longer to update (about 0.5 s for 2000 pieces, 2 s for 5000). |
 | Material.\<type\> | Density, CompressiveStrength, TensileStrength, ShearStrength, BucklingSlenderness (*server*) | per material | | Density (kg/m³) gives structural pieces their weight; strengths in MPa. Stone is strong in compression and weak in tension. Objects weigh their materials instead (see Weight). |
 | Weight | Wood, Stone, MetalBar, Nail (*server*) | 4, 10, 4, 0.1 | 0–1000 | Kilograms per item used to build an object (furniture, crafting stations, chests, torches); objects weigh their materials, not their volume. |
 | Weight | PerItemWeight (*server*) | 2 | 0–100 | Kilograms per unit of the game's item weight, for every other material in an object's recipe. |
