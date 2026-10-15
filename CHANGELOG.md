@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- Fysik is now under the GNU General Public License v3.0 (it was MIT up to 0.1.5): anyone may use,
+  change and share it, and whatever is built on it and distributed must stay open under the same
+  license.
+
 ## 0.1.5: what holds a piece up
 
 - The hammer says what a piece rests on: a new line, *Rests on the ground*, on every piece that

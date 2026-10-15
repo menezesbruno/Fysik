@@ -148,4 +148,4 @@ and nails, and counts any other resource by its weight in the inventory (`Weight
 ## Links
 
 - Source code and issues: <https://github.com/menezesbruno/Fysik>
-- License: MIT
+- License: GNU General Public License v3.0

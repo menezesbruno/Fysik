@@ -51,5 +51,6 @@ snow buildup, in four steps. Everyone therefore solves the same structure with t
 
 ## Source
 
-Fysik is open source, under the MIT license: <https://github.com/menezesbruno/Fysik>. The solver is
-plain C#, tested against beam theory, and runs outside the game too.
+Fysik is free software, under the GNU General Public License v3.0:
+<https://github.com/menezesbruno/Fysik>. The solver is plain C#, tested against beam theory, and runs
+outside the game too.

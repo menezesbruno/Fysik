@@ -138,4 +138,7 @@ lists pages alphabetically), and the rest is its content.
 
 ## License
 
-[MIT](LICENSE)
+Copyright (c) 2026 Bruno Menezes. Fysik is free software under the [GNU General Public License
+v3.0](LICENSE): you may use, change and share it, and whatever you distribute that is built on it must
+be released under the same license, with its source code. Versions up to 0.1.5 were released under
+the MIT license.
