@@ -14,9 +14,10 @@
   could read up to 99%.
 - Numbers change a little where stone meets tower stones or stones cut to fit: towers read a few
   points lower, the guide's lighthouse 35% (was 36%) and its Roman bridge 77% (was 71%).
-- A castle in the building guide: four round towers 24 m apart, walls 2 m thick of 2×1 stones with a
-  wall walk behind a parapet and merlons of thin stone, and a gate under two rings of the 4 m arch,
-  every stone around it cut to fit.
+- Two castles in the building guide, both with four round towers 24 m apart and an arched gate: one
+  with walls 2 m thick of 2×1 stones and a wall walk behind a parapet and merlons of thin stone, one
+  with walls 1 m thick and a wooden wall walk on knee braces, which takes half the stone. Every
+  stone around the gates is cut to fit.
 
 ## 0.2.2: thin walls and round towers
 
