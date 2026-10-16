@@ -65,6 +65,13 @@ namespace Fysik.Game
                         Rotation = t.rotation,
                         Size = Abs(Vector3.Scale(stone.BoxSize, t.lossyScale)),
                     };
+                case MeshCollider _ when TowerStones.TryGet(collider, out TowerStone tower):
+                    return new Obb
+                    {
+                        Center = t.position,
+                        Rotation = t.rotation * tower.BoxRotation,
+                        Size = Abs(Vector3.Scale(tower.BoxSize, t.lossyScale)),
+                    };
                 case MeshCollider mesh when mesh.sharedMesh != null:
                     Bounds b = mesh.sharedMesh.bounds;
                     return new Obb
@@ -244,7 +251,7 @@ namespace Fysik.Game
 
         private static float SolidVolume(Collider c, Obb box)
         {
-            if (ArchStones.TryGet(c, out ArchStone _))
+            if (ArchStones.TryGet(c, out ArchStone _) || TowerStones.TryGet(c, out TowerStone _))
                 return box.Volume;
             if (ArchFit.TryVolume(c, out float fitted))
                 return fitted;

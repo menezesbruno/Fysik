@@ -25,6 +25,8 @@ namespace Fysik
             SynchronizationManager.OnConfigurationSynchronized += OnConfigurationSynchronized;
             Texts.Register();
             ArchStones.Register();
+            ThinStones.Register();
+            TowerStones.Register();
             CommandManager.Instance.AddConsoleCommand(new FysikCommand());
 
             ApplyPatches();

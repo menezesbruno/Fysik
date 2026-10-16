@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Fysik.Structure;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -13,11 +14,20 @@ namespace Fysik.Game
         public readonly List<Collider> Hidden = new List<Collider>();
         public readonly List<MeshCollider> Added = new List<MeshCollider>();
         public readonly List<Mesh> Created = new List<Mesh>();
+        public readonly List<LODGroup> Groups = new List<LODGroup>();
+        public readonly List<LOD[]> Lods = new List<LOD[]>();
+        public readonly List<Renderer> Silenced = new List<Renderer>();
 
         public bool Cut => Filters.Count > 0 || Added.Count > 0;
 
         public void Restore()
         {
+            for (int i = 0; i < Groups.Count; i++)
+                if (Groups[i] != null)
+                    Groups[i].SetLODs(Lods[i]);
+            foreach (Renderer r in Silenced)
+                if (r != null)
+                    r.enabled = true;
             for (int i = 0; i < Filters.Count; i++)
                 if (Filters[i] != null)
                     Filters[i].sharedMesh = Originals[i];
@@ -32,6 +42,9 @@ namespace Fysik.Game
             Originals.Clear();
             Hidden.Clear();
             Added.Clear();
+            Groups.Clear();
+            Lods.Clear();
+            Silenced.Clear();
         }
 
         private void Release()
@@ -54,15 +67,42 @@ namespace Fysik.Game
         private const float Gap = 0.005f;
         private const int MaxDepth = 4;
         private const double BudgetMs = 2;
+        private const double CurvedEdge = 0.1;
+        private const double RoughSlack = 0.15;
+        private const double ExactSlack = 0.02;
 
         private struct Wedge
         {
             public Matrix4x4 ToLocal;
             public Matrix4x4 ToWorld;
             public ArchStone Stone;
+            public TowerStone Tower;
+            public OrientedBox Block;
             public bool Outward;
             public bool Open;
             public bool Deep;
+
+            public bool Contains(Vec3 p, bool visual)
+            {
+                if (Tower != null)
+                    return visual
+                        ? Tower.Ring.Claims(p, Outward, Margin, Open, Deep, Tower.OuterGrow * RoughShare, Tower.InnerGrow * RoughShare,
+                                            Tower.DepthGrow + DepthSlack)
+                        : Tower.Ring.Claims(p, Outward, Margin, Open, Deep);
+                return visual
+                    ? Stone.Shape.Contains(p, Stone.Depth, Margin, Open, Deep, Stone.OuterGrow * RoughShare, Stone.InnerGrow * RoughShare,
+                                           Stone.DepthGrow + DepthSlack)
+                    : Stone.Shape.Contains(p, Stone.Depth, Margin, Open, Deep);
+            }
+
+            public Vec3 ToFace(Vec3 p, bool visual)
+            {
+                if (Tower != null)
+                    return Tower.Ring.ToFaceWithin(p, Block, Outward,
+                                                   Gap + (visual ? (Outward ? Tower.OuterGrow : Tower.InnerGrow) * RoughShare : 0),
+                                                   visual ? RoughSlack : ExactSlack);
+                return Stone.Shape.ToFace(p, Outward, Gap + (visual ? (Outward ? Stone.OuterGrow : Stone.InnerGrow) * RoughShare : 0));
+            }
         }
 
         private static readonly Queue<WearNTear> s_around = new Queue<WearNTear>();
@@ -95,17 +135,20 @@ namespace Fysik.Game
         {
             if (Dedicated)
                 return;
-            if (ArchStones.TryGet(wnt.gameObject, out ArchStone _))
+            if (Shaped(wnt))
                 s_around.Enqueue(wnt);
-            else if (Stone(wnt))
+            else if (Fits(wnt))
                 Queue(wnt);
         }
 
         public static void Destroyed(WearNTear wnt)
         {
-            if (!Dedicated && ArchStones.TryGet(wnt.gameObject, out ArchStone _))
+            if (!Dedicated && Shaped(wnt))
                 QueueAround(wnt);
         }
+
+        private static bool Shaped(WearNTear wnt) =>
+            ArchStones.TryGet(wnt.gameObject, out ArchStone _) || TowerStones.TryGet(wnt.gameObject, out TowerStone _);
 
         public static void Clear()
         {
@@ -133,10 +176,29 @@ namespace Fysik.Game
             }
         }
 
-        private static bool Stone(WearNTear wnt) =>
-            wnt.m_materialType == WearNTear.MaterialType.Stone && wnt.m_supports && !ArchStones.TryGet(wnt.gameObject, out ArchStone _);
+        private static bool Fits(WearNTear wnt) => wnt.m_supports && (Masonry(wnt) || Timber(wnt)) && !Shaped(wnt);
 
-        private static bool Eligible(WearNTear wnt) => Stone(wnt) && wnt.m_piece != null && wnt.m_piece.GetCreator() != 0;
+        private static bool Masonry(WearNTear wnt) => wnt.m_materialType == WearNTear.MaterialType.Stone;
+
+        private static bool Timber(WearNTear wnt)
+        {
+            if (wnt.m_materialType != WearNTear.MaterialType.Wood && wnt.m_materialType != WearNTear.MaterialType.HardWood ||
+                wnt.GetComponent<Door>() != null)
+                return false;
+            FittedStone fitted = wnt.GetComponent<FittedStone>();
+            bool any = false;
+            foreach (BoxCollider box in wnt.GetComponentsInChildren<BoxCollider>())
+            {
+                if (box.isTrigger || !box.enabled && (fitted == null || !fitted.Hidden.Contains(box)))
+                    continue;
+                if (!Panel.Is(ToVec(Vector3.Scale(box.size, box.transform.lossyScale))))
+                    return false;
+                any = true;
+            }
+            return any;
+        }
+
+        private static bool Eligible(WearNTear wnt) => Fits(wnt) && wnt.m_piece != null && wnt.m_piece.GetCreator() != 0;
 
         private static void Queue(WearNTear wnt)
         {
@@ -162,7 +224,7 @@ namespace Fysik.Game
                 for (int i = 0; i < count; i++)
                 {
                     WearNTear other = s_hits[i].GetComponentInParent<WearNTear>();
-                    if (other != null && other != stone && other.m_nview != null && other.m_nview.GetZDO() != null && Stone(other))
+                    if (other != null && other != stone && other.m_nview != null && other.m_nview.GetZDO() != null && Fits(other))
                         Queue(other);
                 }
             }
@@ -190,10 +252,17 @@ namespace Fysik.Game
             EnsureMask();
             s_wedges.Clear();
             s_seen.Clear();
-            foreach (BoxCollider box in wnt.GetComponentsInChildren<BoxCollider>())
+            bool masonry = Masonry(wnt);
+            BoxCollider[] boxes = wnt.GetComponentsInChildren<BoxCollider>().Where(b => b.enabled && !b.isTrigger).ToArray();
+            var corners = new List<Vector3>();
+            Vector3 middle = Vector3.zero;
+            foreach (BoxCollider box in boxes)
             {
-                if (!box.enabled || box.isTrigger)
-                    continue;
+                corners.AddRange(Corners(box));
+                middle += box.transform.TransformPoint(box.center) / boxes.Length;
+            }
+            foreach (BoxCollider box in boxes)
+            {
                 Transform t = box.transform;
                 Vector3 centre = t.TransformPoint(box.center);
                 Vector3 half = Vector3.Scale(box.size, t.lossyScale) * 0.5f;
@@ -201,26 +270,55 @@ namespace Fysik.Game
                 for (int i = 0; i < count; i++)
                 {
                     Collider hit = s_hits[i];
-                    if (!ArchStones.TryGet(hit, out ArchStone stone) || !s_seen.Add(hit.transform))
+                    TowerStone tower = null;
+                    bool arch = ArchStones.TryGet(hit, out ArchStone stone);
+                    if (arch && !masonry || !arch && !TowerStones.TryGet(hit, out tower))
+                        continue;
+                    if (!s_seen.Add(hit.transform))
                         continue;
                     WearNTear owner = hit.GetComponentInParent<WearNTear>();
                     if (owner == null || owner == wnt)
                         continue;
                     Matrix4x4 toLocal = hit.transform.worldToLocalMatrix;
-                    Vector3 p = toLocal.MultiplyPoint3x4(centre);
-                    var local = new Vec3(p.x, p.y, p.z);
-                    s_wedges.Add(new Wedge
+                    var wedge = new Wedge { ToLocal = toLocal, ToWorld = hit.transform.localToWorldMatrix, Stone = stone, Tower = tower };
+                    if (arch)
                     {
-                        ToLocal = toLocal,
-                        ToWorld = hit.transform.localToWorldMatrix,
-                        Stone = stone,
-                        Outward = stone.Shape.Beyond(local),
-                        Open = stone.Shape.InSector(local),
-                        Deep = Voussoir.InDepth(local, stone.Depth),
-                    });
+                        Vec3 local = ToVec(toLocal.MultiplyPoint3x4(centre));
+                        wedge.Outward = stone.Shape.Beyond(local);
+                        wedge.Open = stone.Shape.InSector(local);
+                        wedge.Deep = Voussoir.InDepth(local, stone.Depth);
+                    }
+                    else
+                    {
+                        Vec3 local = ToVec(toLocal.MultiplyPoint3x4(middle));
+                        List<Vec3> locals = corners.Select(c => ToVec(toLocal.MultiplyPoint3x4(c))).ToList();
+                        wedge.Outward = tower.Ring.Beyond(local);
+                        wedge.Open = tower.Ring.Opens(local, locals);
+                        wedge.Deep = tower.Ring.Reaches(locals);
+                        Vector3 size = Abs(Vector3.Scale(box.size, box.transform.lossyScale));
+                        wedge.Block = new OrientedBox
+                        {
+                            Center = local,
+                            AxisX = ToVec(toLocal.MultiplyVector(box.transform.right)),
+                            AxisY = ToVec(toLocal.MultiplyVector(box.transform.up)),
+                            AxisZ = ToVec(toLocal.MultiplyVector(box.transform.forward)),
+                            Half = ToVec(size * 0.5f),
+                        };
+                    }
+                    s_wedges.Add(wedge);
                 }
             }
         }
+
+        private static IEnumerable<Vector3> Corners(BoxCollider box)
+        {
+            Vector3 c = box.center, h = box.size * 0.5f;
+            for (int i = 0; i < 8; i++)
+                yield return box.transform.TransformPoint(c + new Vector3((i & 1) == 0 ? -h.x : h.x, (i & 2) == 0 ? -h.y : h.y,
+                                                                          (i & 4) == 0 ? -h.z : h.z));
+        }
+
+        private static Vec3 ToVec(Vector3 v) => new Vec3(v.x, v.y, v.z);
 
         private static Vector3 Abs(Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
 
@@ -267,7 +365,10 @@ namespace Fysik.Game
                 fitted.Created.Add(cuts[i]);
             }
             foreach (LODGroup group in wnt.GetComponentsInChildren<LODGroup>(true))
+            {
+                KeepNear(group, fitted);
                 group.RecalculateBounds();
+            }
             for (int i = 0; i < boxes.Count; i++)
             {
                 boxes[i].enabled = false;
@@ -279,6 +380,39 @@ namespace Fysik.Game
                 s_volumes[shapes[i]] = Volume(shapes[i], boxes[i].transform.lossyScale);
             }
             return true;
+        }
+
+        private static void KeepNear(LODGroup group, FittedStone fitted)
+        {
+            LOD[] lods = group.GetLODs();
+            if (lods.Length < 2 || !lods[0].renderers.Any(r => Carved(r, fitted)))
+                return;
+            LOD near = lods[0];
+            var far = new List<Renderer>();
+            for (int i = 1; i < lods.Length; i++)
+                foreach (Renderer r in lods[i].renderers)
+                    if (r != null && !near.renderers.Contains(r) && !far.Contains(r))
+                        far.Add(r);
+            if (far.All(r => Carved(r, fitted)))
+                return;
+            fitted.Groups.Add(group);
+            fitted.Lods.Add(lods);
+            near.screenRelativeTransitionHeight = lods[lods.Length - 1].screenRelativeTransitionHeight;
+            group.SetLODs(new[] { near });
+            foreach (Renderer r in far)
+                if (r.enabled)
+                {
+                    r.enabled = false;
+                    fitted.Silenced.Add(r);
+                }
+        }
+
+        private static bool Carved(Renderer renderer, FittedStone fitted)
+        {
+            if (renderer == null)
+                return false;
+            MeshFilter filter = renderer.GetComponent<MeshFilter>();
+            return filter != null && fitted.Filters.Contains(filter);
         }
 
         private static float Volume(Mesh mesh, Vector3 scale)
@@ -329,7 +463,7 @@ namespace Fysik.Game
                 Vector3 w = toWorld.MultiplyPoint3x4(v);
                 world.Add(new Vec3(w.x, w.y, w.z));
             }
-            var carver = new MeshCarver(world, WedgeOf, MaxDepth);
+            var carver = new MeshCarver(world, WedgeOf, MaxDepth, w => s_wedges[w].Tower != null ? CurvedEdge : 0);
             var submeshes = new List<List<int>>();
             for (int s = 0; s < source.subMeshCount; s++)
                 submeshes.Add(carver.Split(source.GetTriangles(s)));
@@ -386,17 +520,8 @@ namespace Fysik.Game
         {
             var point = new Vector3((float)world.X, (float)world.Y, (float)world.Z);
             for (int i = 0; i < s_wedges.Count; i++)
-            {
-                Wedge w = s_wedges[i];
-                Vector3 p = w.ToLocal.MultiplyPoint3x4(point);
-                bool inside = s_visual
-                    ? w.Stone.Shape.Contains(new Vec3(p.x, p.y, p.z), w.Stone.Depth, Margin, w.Open, w.Deep,
-                                             w.Stone.OuterGrow * RoughShare, w.Stone.InnerGrow * RoughShare,
-                                             w.Stone.DepthGrow + DepthSlack)
-                    : w.Stone.Shape.Contains(new Vec3(p.x, p.y, p.z), w.Stone.Depth, Margin, w.Open, w.Deep);
-                if (inside)
+                if (s_wedges[i].Contains(ToVec(s_wedges[i].ToLocal.MultiplyPoint3x4(point)), s_visual))
                     return i;
-            }
             return -1;
         }
 
@@ -404,10 +529,8 @@ namespace Fysik.Game
         {
             Wedge w = s_wedges[wedge];
             Vector3 p = w.ToLocal.MultiplyPoint3x4(new Vector3((float)world.X, (float)world.Y, (float)world.Z));
-            float grow = s_visual ? (w.Outward ? w.Stone.OuterGrow : w.Stone.InnerGrow) * RoughShare : 0;
-            Vec3 q = w.Stone.Shape.ToFace(new Vec3(p.x, p.y, p.z), w.Outward, Gap + grow);
-            Vector3 pushed = w.ToWorld.MultiplyPoint3x4(new Vector3((float)q.X, (float)q.Y, (float)q.Z));
-            return new Vec3(pushed.x, pushed.y, pushed.z);
+            Vec3 q = w.ToFace(ToVec(p), s_visual);
+            return ToVec(w.ToWorld.MultiplyPoint3x4(new Vector3((float)q.X, (float)q.Y, (float)q.Z)));
         }
     }
 }

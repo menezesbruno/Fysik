@@ -20,8 +20,10 @@ times their material's density:
 | Stone | 2400 |
 | Black marble | 2700 |
 
-For example a 2×2 wood floor weighs about 260 kg, a 2 m wood beam 160 kg, a 4 m core wood log 600
-kg and a 26° wood roof piece 320 kg. Fences, stake walls and carved statues count as structure too.
+For example a 2×2 wood floor weighs about 260 kg, a 2 m wood beam 160 kg, a 4 m core wood log 600 kg
+and a 26° wood roof piece 320 kg. Stone is much heavier: a 2×2 stone floor is 9.6 t and a 2×1 stone
+wall 4.8 t, their thin versions half that, and a stone of a 6 m tower about 2.4 t (1.3 t thin).
+Fences, stake walls and carved statues count as structure too.
 
 ## Furniture and other objects
 

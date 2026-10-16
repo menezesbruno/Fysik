@@ -66,6 +66,16 @@ are in the [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/) 
   when it is just past its limit (up to 110%), shorter the further past, none from 200%. A piece with
   no path to the ground falls at once. Whatever loses its support falls with the piece that gave way,
   and for 3 s afterwards overloaded pieces of the same structure fall without warning (cascade).
+- **Fysik's own pieces:** arch stones (wedges in seven sizes, 4 to 16 m spans), tower stones
+  (curved, 22.5°, for towers 4 to 10 m across, in two thicknesses, with half stones) and stone walls
+  and floors 0.5 m thick, cloned from the vanilla stones with their meshes reshaped in code. Each
+  special stone is solved as a box of its true volume. Player-built stone blocks overlapping an arch
+  or tower stone, and wooden panels (floors, wall panels, roofs; never beams, poles or logs)
+  overlapping a tower stone, are cut to fit around it (mesh, collider and weight; a cut piece keeps
+  its near level of detail at any distance, as the game's far meshes cannot be read). Arch and tower
+  stones are turned back to their designed angles when they load, since the game saves rotations in
+  half-degree steps. Placement helpers lay the next arch or tower stone along its curve and a thin
+  floor on top of a wall.
 - **World buildings:** buildings that come with the world (stone towers, abandoned houses, villages,
   ruins: every piece no player placed) do not get Fysik's physics. They keep vanilla support, are
   shown in neutral grey, and a player build resting on them treats them as fixed ground; only player
@@ -89,7 +99,9 @@ are in the [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/) 
 
 Next:
 
+- Floors and roofs shaped for round towers
 - More arch stones (cut from the 2×1 stone), and grausten and black marble blocks cut around arches
+  and towers
 - Creatures' weight (tamed lox, trolls) on bridges and floors
 
 Later:
@@ -132,7 +144,7 @@ directly. Game and third-party DLLs are referenced in place and never committed.
 |---|---|
 | `src/Fysik/Structure/` | The solver: pure C#, no Unity types, shared with the tests |
 | `src/Fysik/Game/` | Valheim side: piece graph, contacts, display, patches |
-| `tests/Fysik.Tests/` | Solver tests: beam theory (cantilever, fixed beam, column, arch, brace, floor on a beam), plates, loads meeting at a piece's centre, stacked stone walls, contact overlap and contact areas, masonry joints (tipping, sliding, arches with and without their keystone), arch stones and stone blocks cut around them, weight held, squeeze along a piece, snow on roofs, damage, crack policy and warning, performance |
+| `tests/Fysik.Tests/` | Solver tests: beam theory (cantilever, fixed beam, column, arch, brace, floor on a beam), plates, loads meeting at a piece's centre, stacked stone walls, contact overlap and contact areas, masonry joints (tipping, sliding, arches with and without their keystone), arch stones and stone blocks cut around them, tower rings (closing, courses, towers and rounded corners standing) and walls cut around them, angles kept through a world save, floors laid on walls, weight held, squeeze along a piece, snow on roofs, damage, crack policy and warning, performance |
 | `package/` | Thunderstore `manifest.json` template and the package README |
 | `art/` | `icon.png` and `banner.png` |
 | `docs/images/` | The building guide's pictures |

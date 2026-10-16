@@ -6,6 +6,9 @@ Fysik must be on the server and on every player, with exactly the same version: 
 owns part of a structure must calculate it exactly as the others do. Players without it, or with
 another version, cannot join. Update the server and tell your players to update at the same time.
 
+Fysik adds pieces of its own: arch stones, tower stones, and thin stone walls and floors. A world
+keeps them only while Fysik is installed; removing it removes them, and what they held may fall.
+
 ## Who calculates
 
 Only players calculate. Whoever owns a piece (the player near it, as in vanilla) solves the whole
