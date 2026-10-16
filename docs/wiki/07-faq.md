@@ -40,6 +40,16 @@ from 30° snow starts to slide off, from 60° none stays. Tarred roofs are prote
 A full cart weighs from about 1.9 t (wood) to 6.6 t (metal bars). Long spans resting only on their
 ends need a post in the middle, a truss or an arch; see **Building guide**.
 
+**A floor will not snap on top of a wall.**
+The game puts the middle of the piece where you aim and snaps only to points within half a metre, so
+a 2×2 floor aimed at a wall's top is too far from any corner. Press Q or E to choose which corner of
+the floor you hold and aim at the wall's corner, or use a thin stone floor: aimed at the top of a
+wall, pillar or beam, it lies on it by itself.
+
+**What happens to the arch stones and tower stones if I remove Fysik?**
+They are Fysik's own pieces, as are the thin stone walls and floors: a world keeps them only while
+Fysik is installed. Remove it and they go, and what rested on them may fall.
+
 **Can I turn off the weight of chests, players, carts and snow?**
 The server can, with `Weight.LiveLoads = false`.
 

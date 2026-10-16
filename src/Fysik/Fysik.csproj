@@ -18,7 +18,7 @@
     <Copyright>Copyright (c) 2026 Bruno Menezes</Copyright>
     <RepositoryUrl>https://github.com/menezesbruno/Fysik</RepositoryUrl>
     <BepInExPluginGuid>menezesbruno.fysik</BepInExPluginGuid>
-    <Description>Structural physics for building. Shape matters: arches carry load in compression, trusses stay rigid, cantilevers bend, stone rests on stone like real masonry. Adds arch stones. Overloaded pieces crack before they fall. Work in progress.</Description>
+    <Description>Structural physics for building. Shape matters: arches carry load in compression, trusses stay rigid, cantilevers bend, stone rests on stone like real masonry. Adds arch stones, tower stones, thin walls and floors. Pieces crack before they fall.</Description>
   </PropertyGroup>
   <PropertyGroup>
     <ValheimManagedDir>$(ValheimDir)\valheim_Data\Managed</ValheimManagedDir>

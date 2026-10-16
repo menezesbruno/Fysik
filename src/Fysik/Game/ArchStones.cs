@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Fysik.Structure;
-using Jotunn.Configs;
-using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 
@@ -55,6 +54,10 @@ namespace Fysik.Game
         private static readonly List<Piece> s_nearby = new List<Piece>();
         private static readonly List<Transform> s_snaps = new List<Transform>();
         private const float SnapDistance = 0.5f;
+        private const double YawStep = 22.5;
+        private const double IconNarrowest = 0.2;
+        private const double IconWidest = 0.8;
+        private static readonly Quaternion IconView = Quaternion.Euler(0, 20, 0);
 
         public static void Register()
         {
@@ -62,26 +65,7 @@ namespace Fysik.Game
             PieceManager.OnPiecesRegistered += Order;
         }
 
-        private static void Order()
-        {
-            PieceTable table = PieceManager.Instance.GetPieceTable(PieceTables.Hammer);
-            if (table == null)
-                return;
-            var stones = new List<GameObject>();
-            foreach (ArchStone stone in s_stones)
-            {
-                int i = table.m_pieces.FindIndex(p => p != null && p.name == stone.Prefab);
-                if (i < 0)
-                    continue;
-                stones.Add(table.m_pieces[i]);
-                table.m_pieces.RemoveAt(i);
-            }
-            int neighbour = table.m_pieces.FindIndex(p => p != null && p.name == Neighbour);
-            int at = neighbour >= 0 ? neighbour + 1 : table.m_pieces.FindIndex(p => p != null && p.name == s_stones[0].Base) + 1;
-            if (at <= 0)
-                at = table.m_pieces.Count;
-            table.m_pieces.InsertRange(at, stones);
-        }
+        private static void Order() => StonePieces.Place(s_stones.Select(s => s.Prefab), Neighbour, s_stones[0].Base);
 
         public static bool TryGet(GameObject gameObject, out ArchStone stone)
         {
@@ -122,9 +106,10 @@ namespace Fysik.Game
                 throw new InvalidOperationException($"{stone.Base} has no box collider");
             Vector3 cube = boxes[0].size;
 
-            foreach (MeshFilter filter in prefab.GetComponentsInChildren<MeshFilter>(true))
-                if (filter.sharedMesh != null)
-                    filter.sharedMesh = Reshape(filter.sharedMesh, stone, cube, root, filter.transform);
+            List<MeshFilter> filters = prefab.GetComponentsInChildren<MeshFilter>(true).Where(f => f.sharedMesh != null).ToList();
+            List<Mesh> originals = filters.Select(f => f.sharedMesh).ToList();
+            foreach (MeshFilter filter in filters)
+                filter.sharedMesh = Reshape(filter.sharedMesh, stone, cube, root, filter.transform);
             foreach (LODGroup group in prefab.GetComponentsInChildren<LODGroup>(true))
                 group.RecalculateBounds();
             Measure(prefab, stone);
@@ -140,24 +125,20 @@ namespace Fysik.Game
             collider.convex = true;
             s_byCollider[shape] = stone;
 
-            var config = new PieceConfig
-            {
-                Name = "$" + stone.Token,
-                Description = "$" + stone.Token + "_description",
-                PieceTable = "Hammer",
-            };
-            try
-            {
-                Sprite icon = RenderManager.Instance.Render(prefab);
-                if (icon != null)
-                    config.Icon = icon;
-            }
-            catch (Exception e)
-            {
-                Plugin.Log.LogWarning($"Arch stone {stone.Prefab} keeps the stone icon: {e.Message}");
-            }
-            PieceManager.Instance.AddPiece(new CustomPiece(prefab, false, config));
+            ArchStone icon = IconShape(stone);
+            List<Mesh> shapes = filters.Select((f, i) => Reshape(originals[i], icon, cube, root, f.transform)).ToList();
+            StonePieces.Add(prefab, stone.Token, StonePieces.Render(prefab, IconView, filters, shapes));
             s_byPrefab[stone.Prefab] = stone;
+        }
+
+        private static ArchStone IconShape(ArchStone stone)
+        {
+            int i = Array.IndexOf(s_stones, stone);
+            double inner = IconNarrowest + (IconWidest - IconNarrowest) * i / (s_stones.Length - 1);
+            Voussoir real = stone.Shape;
+            double outerRadius = real.Height / (1 - inner);
+            double angle = 2 * Math.Atan(real.Width / (2 * outerRadius)) * 180 / Math.PI;
+            return new ArchStone(stone.Span, real.Stones) { Shape = new Voussoir(angle, real.Width, real.Height) };
         }
 
         private static void Measure(GameObject prefab, ArchStone stone)
@@ -252,6 +233,14 @@ namespace Fysik.Game
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             return mesh;
+        }
+
+        public static void Straighten(Transform t, ArchStone stone)
+        {
+            Vector3 e = t.rotation.eulerAngles;
+            if (Angles.TrySnap(e.x, 0, 360, out double x) && Angles.TrySnap(e.y, 0, YawStep, out double y) &&
+                Angles.TrySnap(e.z, stone.Shape.SpringerTurn, stone.Shape.Angle, out double z))
+                t.rotation = Quaternion.Euler((float)x, (float)y, (float)z);
         }
 
         public static void Continue(Player player)

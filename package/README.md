@@ -17,7 +17,10 @@ is at 42%, and it goes up without scaffolding. The parts list and building order
   and triangles carry load along their length instead of bending. Cantilevers bend, more the further
   they reach.
 - **Stone is masonry.** Stones rest on each other and cannot pull: each needs something under its
-  weight, and an arch of the new wedge-shaped arch stones stands once its keystone is in.
+  weight, and an arch of the wedge-shaped arch stones stands once its keystone is in.
+- **New stone pieces**: arch stones, curved tower stones for round towers and rounded corners, and
+  stone walls and floors half as thick. Stone walls and floors are cut to fit around arches and
+  towers, and wooden floors and walls around towers.
 - **Colors show the stress**: blue is relaxed, green is fine, yellow is getting close, red is at the
   limit.
 - **Overloaded pieces crack before they fall**: they turn red, shake and creak for a few seconds,
@@ -59,7 +62,8 @@ Worked examples, every number explained and answers to common questions are in t
 > them, half-built arches. Back up your world before updating and look over your stone builds with
 > the X-ray (F7), or have the server set `Structure.MasonryJoints = false` to keep stone glued as before.
 >
-> The arch stones are Fysik's own pieces: a world keeps them only while Fysik is installed.
+> The arch stones, tower stones and thin stone walls and floors are Fysik's own pieces: a world
+> keeps them only while Fysik is installed.
 
 ## The physics
 
@@ -100,8 +104,8 @@ Everything else is in the [wiki](https://thunderstore.io/c/valheim/p/menezesbrun
 - **Reading the forces**: the colors, every line next to the crosshair, the X-ray, the placement
   preview and how cracking works.
 - **What weighs**: pieces, furniture, piles, chests, players, carts and snow, with typical weights.
-- **Building guide**: balconies, arches, trusses, stone masonry and stone bridges, snow on roofs and
-  carts on bridges, with worked examples.
+- **Building guide**: balconies, arches, trusses, stone masonry, round towers and stone bridges,
+  snow on roofs and carts on bridges, with worked examples.
 - **Server admins**: multiplayer, versions, world buildings, big bases and the settings worth knowing.
 - **FAQ**: common questions, and how to send a build that behaves strangely.
 - **How it works**: the calculation behind it.
@@ -110,7 +114,9 @@ Everything else is in the [wiki](https://thunderstore.io/c/valheim/p/menezesbrun
 
 Next:
 
+- Floors and roofs shaped for round towers
 - More arch stones (cut from the 2×1 stone), and grausten and black marble blocks cut around arches
+  and towers
 - Creatures' weight (tamed lox, trolls) on bridges and floors
 
 Later:

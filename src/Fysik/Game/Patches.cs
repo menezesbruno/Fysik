@@ -141,6 +141,10 @@ namespace Fysik.Game
             {
                 try { ArchStones.Continue(__instance); }
                 catch (Exception e) { Guard.Report("Arch stone placement", e); }
+                try { TowerStones.Continue(__instance); }
+                catch (Exception e) { Guard.Report("Tower stone placement", e); }
+                try { ThinStones.Rest(__instance); }
+                catch (Exception e) { Guard.Report("Thin floor placement", e); }
                 try { Hooks.PlacementGhost(__instance); }
                 catch (Exception e) { Guard.Report("Placement preview", e); }
             }
@@ -163,6 +167,7 @@ namespace Fysik.Game
         {
             if (wnt.m_nview == null || wnt.m_nview.GetZDO() == null)
                 return;
+            StonePieces.Straighten(wnt);
             StructureManager.Instance.OnPieceAppeared(wnt);
             ArchFit.Appeared(wnt);
         }
