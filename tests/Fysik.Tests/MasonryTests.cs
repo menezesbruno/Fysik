@@ -170,6 +170,23 @@ namespace Fysik.Tests
         }
 
         [Fact]
+        public void A_block_cut_to_fit_does_not_hang_on_the_edge_of_a_stone_beside_it()
+        {
+            var alone = new Blocks();
+            alone.Add(new Vec3(1, 0.5, 0), Cube);
+            alone.Add(new Vec3(1, 1.5, 0), Cube, null, 0, fitted: true);
+            BodyResult[] a = Run(alone, "cut block on a block");
+
+            var beside = new Blocks();
+            beside.Add(new Vec3(1, 0.5, 0), Cube);
+            beside.Add(new Vec3(1, 1.5, 0), Cube, null, 0, fitted: true);
+            beside.Add(new Vec3(0, 0.5, 0), Cube);
+            BodyResult[] b = Run(beside, "the same, its edge touching the edge of a stone beside it");
+            Assert.Equal(a[1].Utilization, b[1].Utilization, 2);
+            Assert.True(b[2].Utilization < 0.05, $"the stone beside reads {b[2].Utilization:P0}");
+        }
+
+        [Fact]
         public void A_column_of_blocks_stands_in_compression()
         {
             var blocks = new Blocks();

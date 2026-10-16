@@ -45,6 +45,12 @@ is at 42%, and it goes up without scaffolding. The parts list and building order
 Worked examples, every number explained and answers to common questions are in the
 [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/).
 
+![A castle with round towers of tower stones, 1 m stone walls cut to fit them, an arched gate and a wooden wall walk on knee braces: front view, top view, wall section, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-castle-wooden-walk.png)
+
+*A castle from the building guide: round towers of Fysik's tower stones, stone walls cut to fit
+them, an arched gate whose stones are all cut to fit, and a wooden wall walk on knee braces behind
+the merlons. Worst piece 67%; the guide also has one with walls 2 m thick and a stone wall walk.*
+
 > ### ⚠ Before you install
 >
 > Fysik is **on from the start**. As soon as a world loads, every building made by players is checked
@@ -104,8 +110,8 @@ Everything else is in the [wiki](https://thunderstore.io/c/valheim/p/menezesbrun
 - **Reading the forces**: the colors, every line next to the crosshair, the X-ray, the placement
   preview and how cracking works.
 - **What weighs**: pieces, furniture, piles, chests, players, carts and snow, with typical weights.
-- **Building guide**: balconies, arches, trusses, stone masonry, round towers and stone bridges,
-  snow on roofs and carts on bridges, with worked examples.
+- **Building guide**: balconies, arches, trusses, stone masonry, round towers, castles and stone
+  bridges, snow on roofs and carts on bridges, with worked examples.
 - **Server admins**: multiplayer, versions, world buildings, big bases and the settings worth knowing.
 - **FAQ**: common questions, and how to send a build that behaves strangely.
 - **How it works**: the calculation behind it.
@@ -114,7 +120,7 @@ Everything else is in the [wiki](https://thunderstore.io/c/valheim/p/menezesbrun
 
 Next:
 
-- Floors and roofs shaped for round towers
+- Conical roofs for round towers
 - More arch stones (cut from the 2×1 stone), and grausten and black marble blocks cut around arches
   and towers
 - Creatures' weight (tamed lox, trolls) on bridges and floors

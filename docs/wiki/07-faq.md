@@ -46,6 +46,10 @@ a 2×2 floor aimed at a wall's top is too far from any corner. Press Q or E to c
 the floor you hold and aim at the wall's corner, or use a thin stone floor: aimed at the top of a
 wall, pillar or beam, it lies on it by itself.
 
+**A piece I laid into a tower or an arch shows whole for a moment.**
+It is cut to fit in the background, so the game never stops for it: the piece shows its cut a moment
+after it is placed, usually well under a second.
+
 **What happens to the arch stones and tower stones if I remove Fysik?**
 They are Fysik's own pieces, as are the thin stone walls and floors: a world keeps them only while
 Fysik is installed. Remove it and they go, and what rested on them may fall.
@@ -55,7 +59,8 @@ The server can, with `Weight.LiveLoads = false`.
 
 **Does it cost frame rate?**
 Little: structures are only recalculated when something changes, the heavy part runs on a worker
-thread, and the rest is limited to 1.5 ms per frame (`Performance.FrameBudgetMs`).
+thread, and the rest is limited to 1.5 ms per frame (`Performance.FrameBudgetMs`). Cutting a piece
+to fit an arch or a tower runs on worker threads too.
 
 **Does it work in multiplayer and on dedicated servers?**
 Yes. The server and every player need Fysik, the same version; see **Server admins**, which also

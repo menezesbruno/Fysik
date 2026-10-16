@@ -33,9 +33,13 @@ namespace Fysik.Game
             Base = Ring.MeanWidth > LongStone ? "stone_wall_2x1" : "stone_wall_1x1";
         }
 
-        public Vector3 BoxSize => new Vector3((float)Ring.MeanWidth, (float)Ring.Height, (float)Ring.Thickness);
+        public Vector3 BoxSize => new Vector3((float)Ring.MeanWidth, (float)Ring.Height, (float)Ring.BoxDepth);
 
         public Quaternion BoxRotation => Quaternion.Euler(0, (float)Ring.BoxTurn, 0);
+
+        public Vector3 BoxOffset => BoxRotation * new Vector3(0, 0, (float)Ring.BoxShift);
+
+        public float Fill => (float)(Ring.Thickness / Ring.BoxDepth);
 
         public bool SameRing(TowerStone other) => other.Diameter == Diameter && other.Thin == Thin;
     }

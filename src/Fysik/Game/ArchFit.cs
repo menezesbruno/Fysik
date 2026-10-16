@@ -20,6 +20,12 @@ namespace Fysik.Game
 
         public bool Cut => Filters.Count > 0 || Added.Count > 0;
 
+        public Mesh Original(MeshFilter filter)
+        {
+            int i = Filters.IndexOf(filter);
+            return i >= 0 ? Originals[i] : filter.sharedMesh;
+        }
+
         public void Restore()
         {
             for (int i = 0; i < Groups.Count; i++)
@@ -68,6 +74,8 @@ namespace Fysik.Game
         private const int MaxDepth = 4;
         private const double BudgetMs = 2;
         private const double CurvedEdge = 0.1;
+        private const double CapEdge = 4;
+        private const int MaxJobs = 2;
         private const double RoughSlack = 0.15;
         private const double ExactSlack = 0.02;
 
@@ -112,8 +120,47 @@ namespace Fysik.Game
         private static readonly Dictionary<Mesh, float> s_volumes = new Dictionary<Mesh, float>();
         private static readonly List<Wedge> s_wedges = new List<Wedge>();
         private static readonly HashSet<Transform> s_seen = new HashSet<Transform>();
+        private static readonly Dictionary<WearNTear, Job> s_running = new Dictionary<WearNTear, Job>();
+        private static readonly HashSet<WearNTear> s_again = new HashSet<WearNTear>();
+        private static readonly List<WearNTear> s_done = new List<WearNTear>();
         private static int s_mask;
-        private static bool s_visual;
+
+        private static readonly int[] BoxTriangles =
+        {
+            0, 2, 1, 1, 2, 3, 4, 5, 6, 5, 7, 6, 0, 1, 4, 1, 5, 4, 2, 6, 3, 3, 6, 7, 0, 4, 2, 2, 4, 6, 1, 3, 5, 3, 7, 5,
+        };
+
+        private sealed class Shape
+        {
+            public MeshFilter Filter;
+            public BoxCollider Box;
+            public string Name;
+            public Matrix4x4 ToWorld, ToLocal;
+            public Vector3 Scale;
+            public OrientedBox? Keep;
+            public Vector3[] Vertices;
+            public int[][] Triangles;
+            public Vector3[] Normals;
+            public Vector4[] Tangents;
+            public Vector2[] Uv, Uv2;
+            public Color[] Colors;
+            public bool Moved;
+            public List<Vector3> CutVertices;
+            public List<Vector3> CutNormals;
+            public List<Vector4> CutTangents;
+            public List<Vector2> CutUv, CutUv2;
+            public List<Color> CutColors;
+            public List<int>[] CutTriangles;
+            public float Volume;
+        }
+
+        private sealed class Job
+        {
+            public WearNTear Piece;
+            public Wedge[] Wedges;
+            public readonly List<Shape> Shapes = new List<Shape>();
+            public System.Threading.Tasks.Task Work;
+        }
         private const float DepthSlack = 0.02f;
         private const float RoughShare = 0.5f;
 
@@ -155,6 +202,8 @@ namespace Fysik.Game
             s_around.Clear();
             s_queue.Clear();
             s_queued.Clear();
+            s_running.Clear();
+            s_again.Clear();
         }
 
         public static void Tick()
@@ -165,14 +214,19 @@ namespace Fysik.Game
                 if (stone != null)
                     QueueAround(stone);
             }
+            Finish();
             long deadline = System.Diagnostics.Stopwatch.GetTimestamp() +
                             (long)(BudgetMs * System.Diagnostics.Stopwatch.Frequency / 1000);
-            while (s_queue.Count > 0 && System.Diagnostics.Stopwatch.GetTimestamp() < deadline)
+            while (s_queue.Count > 0 && s_running.Count < MaxJobs && System.Diagnostics.Stopwatch.GetTimestamp() < deadline)
             {
                 WearNTear wnt = s_queue.Dequeue();
                 s_queued.Remove(wnt);
-                if (wnt != null && wnt.m_nview != null && wnt.m_nview.IsValid() && Eligible(wnt))
-                    Fit(wnt);
+                if (wnt == null || wnt.m_nview == null || !wnt.m_nview.IsValid() || !Eligible(wnt))
+                    continue;
+                if (s_running.ContainsKey(wnt))
+                    s_again.Add(wnt);
+                else
+                    Begin(wnt);
             }
         }
 
@@ -230,36 +284,105 @@ namespace Fysik.Game
             }
         }
 
-        private static void Fit(WearNTear wnt)
+        private static void Begin(WearNTear wnt)
         {
+            FittedStone fitted = wnt.GetComponent<FittedStone>();
+            var boxes = new List<BoxCollider>();
+            foreach (BoxCollider box in wnt.GetComponentsInChildren<BoxCollider>())
+                if (!box.isTrigger && (box.enabled || fitted != null && fitted.Hidden.Contains(box)))
+                    boxes.Add(box);
+            var job = new Job { Piece = wnt, Wedges = FindWedges(wnt, boxes) };
+            if (job.Wedges.Length > 0)
+            {
+                foreach (MeshFilter filter in wnt.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    Mesh source = fitted != null ? fitted.Original(filter) : filter.sharedMesh;
+                    if (source != null && source.isReadable)
+                        job.Shapes.Add(Read(filter, source));
+                }
+                foreach (BoxCollider box in boxes)
+                    job.Shapes.Add(Read(box));
+            }
+            s_running[wnt] = job;
+            job.Work = System.Threading.Tasks.Task.Run(() =>
+                System.Threading.Tasks.Parallel.ForEach(job.Shapes, shape => Carve(shape, job.Wedges)));
+        }
+
+        private static void Finish()
+        {
+            s_done.Clear();
+            foreach (KeyValuePair<WearNTear, Job> running in s_running)
+                if (running.Value.Work.IsCompleted)
+                    s_done.Add(running.Key);
+            foreach (WearNTear wnt in s_done)
+            {
+                Job job = s_running[wnt];
+                s_running.Remove(wnt);
+                if (job.Work.IsFaulted)
+                    Plugin.Log.LogWarning($"Fysik could not fit {(wnt != null ? wnt.name : "a piece")}: {job.Work.Exception?.InnerException?.Message}");
+                else if (wnt != null && wnt.m_nview != null && wnt.m_nview.IsValid())
+                    Apply(job);
+                if (s_again.Remove(wnt) && wnt != null)
+                    Queue(wnt);
+            }
+        }
+
+        private static void Apply(Job job)
+        {
+            WearNTear wnt = job.Piece;
             FittedStone fitted = wnt.GetComponent<FittedStone>();
             bool wasCut = fitted != null && fitted.Cut;
             fitted?.Restore();
-            FindWedges(wnt);
-            bool cut = false;
-            if (s_wedges.Count > 0)
+            bool cut = job.Shapes.Any(s => s.Moved);
+            if (cut)
             {
                 if (fitted == null)
                     fitted = wnt.gameObject.AddComponent<FittedStone>();
-                cut = Cut(wnt, fitted);
+                foreach (Shape shape in job.Shapes)
+                {
+                    if (shape.Filter == null)
+                        continue;
+                    Mesh mesh = Build(shape);
+                    fitted.Filters.Add(shape.Filter);
+                    fitted.Originals.Add(shape.Filter.sharedMesh);
+                    shape.Filter.sharedMesh = mesh;
+                    fitted.Created.Add(mesh);
+                }
+                foreach (LODGroup group in wnt.GetComponentsInChildren<LODGroup>(true))
+                {
+                    KeepNear(group, fitted);
+                    group.RecalculateBounds();
+                }
+                foreach (Shape shape in job.Shapes)
+                {
+                    if (shape.Box == null)
+                        continue;
+                    Mesh mesh = Build(shape);
+                    shape.Box.enabled = false;
+                    fitted.Hidden.Add(shape.Box);
+                    var collider = shape.Box.gameObject.AddComponent<MeshCollider>();
+                    collider.sharedMesh = mesh;
+                    fitted.Added.Add(collider);
+                    fitted.Created.Add(mesh);
+                    s_volumes[mesh] = shape.Volume;
+                }
             }
             if (wasCut || cut)
                 StructureManager.Instance.Reshape(wnt);
         }
 
-        private static void FindWedges(WearNTear wnt)
+        private static Wedge[] FindWedges(WearNTear wnt, List<BoxCollider> boxes)
         {
             EnsureMask();
             s_wedges.Clear();
             s_seen.Clear();
             bool masonry = Masonry(wnt);
-            BoxCollider[] boxes = wnt.GetComponentsInChildren<BoxCollider>().Where(b => b.enabled && !b.isTrigger).ToArray();
             var corners = new List<Vector3>();
             Vector3 middle = Vector3.zero;
             foreach (BoxCollider box in boxes)
             {
                 corners.AddRange(Corners(box));
-                middle += box.transform.TransformPoint(box.center) / boxes.Length;
+                middle += box.transform.TransformPoint(box.center) / boxes.Count;
             }
             foreach (BoxCollider box in boxes)
             {
@@ -308,6 +431,7 @@ namespace Fysik.Game
                     s_wedges.Add(wedge);
                 }
             }
+            return s_wedges.ToArray();
         }
 
         private static IEnumerable<Vector3> Corners(BoxCollider box)
@@ -321,66 +445,6 @@ namespace Fysik.Game
         private static Vec3 ToVec(Vector3 v) => new Vec3(v.x, v.y, v.z);
 
         private static Vector3 Abs(Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
-
-        private static bool Cut(WearNTear wnt, FittedStone fitted)
-        {
-            bool moved = false;
-            var meshes = new List<MeshFilter>();
-            var cuts = new List<Mesh>();
-            foreach (MeshFilter filter in wnt.GetComponentsInChildren<MeshFilter>(true))
-            {
-                Mesh source = filter.sharedMesh;
-                if (source == null || !source.isReadable)
-                    continue;
-                meshes.Add(filter);
-                s_visual = true;
-                cuts.Add(Carve(source, filter.transform.localToWorldMatrix, ref moved));
-            }
-            var boxes = new List<BoxCollider>();
-            var shapes = new List<Mesh>();
-            foreach (BoxCollider box in wnt.GetComponentsInChildren<BoxCollider>())
-            {
-                if (!box.enabled || box.isTrigger)
-                    continue;
-                Mesh solid = Solid(box);
-                boxes.Add(box);
-                s_visual = false;
-                shapes.Add(Carve(solid, box.transform.localToWorldMatrix, ref moved, Bounds(box)));
-                UnityEngine.Object.Destroy(solid);
-            }
-            if (!moved)
-            {
-                foreach (Mesh m in cuts)
-                    UnityEngine.Object.Destroy(m);
-                foreach (Mesh m in shapes)
-                    UnityEngine.Object.Destroy(m);
-                return false;
-            }
-
-            for (int i = 0; i < meshes.Count; i++)
-            {
-                fitted.Filters.Add(meshes[i]);
-                fitted.Originals.Add(meshes[i].sharedMesh);
-                meshes[i].sharedMesh = cuts[i];
-                fitted.Created.Add(cuts[i]);
-            }
-            foreach (LODGroup group in wnt.GetComponentsInChildren<LODGroup>(true))
-            {
-                KeepNear(group, fitted);
-                group.RecalculateBounds();
-            }
-            for (int i = 0; i < boxes.Count; i++)
-            {
-                boxes[i].enabled = false;
-                fitted.Hidden.Add(boxes[i]);
-                var collider = boxes[i].gameObject.AddComponent<MeshCollider>();
-                collider.sharedMesh = shapes[i];
-                fitted.Added.Add(collider);
-                fitted.Created.Add(shapes[i]);
-                s_volumes[shapes[i]] = Volume(shapes[i], boxes[i].transform.lossyScale);
-            }
-            return true;
-        }
 
         private static void KeepNear(LODGroup group, FittedStone fitted)
         {
@@ -415,27 +479,31 @@ namespace Fysik.Game
             return filter != null && fitted.Filters.Contains(filter);
         }
 
-        private static float Volume(Mesh mesh, Vector3 scale)
+        private static Shape Read(MeshFilter filter, Mesh source)
         {
-            Vector3[] vertices = mesh.vertices;
-            var points = new List<Vec3>(vertices.Length);
-            foreach (Vector3 v in vertices)
-                points.Add(new Vec3(v.x * scale.x, v.y * scale.y, v.z * scale.z));
-            return (float)MeshVolume.Of(points, mesh.triangles);
+            var shape = new Shape
+            {
+                Filter = filter, Name = source.name, ToWorld = filter.transform.localToWorldMatrix,
+                ToLocal = filter.transform.worldToLocalMatrix, Vertices = source.vertices, Normals = source.normals,
+                Tangents = source.tangents, Uv = source.uv, Uv2 = source.uv2, Colors = source.colors,
+                Triangles = new int[source.subMeshCount][],
+            };
+            for (int k = 0; k < source.subMeshCount; k++)
+                shape.Triangles[k] = source.GetTriangles(k);
+            return shape;
         }
 
-        private static Mesh Solid(BoxCollider box)
+        private static Shape Read(BoxCollider box)
         {
             Vector3 c = box.center, h = box.size * 0.5f;
             var vertices = new Vector3[8];
             for (int i = 0; i < 8; i++)
                 vertices[i] = c + new Vector3((i & 1) == 0 ? -h.x : h.x, (i & 2) == 0 ? -h.y : h.y, (i & 4) == 0 ? -h.z : h.z);
-            var mesh = new Mesh { vertices = vertices };
-            mesh.triangles = new[]
+            return new Shape
             {
-                0, 2, 1, 1, 2, 3, 4, 5, 6, 5, 7, 6, 0, 1, 4, 1, 5, 4, 2, 6, 3, 3, 6, 7, 0, 4, 2, 2, 4, 6, 1, 3, 5, 3, 7, 5,
+                Box = box, Name = box.name, ToWorld = box.transform.localToWorldMatrix, ToLocal = box.transform.worldToLocalMatrix,
+                Scale = box.transform.lossyScale, Keep = Bounds(box), Vertices = vertices, Triangles = new[] { BoxTriangles },
             };
-            return mesh;
         }
 
         private static OrientedBox Bounds(BoxCollider box)
@@ -453,55 +521,72 @@ namespace Fysik.Game
             };
         }
 
-        private static Mesh Carve(Mesh source, Matrix4x4 toWorld, ref bool moved, OrientedBox? keep = null)
+        private static void Carve(Shape shape, Wedge[] wedges)
         {
-            var local = new List<Vector3>();
-            source.GetVertices(local);
-            var world = new List<Vec3>(local.Count);
-            foreach (Vector3 v in local)
+            bool visual = shape.Box == null;
+            var world = new List<Vec3>(shape.Vertices.Length);
+            foreach (Vector3 v in shape.Vertices)
+                world.Add(ToVec(shape.ToWorld.MultiplyPoint3x4(v)));
+            int WedgeOf(Vec3 p)
             {
-                Vector3 w = toWorld.MultiplyPoint3x4(v);
-                world.Add(new Vec3(w.x, w.y, w.z));
+                Vector3 point = ToVector(p);
+                for (int i = 0; i < wedges.Length; i++)
+                    if (wedges[i].Contains(ToVec(wedges[i].ToLocal.MultiplyPoint3x4(point)), visual))
+                        return i;
+                return -1;
             }
-            var carver = new MeshCarver(world, WedgeOf, MaxDepth, w => s_wedges[w].Tower != null ? CurvedEdge : 0);
-            var submeshes = new List<List<int>>();
-            for (int s = 0; s < source.subMeshCount; s++)
-                submeshes.Add(carver.Split(source.GetTriangles(s)));
-            moved |= carver.Push(Push);
-            if (keep.HasValue)
-                carver.Clamp(keep.Value);
-
-            Matrix4x4 toLocal = toWorld.inverse;
-            int count = carver.Points.Count;
-            var vertices = new List<Vector3>(count);
+            Vec3 Push(Vec3 p, int k)
+            {
+                Wedge w = wedges[k];
+                Vec3 q = w.ToFace(ToVec(w.ToLocal.MultiplyPoint3x4(ToVector(p))), visual);
+                return ToVec(w.ToWorld.MultiplyPoint3x4(ToVector(q)));
+            }
+            var carver = new MeshCarver(world, WedgeOf, MaxDepth, w => wedges[w].Tower != null ? CurvedEdge : 0, CapEdge);
+            shape.CutTriangles = new List<int>[shape.Triangles.Length];
+            for (int k = 0; k < shape.Triangles.Length; k++)
+                shape.CutTriangles[k] = carver.Split(shape.Triangles[k]);
+            shape.Moved = carver.Push(Push);
+            if (shape.Keep.HasValue)
+                carver.Clamp(shape.Keep.Value);
+            shape.CutVertices = new List<Vector3>(carver.Points.Count);
             foreach (Vec3 p in carver.Points)
-                vertices.Add(toLocal.MultiplyPoint3x4(new Vector3((float)p.X, (float)p.Y, (float)p.Z)));
-            var mesh = new Mesh { name = source.name + "_fitted" };
-            if (count > 65535)
-                mesh.indexFormat = IndexFormat.UInt32;
-            mesh.SetVertices(vertices);
-            List<Vector3> normals = Grow(source.normals, carver, (a, b) => (a + b).normalized);
-            if (normals != null)
-                mesh.SetNormals(normals);
-            List<Vector4> tangents = Grow(source.tangents, carver, (a, b) =>
+                shape.CutVertices.Add(shape.ToLocal.MultiplyPoint3x4(ToVector(p)));
+            shape.CutNormals = Grow(shape.Normals, carver, (a, b) => (a + b).normalized);
+            shape.CutTangents = Grow(shape.Tangents, carver, (a, b) =>
             {
                 Vector3 t = ((Vector3)a + (Vector3)b).normalized;
                 return new Vector4(t.x, t.y, t.z, a.w);
             });
-            if (tangents != null)
-                mesh.SetTangents(tangents);
-            List<Vector2> uv = Grow(source.uv, carver, (a, b) => (a + b) * 0.5f);
-            if (uv != null)
-                mesh.SetUVs(0, uv);
-            List<Vector2> uv2 = Grow(source.uv2, carver, (a, b) => (a + b) * 0.5f);
-            if (uv2 != null)
-                mesh.SetUVs(1, uv2);
-            List<Color> colors = Grow(source.colors, carver, (a, b) => Color.Lerp(a, b, 0.5f));
-            if (colors != null)
-                mesh.SetColors(colors);
-            mesh.subMeshCount = submeshes.Count;
-            for (int s = 0; s < submeshes.Count; s++)
-                mesh.SetTriangles(submeshes[s], s);
+            shape.CutUv = Grow(shape.Uv, carver, (a, b) => (a + b) * 0.5f);
+            shape.CutUv2 = Grow(shape.Uv2, carver, (a, b) => (a + b) * 0.5f);
+            shape.CutColors = Grow(shape.Colors, carver, (a, b) => Color.Lerp(a, b, 0.5f));
+            if (visual)
+                return;
+            var points = new List<Vec3>(shape.CutVertices.Count);
+            foreach (Vector3 v in shape.CutVertices)
+                points.Add(new Vec3(v.x * shape.Scale.x, v.y * shape.Scale.y, v.z * shape.Scale.z));
+            shape.Volume = (float)MeshVolume.Of(points, shape.CutTriangles[0]);
+        }
+
+        private static Mesh Build(Shape shape)
+        {
+            var mesh = new Mesh { name = shape.Name + "_fitted" };
+            if (shape.CutVertices.Count > 65535)
+                mesh.indexFormat = IndexFormat.UInt32;
+            mesh.SetVertices(shape.CutVertices);
+            if (shape.CutNormals != null)
+                mesh.SetNormals(shape.CutNormals);
+            if (shape.CutTangents != null)
+                mesh.SetTangents(shape.CutTangents);
+            if (shape.CutUv != null)
+                mesh.SetUVs(0, shape.CutUv);
+            if (shape.CutUv2 != null)
+                mesh.SetUVs(1, shape.CutUv2);
+            if (shape.CutColors != null)
+                mesh.SetColors(shape.CutColors);
+            mesh.subMeshCount = shape.CutTriangles.Length;
+            for (int k = 0; k < shape.CutTriangles.Length; k++)
+                mesh.SetTriangles(shape.CutTriangles[k], k);
             mesh.RecalculateBounds();
             return mesh;
         }
@@ -516,21 +601,6 @@ namespace Fysik.Game
             return grown;
         }
 
-        private static int WedgeOf(Vec3 world)
-        {
-            var point = new Vector3((float)world.X, (float)world.Y, (float)world.Z);
-            for (int i = 0; i < s_wedges.Count; i++)
-                if (s_wedges[i].Contains(ToVec(s_wedges[i].ToLocal.MultiplyPoint3x4(point)), s_visual))
-                    return i;
-            return -1;
-        }
-
-        private static Vec3 Push(Vec3 world, int wedge)
-        {
-            Wedge w = s_wedges[wedge];
-            Vector3 p = w.ToLocal.MultiplyPoint3x4(new Vector3((float)world.X, (float)world.Y, (float)world.Z));
-            Vec3 q = w.ToFace(ToVec(p), s_visual);
-            return ToVec(w.ToWorld.MultiplyPoint3x4(new Vector3((float)q.X, (float)q.Y, (float)q.Z)));
-        }
+        private static Vector3 ToVector(Vec3 v) => new Vector3((float)v.X, (float)v.Y, (float)v.Z);
     }
 }

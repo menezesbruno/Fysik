@@ -13,15 +13,18 @@ namespace Fysik.Structure
         private readonly Func<Vec3, int> _wedgeOf;
         private readonly int _maxDepth;
         private readonly Func<int, double> _longest;
+        private readonly double _inside;
         private readonly Dictionary<long, int> _middles = new Dictionary<long, int>();
 
-        public MeshCarver(IEnumerable<Vec3> points, Func<Vec3, int> wedgeOf, int maxDepth, Func<int, double> longest = null)
+        public MeshCarver(IEnumerable<Vec3> points, Func<Vec3, int> wedgeOf, int maxDepth, Func<int, double> longest = null,
+                          double inside = 1)
         {
             Points = new List<Vec3>(points);
             OriginalCount = Points.Count;
             _wedgeOf = wedgeOf;
             _maxDepth = maxDepth;
             _longest = longest;
+            _inside = inside;
         }
 
         public List<int> Split(IReadOnlyList<int> triangles)
@@ -133,6 +136,8 @@ namespace Fysik.Structure
             }
             if (limit <= 0 || (!straddles && _samples[0] < 0))
                 return false;
+            if (!straddles)
+                limit *= _inside;
             return Math.Max((a - b).Length, Math.Max((b - c).Length, (c - a).Length)) > limit;
         }
 
