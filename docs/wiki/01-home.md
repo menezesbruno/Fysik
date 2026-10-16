@@ -17,8 +17,8 @@ time to shore it up.
 - **Reading the forces**: the colors, the lines next to the crosshair, the X-ray, the placement
   preview and how cracking works.
 - **What weighs**: pieces, furniture, piles, chests, players, carts and snow, with typical weights.
-- **Building guide**: balconies, arches, trusses, stone masonry, round towers and stone bridges,
-  snow on roofs and carts on bridges, with worked examples.
+- **Building guide**: balconies, arches, trusses, stone masonry, round towers, castles and stone
+  bridges, snow on roofs and carts on bridges, with worked examples.
 - **Server admins**: multiplayer, versions, world buildings, big bases and the settings worth knowing.
 - **FAQ**: common questions, and how to send a build that behaves strangely.
 - **How it works**: the calculation behind it, for the curious.
