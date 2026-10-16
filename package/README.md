@@ -114,7 +114,7 @@ Everything else is in the [wiki](https://thunderstore.io/c/valheim/p/menezesbrun
 
 Next:
 
-- Floors and roofs shaped for round towers
+- Conical roofs for round towers
 - More arch stones (cut from the 2×1 stone), and grausten and black marble blocks cut around arches
   and towers
 - Creatures' weight (tamed lox, trolls) on bridges and floors
