@@ -30,6 +30,12 @@ namespace Fysik.Structure
 
         public double BoxTurn => Angle / 2;
 
+        public double Sag => OuterRadius * (1 - Math.Cos(Angle / 2 * Math.PI / 180));
+
+        public double BoxDepth => Thickness - Sag;
+
+        public double BoxShift => -Sag / 2;
+
         public Vec3 Centre => Direction(Angle / 2) * -MidRadius;
 
         public static Vec3 Direction(double degrees)

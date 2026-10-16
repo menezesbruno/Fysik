@@ -157,10 +157,22 @@ but reads higher on the hammer than the wider ones.
 
 A lighthouse 8 m across and 24 m high: tower stones with a 1 m wall up to 12 m, thin ones above,
 a doorway one stone wide under a lintel of core wood logs, and two wooden platforms on joists laid
-into the wall. Its worst stone, beside the door, reads 36%, and nothing goes above 54% while it is
+into the wall. Its worst stone, beside the door, reads 35%, and nothing goes above 53% while it is
 built.
 
 ![Lighthouse: a round tower of tower stones 8 m across and 24 m high; side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-lighthouse.png)
+
+A castle: four towers 8 m across and 13 m high, 24 m apart at the corners of a square, joined by
+walls 2 m thick and 7 m high with a wall walk: defenders stand on a walk 1.5 m wide behind a parapet
+of thin stone 1 m high, with merlons every other metre that bring it to 2 m. The walls are of 2×1
+stones, courses laid along, two side by side, alternating with courses laid across that tie them,
+and every course ends with stones that run into the towers and are cut to fit them. The gate in the
+front wall is two rings of the 4 m arch side by side, every stone around it cut to fit, so no gap is
+left. Worst piece 73%, at the feet of the arch; the walls and towers read up to 62%. Build the arch
+on centering and take the poles away once the keystones are in: the closed arch stands on its own
+(63%), and nothing goes above 79% while the castle is built.
+
+![Castle: four round towers, walls 2 m thick with a wall walk behind a parapet, and an arched gate; front view, top view, wall section, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-castle.png)
 
 ## Stone bridges
 
@@ -178,13 +190,13 @@ wedge-shaped stones next to the stone arch in the hammer.
 ![Roman bridge: three 8 m arches of arch stones on 2 m piers; side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-roman-bridge.png)
 
 - Three 8 m arches of arch stones on piers 2 m wide, two rings side by side, the space above them
-  filled with stone walls that are cut to fit around the arches: worst piece 71%. Leave out the few
+  filled with stone walls that are cut to fit around the arches: worst piece 77%. Leave out the few
   blocks that would be cut down to a sliver.
 - **Build each arch on centering.** Until its keystone is in, half an arch tips over. A plain pole
-  under every arch stone from the fourth to the twelfth holds it: nothing goes above 82% while it is
+  under every arch stone from the fourth to the twelfth holds it: nothing goes above 81% while it is
   built.
 - **Fill before you take the props away.** The bare arches read 90%; the stone over their haunches
-  presses them into shape and brings the bridge down to 71%.
+  presses them into shape and brings the bridge down to 77%.
 
 ## Snow
 

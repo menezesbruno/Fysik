@@ -69,13 +69,13 @@ are in the [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/) 
 - **Fysik's own pieces:** arch stones (wedges in seven sizes, 4 to 16 m spans), tower stones
   (curved, 22.5°, for towers 4 to 10 m across, in two thicknesses, with half stones) and stone walls
   and floors 0.5 m thick, cloned from the vanilla stones with their meshes reshaped in code. Each
-  special stone is solved as a box of its true volume. Player-built stone blocks overlapping an arch
-  or tower stone, and wooden panels (floors, wall panels, roofs; never beams, poles or logs)
-  overlapping a tower stone, are cut to fit around it (mesh, collider and weight; a cut piece keeps
-  its near level of detail at any distance, as the game's far meshes cannot be read). Arch and tower
-  stones are turned back to their designed angles when they load, since the game saves rotations in
-  half-degree steps. Placement helpers lay the next arch or tower stone along its curve and a thin
-  floor on top of a wall.
+  special stone is solved as a box of its true volume (a tower stone's box stays inside its curve).
+  Player-built stone blocks overlapping an arch or tower stone, and wooden panels (floors, wall
+  panels, roofs; never beams, poles or logs) overlapping a tower stone, are cut to fit around it
+  (mesh, collider and weight; a cut piece keeps its near level of detail at any distance, as the
+  game's far meshes cannot be read). Arch and tower stones are turned back to their designed angles
+  when they load, since the game saves rotations in half-degree steps. Placement helpers lay the
+  next arch or tower stone along its curve and a thin floor on top of a wall.
 - **World buildings:** buildings that come with the world (stone towers, abandoned houses, villages,
   ruins: every piece no player placed) do not get Fysik's physics. They keep vanilla support, are
   shown in neutral grey, and a player build resting on them treats them as fixed ground; only player
