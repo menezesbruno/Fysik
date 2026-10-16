@@ -5,8 +5,8 @@
 **Structural physics for Valheim building.** Fysik ("physics" in Swedish and Danish) replaces Valheim's
 vanilla structural integrity, where a piece only cares about its distance to the ground, with a force
 calculation in which the **shape** of a build matters: arches work in compression, triangulated
-trusses stay rigid, cantilevers bend, and stone rests on stone like real masonry. Overloaded pieces crack, shake and creak for a few seconds before
-they fall, so there is time to shore them up.
+trusses stay rigid, cantilevers bend, and stone rests on stone like real masonry. Overloaded pieces
+crack, shake and creak for a few seconds before they fall, so there is time to shore them up.
 
 Gameplay references: Poly Bridge, Bridge Constructor.
 
@@ -82,8 +82,8 @@ are in the [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/) 
 - **Performance:** recalculation only on events (piece placed, removed or damaged, an object placed on
   it or taken away, a chest's contents changed, a player or cart moving onto another piece, snow
   building up or shoveled off, a weight or material setting changed), only on the affected island.
-  Reading contacts and building the model stay within ~1–2 ms per frame; the solve itself runs on a
-  worker thread (a 2000-piece island in about half a second).
+  Scanning contacts and reading the pieces stay within `Performance.FrameBudgetMs` (1.5 ms) per
+  frame; the solver is set up and run on a worker thread (a base of 850 pieces in about half a second).
 
 ## Roadmap
 
@@ -132,7 +132,7 @@ directly. Game and third-party DLLs are referenced in place and never committed.
 |---|---|
 | `src/Fysik/Structure/` | The solver: pure C#, no Unity types, shared with the tests |
 | `src/Fysik/Game/` | Valheim side: piece graph, contacts, display, patches |
-| `tests/Fysik.Tests/` | Solver tests: beam theory (cantilever, fixed beam, column, arch, brace, floor on a beam), loads meeting at a piece's centre, stacked stone walls, contact overlap, weight held, squeeze along a piece, snow on roofs, crack policy and warning, performance |
+| `tests/Fysik.Tests/` | Solver tests: beam theory (cantilever, fixed beam, column, arch, brace, floor on a beam), plates, loads meeting at a piece's centre, stacked stone walls, contact overlap and contact areas, masonry joints (tipping, sliding, arches with and without their keystone), arch stones and stone blocks cut around them, weight held, squeeze along a piece, snow on roofs, damage, crack policy and warning, performance |
 | `package/` | Thunderstore `manifest.json` template and the package README |
 | `art/` | `icon.png` and `banner.png` |
 | `docs/images/` | The building guide's pictures |

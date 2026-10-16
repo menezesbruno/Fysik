@@ -549,7 +549,9 @@ namespace Fysik.Game
                     break;
                 long t0 = Stopwatch.GetTimestamp();
                 bool done = _job.Run(this, deadline);
-                _job.ComputeTicks += Stopwatch.GetTimestamp() - t0;
+                long spent = Stopwatch.GetTimestamp() - t0;
+                _job.ComputeTicks += spent;
+                _job.LongestTicks = Math.Max(_job.LongestTicks, spent);
                 if (done)
                 {
                     Finish(_job);
@@ -700,12 +702,13 @@ namespace Fysik.Game
             }
 
             double ms = job.ComputeTicks * 1000.0 / Stopwatch.Frequency;
+            double longest = job.LongestTicks * 1000.0 / Stopwatch.Frequency;
             double wall = (Stopwatch.GetTimestamp() - job.Started) * 1000.0 / Stopwatch.Frequency;
             string worstText = worst < 0 ? "" :
                 $"; worst {job.Members[worst].Name} {Describe(results[worst])}";
             LastSolve = $"{job.Members.Count} pieces, {island.Solver}" +
                         (island.Solver == SolverKind.Frame ? $" ({job.Analysis.Iterations} iterations{(job.Analysis.MasonryRounds > 0 ? $", {job.Analysis.MasonryRounds} masonry rounds" : "")}{(job.Analysis.MasonrySettled ? "" : ", masonry not settled")}{(job.Analysis.Converged ? "" : ", not converged")})" : "") +
-                        $", {ms:0.0} ms of frame time over {job.Frames} frames, {wall:0} ms in all{worstText}";
+                        $", {ms:0.0} ms of frame time over {job.Frames} frames (longest {longest:0.0} ms), {wall:0} ms in all{worstText}";
             if (FysikConfig.LogSolves.Value)
                 Plugin.Log.LogInfo("Solved " + LastSolve);
         }
@@ -1098,11 +1101,17 @@ namespace Fysik.Game
             public bool Dirty;
             public bool LoadsChanged;
             public long ComputeTicks;
+            public long LongestTicks;
             public int Frames;
             public readonly long Started = Stopwatch.GetTimestamp();
 
             private System.Threading.Tasks.Task _solve;
             private volatile bool _cancelled;
+            private bool _built;
+            private Dictionary<PieceNode, int> _index;
+            private SortedDictionary<long, Contact> _joints;
+            private int _bodiesBuilt;
+            private int _jointsBuilt;
 
             public void MarkDirty()
             {
@@ -1146,13 +1155,19 @@ namespace Fysik.Game
                             _frontier.Enqueue(c.Other);
                 }
 
-                if (Analysis == null)
-                    Build();
+                if (!_built && !Build(deadline))
+                    return Dirty;
 
+                int maxFrameBodies = FysikConfig.MaxFrameBodies.Value;
                 if (FysikConfig.BackgroundSolver.Value || _solve != null)
                 {
                     if (_solve == null)
-                        _solve = System.Threading.Tasks.Task.Run(() => Analysis.RunToCompletion(() => _cancelled));
+                        _solve = System.Threading.Tasks.Task.Run(() =>
+                        {
+                            if (Analysis == null)
+                                Analysis = new StructureAnalysis(Model, maxFrameBodies);
+                            Analysis.RunToCompletion(() => _cancelled);
+                        });
                     if (!_solve.IsCompleted)
                         return false;
                     if (_solve.IsFaulted)
@@ -1160,29 +1175,40 @@ namespace Fysik.Game
                     return true;
                 }
 
+                if (Analysis == null)
+                    Analysis = new StructureAnalysis(Model, maxFrameBodies);
                 while (Stopwatch.GetTimestamp() < deadline)
                     if (Analysis.Step(1))
                         return true;
                 return false;
             }
 
-            private void Build()
+            private bool Build(long deadline)
             {
-                Members = new List<PieceNode>();
-                foreach (PieceNode n in Visited)
-                    if (n.Alive)
-                        Members.Add(n);
-                Members.Sort(PieceNode.Compare);
-
-                var index = new Dictionary<PieceNode, int>(Members.Count);
-                Model = new StructureModel();
-                Carried = new double[Members.Count];
-                Snow = new double[Members.Count];
-                SnowLevels = new int[Members.Count];
-                for (int i = 0; i < Members.Count; i++)
+                if (Model == null)
                 {
+                    Members = new List<PieceNode>();
+                    foreach (PieceNode n in Visited)
+                        if (n.Alive)
+                            Members.Add(n);
+                    Members.Sort(PieceNode.Compare);
+
+                    _index = new Dictionary<PieceNode, int>(Members.Count);
+                    for (int i = 0; i < Members.Count; i++)
+                        _index[Members[i]] = i;
+                    _joints = new SortedDictionary<long, Contact>();
+                    Model = new StructureModel();
+                    Carried = new double[Members.Count];
+                    Snow = new double[Members.Count];
+                    SnowLevels = new int[Members.Count];
+                }
+
+                for (; _bodiesBuilt < Members.Count; _bodiesBuilt++)
+                {
+                    if (!CanContinue(Members[_bodiesBuilt], deadline))
+                        return false;
+                    int i = _bodiesBuilt;
                     PieceNode member = Members[i];
-                    index[member] = i;
                     Body body = member.Geometry.ToBody(MaterialTable.For(member.Wnt));
                     member.Contents = ExtraLoads.ContentsOf(member.Container);
                     SnowLevels[i] = ExtraLoads.SnowLevel(member.Wnt);
@@ -1196,20 +1222,22 @@ namespace Fysik.Game
                     Model.AddBody(body);
                 }
 
-                var joints = new SortedDictionary<long, Contact>();
-                for (int i = 0; i < Members.Count; i++)
+                for (; _jointsBuilt < Members.Count; _jointsBuilt++)
                 {
+                    if (!CanContinue(Members[_jointsBuilt], deadline))
+                        return false;
+                    int i = _jointsBuilt;
                     foreach (Contact c in Members[i].Contacts)
                     {
-                        if (!index.TryGetValue(c.Other, out int j))
+                        if (!_index.TryGetValue(c.Other, out int j))
                             continue;
                         long key = (long)Math.Min(i, j) * Members.Count + Math.Max(i, j);
-                        if (joints.ContainsKey(key) && i > j)
+                        if (_joints.ContainsKey(key) && i > j)
                             continue;
-                        joints[key] = i < j ? c : new Contact { Point = c.Point, Span = c.OtherSpan, OtherSpan = c.Span };
+                        _joints[key] = i < j ? c : new Contact { Point = c.Point, Span = c.OtherSpan, OtherSpan = c.Span };
                     }
                 }
-                foreach (KeyValuePair<long, Contact> kv in joints)
+                foreach (KeyValuePair<long, Contact> kv in _joints)
                 {
                     int a = (int)(kv.Key / Members.Count), b = (int)(kv.Key % Members.Count);
                     Model.Connect(a, b, PieceGeometry.ToVec(kv.Value.Point), kv.Value.Span, kv.Value.OtherSpan);
@@ -1229,7 +1257,7 @@ namespace Fysik.Game
                     GhostRestsOn = _ghost.GroundKinds;
                     foreach (Contact c in _ghost.Contacts)
                     {
-                        if (index.TryGetValue(c.Other, out int j))
+                        if (_index.TryGetValue(c.Other, out int j))
                         {
                             Model.Connect(g, j, PieceGeometry.ToVec(c.Point), c.Span, c.OtherSpan);
                         }
@@ -1242,8 +1270,20 @@ namespace Fysik.Game
                     foreach (GroundContact contact in _ghost.GroundContacts)
                         Model.Ground(g, PieceGeometry.ToVec(contact.Point), contact.Span);
                 }
+                _index = null;
+                _joints = null;
+                _built = true;
+                return true;
+            }
 
-                Analysis = new StructureAnalysis(Model, FysikConfig.MaxFrameBodies.Value);
+            private bool CanContinue(PieceNode member, long deadline)
+            {
+                if (Dirty || !member.Alive)
+                {
+                    MarkDirty();
+                    return false;
+                }
+                return Stopwatch.GetTimestamp() < deadline;
             }
         }
     }

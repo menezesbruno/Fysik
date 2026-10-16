@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.1: smoother big bases
+
+- Less stutter in big bases. A structure is solved again each time someone walks onto another piece
+  of it, and preparing it for the solver ran in one go on the game's main thread: a base of 850
+  pieces took 5 to 17 ms of it each time, most of that in a single frame. Reading the pieces is now
+  spread over frames within `Performance.FrameBudgetMs`, and the solver is set up on the worker
+  thread with the rest of the calculation. Results are the same.
+- The documented solve times were measured on simple walls; they now give a real base: 850 pieces in
+  about half a second.
+
 ## 0.2.0: masonry and arch stones
 
 **Updating from 0.1.x:** stone now rests on stone like real masonry (below), so stone that only held
