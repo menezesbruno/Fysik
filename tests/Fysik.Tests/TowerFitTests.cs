@@ -38,7 +38,7 @@ namespace Fysik.Tests
 
         private sealed class Tower
         {
-            private const double Margin = 0.002, Gap = 0.005, Curved = 0.1;
+            private const double Margin = 0.002, Gap = 0.005, Curved = 0.1, Inside = 4;
             private readonly double _outerGrow, _innerGrow, _depthGrow;
             private readonly List<TowerRing> _rings = new List<TowerRing>();
             private readonly List<Vec3> _origins = new List<Vec3>();
@@ -112,7 +112,7 @@ namespace Fysik.Tests
                         AxisZ = TowerRing.Turn(Vec3.UnitZ, -_yaws[k]), Half = (max - min) * 0.5,
                     });
                 }
-                var carver = new MeshCarver(corners, WedgeOf, 4, w => Curved);
+                var carver = new MeshCarver(corners, WedgeOf, 4, w => Curved, Inside);
                 List<int> triangles = carver.Split(Box);
                 bool moved = carver.Push((p, k) =>
                     ToWorld(k, _rings[k].ToFaceWithin(ToLocal(k, p), _blocks[k], _outward[k], Gap + (_outward[k] ? _outerGrow : _innerGrow),

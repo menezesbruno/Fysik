@@ -110,9 +110,10 @@ half circles 4 to 16 m wide inside and about half as high.
 ![A wall around an 8 m arch: the blocks laid on the grid and the same blocks cut to fit around the arch stones](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/arch-fitting.png)
 
 - **Close it in with a wall:** lay stone walls, blocks and floors on the grid around the arch. Where
-  one runs into an arch stone it is cut along the arch's curve, its look, its collider and its weight,
-  the way masons cut the stones beside an arch. Blocks laid before the arch are cut when its stones go
-  in, and become whole again if the arch stones are taken out.
+  one runs into an arch stone it is cut along the arch's curve, its look, its collider and its
+  weight, the way masons cut the stones beside an arch. Blocks laid before the arch are cut when its
+  stones go in, and become whole again if the arch stones are taken out. The cut shows a moment
+  after the piece is placed.
 
 ## Thin walls and floors
 
@@ -148,7 +149,7 @@ but reads higher on the hammer than the wider ones.
 - **Walls and floors fit the tower:** a stone wall, block or floor that runs into a tower stone is
   cut along the curve, flush with the outside, or with the inside for a wall or floor within the
   tower, even if it reaches past the tower's wall. A floor is cut only where it sits within a
-  course, not when it lies on top of one.
+  course, not when it lies on top of one. The cut shows a moment after the piece is placed.
 - **Wood fits too:** wooden floors, wall panels and roofs are cut the same way, so a wooden floor
   inside the tower closes up to the wall. Beams, poles and logs are never cut: a joist or a lintel
   can rest in the wall, and a beam can run through it to carry a balcony outside.
@@ -157,10 +158,38 @@ but reads higher on the hammer than the wider ones.
 
 A lighthouse 8 m across and 24 m high: tower stones with a 1 m wall up to 12 m, thin ones above,
 a doorway one stone wide under a lintel of core wood logs, and two wooden platforms on joists laid
-into the wall. Its worst stone, beside the door, reads 36%, and nothing goes above 54% while it is
+into the wall. Its worst stone, beside the door, reads 35%, and nothing goes above 53% while it is
 built.
 
 ![Lighthouse: a round tower of tower stones 8 m across and 24 m high; side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-lighthouse.png)
+
+## Castles
+
+Round towers at the corners, walls between them that run into the towers and are cut to fit, a gate
+under an arch, and a wall walk for the defenders behind merlons: two ways to build the walls, one
+all stone and one with half the stone and a walk of wood. Both have four towers 8 m across and 13 m
+high, 24 m apart at the corners of a square.
+
+**Walls 2 m thick with a stone wall walk.** The walls are 7 m high, of 2×1 stones: courses laid
+along, two side by side, alternating with courses laid across that tie them, every course ending
+with stones that run into the towers and are cut to fit them. Defenders stand on a walk 1.5 m wide
+behind a parapet of thin stone 1 m high, with merlons every other metre that bring it to 2 m. The
+gate in the front wall is two rings of the 4 m arch side by side, every stone around it cut to fit,
+so no gap is left. Worst piece 73%, at the feet of the arch; the walls and towers read up to 62%.
+Build the arch on centering and take the poles away once the keystones are in: the closed arch
+stands on its own (63%), and nothing goes above 79% while the castle is built.
+
+![Castle: four round towers, walls 2 m thick with a wall walk behind a parapet, and an arched gate; front view, top view, wall section, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-castle.png)
+
+**Walls 1 m thick with a wooden wall walk.** The same towers, a gate under one ring of the 4 m arch,
+and a walk on the courtyard side: every 2 m a 2 m core wood log stands out from the inside of the
+wall just below 6 m, a 45° wood beam braces its end against the wall, and 2×2 wood floors lie on
+top, the last ones running into the towers, which cut them to fit. The wall rises 1 m above the walk
+and its merlons another metre. The walls take 1109 t of stone and 24 t of wood, against 2192 t of
+stone for walls 2 m thick. Worst piece 67%, beside the gate arch; the wall walk reads 8%, and
+nothing goes above 80% while it is built.
+
+![Castle with a wooden wall walk: 1 m stone walls, the walk on core wood joists and 45° knee braces; front view, top view, wall section, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-castle-wooden-walk.png)
 
 ## Stone bridges
 
@@ -178,13 +207,13 @@ wedge-shaped stones next to the stone arch in the hammer.
 ![Roman bridge: three 8 m arches of arch stones on 2 m piers; side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-roman-bridge.png)
 
 - Three 8 m arches of arch stones on piers 2 m wide, two rings side by side, the space above them
-  filled with stone walls that are cut to fit around the arches: worst piece 71%. Leave out the few
+  filled with stone walls that are cut to fit around the arches: worst piece 77%. Leave out the few
   blocks that would be cut down to a sliver.
 - **Build each arch on centering.** Until its keystone is in, half an arch tips over. A plain pole
-  under every arch stone from the fourth to the twelfth holds it: nothing goes above 82% while it is
+  under every arch stone from the fourth to the twelfth holds it: nothing goes above 81% while it is
   built.
 - **Fill before you take the props away.** The bare arches read 90%; the stone over their haunches
-  presses them into shape and brings the bridge down to 71%.
+  presses them into shape and brings the bridge down to 77%.
 
 ## Snow
 

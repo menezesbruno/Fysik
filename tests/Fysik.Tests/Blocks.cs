@@ -41,10 +41,12 @@ namespace Fysik.Tests
             return _bodies.Count - 1;
         }
 
-        public int AddYawed(Vec3 centre, Vec3 size, double yaw, MaterialProps material = null)
+        public int AddYawed(Vec3 centre, Vec3 size, double yaw, MaterialProps material = null, double volume = 0)
         {
             double a = yaw * Math.PI / 180;
             Body body = Structures.Box(centre, size, material ?? Masonry, new Vec3(Math.Cos(a), 0, -Math.Sin(a)), Vec3.UnitY);
+            if (volume > 0)
+                body.Mass = body.Material.Density * volume;
             _bodies.Add(body);
             return _bodies.Count - 1;
         }

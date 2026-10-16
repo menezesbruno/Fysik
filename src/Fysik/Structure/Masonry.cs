@@ -17,6 +17,7 @@ namespace Fysik.Structure
         private const double ThinShare = 0.3;
         private const double EdgeShare = 0.05;
         private const double OuterShare = 0.25;
+        private const double EmbeddedVolume = 0.001;
 
         private struct State
         {
@@ -190,11 +191,20 @@ namespace Fysik.Structure
                 Link link = _model.Links[joint.Link];
                 joint.Rank = 0;
                 joint.Released = joint.Now;
-                if (joint.Edges || joint.Held || joint.Now.Open || Gone[link.A] || Gone[link.B])
+                if (joint.Edges || joint.Now.Open || Gone[link.A] || Gone[link.B])
                     continue;
 
                 double slack = Tolerance * joint.Reference;
                 Measure(joint, frame.LinkLoad(joint.Link));
+                if (joint.Held)
+                {
+                    if (!joint.Now.Slip && joint.Force > slack && (joint.Sliding - 1) * joint.Friction * joint.Force > slack)
+                    {
+                        joint.Released = new State { Slip = true, Side1 = joint.Now.Side1, Side2 = joint.Now.Side2 };
+                        joint.Rank = joint.Sliding;
+                    }
+                    continue;
+                }
                 if (joint.Force < -slack ||
                     joint.Force <= slack && joint.Turning > slack * Math.Max(joint.A1, joint.A2))
                 {
@@ -439,13 +449,14 @@ namespace Fysik.Structure
             bool faceB = Face(b, link.SpanB, out Vec3 outB, out int thinB);
             Vec3 n;
             bool edges = false;
-            if (a.Fitted && !b.Fitted)
+            bool cut = a.Fitted != b.Fitted && Embedded(a, b);
+            if (cut && a.Fitted)
             {
                 if (!faceB)
                     return null;
                 n = -outB;
             }
-            else if (b.Fitted && !a.Fitted)
+            else if (cut)
             {
                 if (!faceA)
                     return null;
@@ -498,6 +509,14 @@ namespace Fysik.Structure
                 Edges = edges,
             };
         }
+
+        private static bool Embedded(Body a, Body b) =>
+            Structure.Overlap.Of(Box(a), Box(b), out Vec3 _, out double volume) && volume > EmbeddedVolume;
+
+        private static OrientedBox Box(Body body) => new OrientedBox
+        {
+            Center = body.Center, AxisX = body.AxisX, AxisY = body.AxisY, AxisZ = body.AxisZ, Half = body.Size * 0.5,
+        };
 
         private static bool Face(Body body, double[] span, out Vec3 outward, out int thin)
         {

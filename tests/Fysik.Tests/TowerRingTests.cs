@@ -128,8 +128,32 @@ namespace Fysik.Tests
 
         private static void Ring(Blocks blocks, TowerRing ring, double start, double course)
         {
-            Vec3 centre = TowerRing.Turn(-ring.Centre, start) + new Vec3(0, course + ring.Height / 2, 0);
-            blocks.AddYawed(centre, new Vec3(ring.MeanWidth, ring.Height, ring.Thickness), start + ring.BoxTurn);
+            Vec3 centre = TowerRing.Turn(-ring.Centre, start) + TowerRing.Direction(start + ring.BoxTurn) * ring.BoxShift +
+                          new Vec3(0, course + ring.Height / 2, 0);
+            blocks.AddYawed(centre, new Vec3(ring.MeanWidth, ring.Height, ring.BoxDepth), start + ring.BoxTurn, null, ring.Volume);
+        }
+
+        [Theory]
+        [InlineData(2, 1, Step)]
+        [InlineData(2, 0.5, Step / 2)]
+        [InlineData(3, 1, Step)]
+        [InlineData(4, 0.5, Step)]
+        [InlineData(5, 1, Step / 2)]
+        [InlineData(5, 0.5, Step)]
+        public void A_tower_stone_is_solved_as_a_box_that_stays_inside_its_curve(double outer, double thickness, double angle)
+        {
+            var ring = new TowerRing(outer, thickness, angle);
+            Vec3 radial = TowerRing.Direction(ring.BoxTurn);
+            var tangent = new Vec3(radial.Z, 0, -radial.X);
+            Vec3 centre = radial * (ring.MidRadius + ring.BoxShift);
+            foreach (double u in new[] { -0.5, 0.5 })
+                foreach (double v in new[] { -0.5, 0.5 })
+                {
+                    Vec3 corner = centre + tangent * (u * ring.MeanWidth) + radial * (v * ring.BoxDepth);
+                    Assert.True(Math.Sqrt(corner.X * corner.X + corner.Z * corner.Z) <= ring.OuterRadius + 1e-9);
+                }
+            Assert.Equal(ring.InnerRadius, Vec3.Dot(centre, radial) - ring.BoxDepth / 2, 9);
+            Assert.Equal(ring.OuterRadius * Math.Cos(angle / 2 * Math.PI / 180), Vec3.Dot(centre, radial) + ring.BoxDepth / 2, 9);
         }
 
         private BodyResult[] Run(Blocks blocks, string title)
@@ -166,6 +190,26 @@ namespace Fysik.Tests
             Assert.DoesNotContain(r, x => x.Mode == StressMode.Unstable);
             if (limit > 0)
                 Assert.True(r.Max(x => x.Utilization) < limit, $"worst {r.Max(x => x.Utilization):P0}");
+        }
+
+        [Fact]
+        public void A_curtain_wall_cut_to_fit_a_tower_rests_against_it_without_hanging_from_it()
+        {
+            var ring = new TowerRing(4, 1, Step);
+            var blocks = new Blocks();
+            for (int course = 0; course < 10; course++)
+                for (int i = 0; i < 16; i++)
+                    Ring(blocks, ring, i * Step + (course % 2 == 1 ? Step / 2 : 0), course);
+            for (int course = 0; course < 7; course++)
+                for (double u = course % 2 == 0 ? 4 : 3; u < 12 - 1e-9; u += 2)
+                {
+                    double a = Math.Max(u, ring.OuterRadius), b = u + 2;
+                    blocks.Add(new Vec3((a + b) / 2, course + 0.5, 0), new Vec3(b - a, 1, 1), null, 0, fitted: u < ring.OuterRadius);
+                }
+            BodyResult[] r = Run(blocks, "curtain wall cut to fit an 8 m tower");
+            Assert.DoesNotContain(r, x => x.Mode == StressMode.Unstable);
+            double tower = r.Take(160).Max(x => x.Utilization);
+            Assert.True(tower < 0.3, $"the tower reads {tower:P0}");
         }
 
         [Fact]

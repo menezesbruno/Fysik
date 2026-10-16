@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.2.3: castles
+
+- Walls cut to fit a round tower no longer hang on it. Fysik solves each tower stone as a straight
+  block, and that block's outer face stuck out of the curve by up to 8 cm near the stone's ends: a
+  wall cut to the true curve rested on those corners, so the tower stones and the wall beside them
+  read up to 99%. The block now stays inside the curve, with the stone's full weight, and a cut
+  stone that only touches another stone corner to corner along an edge no longer holds on it, as
+  between any two stones. In the guide's castle with 2 m walls the towers and walls read 62% instead
+  of 89%, and 79% instead of 97% while it is built.
+- Masonry: a joint that Fysik closes again to stop a loose stone from moving can still slip when it
+  is pushed sideways harder than friction holds. It stayed stuck before, and the stones beside it
+  could read up to 99%.
+- Cutting a piece to fit a round tower no longer freezes the game for a moment. A wooden floor or
+  wall panel took 0.2 to 0.9 s of a single frame to cut; the cut is now worked out in the
+  background, each of the piece's meshes on its own core, and shows a moment after the piece is
+  placed. Away from the cut line the cut surface follows the tower's curve in 40 cm steps instead of
+  10 cm (still 10 cm along the line itself), 40% fewer triangles for the same look.
+- Numbers change a little where stone meets tower stones or stones cut to fit: towers read a few
+  points lower, the guide's lighthouse 35% (was 36%) and its Roman bridge 77% (was 71%).
+- Two castles in the building guide, both with four round towers 24 m apart and an arched gate: one
+  with walls 2 m thick of 2×1 stones and a wall walk behind a parapet and merlons of thin stone, one
+  with walls 1 m thick and a wooden wall walk on knee braces, which takes half the stone. Every
+  stone around the gates is cut to fit.
+
 ## 0.2.2: thin walls and round towers
 
 - Thin stone walls and floors: the 1x1, 2x1 and 4x2 stone walls and the 2x2 stone floor also come
