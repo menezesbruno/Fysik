@@ -162,15 +162,17 @@ built.
 
 ![Lighthouse: a round tower of tower stones 8 m across and 24 m high; side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-lighthouse.png)
 
-A castle: four towers 8 m across and 10 m high, 24 m apart at the corners of a square, joined by
-curtain walls of 2×1 stones 7 m high with merlons, and a gate in the front wall under a 4 m arch of
-arch stones. Every other course of the walls starts with a stone that runs into the tower and is cut
-to fit it, and around the arch every stone is cut to fit, so no gap is left. Worst piece 74%, over
-the small stones cut beside the keystone; away from the gate the walls read up to 71% and the towers
-19%. Build the arch on centering and take the poles away once the keystone is in: the closed arch
-stands on its own (66%), and nothing goes above 75% while the castle is built.
+A castle: four towers 8 m across and 13 m high, 24 m apart at the corners of a square, joined by
+walls 2 m thick and 7 m high with a wall walk: defenders stand on a walk 1.5 m wide behind a parapet
+of thin stone 1 m high, with merlons every other metre that bring it to 2 m. The walls are of 2×1
+stones, courses laid along, two side by side, alternating with courses laid across that tie them,
+and every course ends with stones that run into the towers and are cut to fit them. The gate in the
+front wall is two rings of the 4 m arch side by side, every stone around it cut to fit, so no gap is
+left. Worst piece 73%, at the feet of the arch; the walls and towers read up to 62%. Build the arch
+on centering and take the poles away once the keystones are in: the closed arch stands on its own
+(63%), and nothing goes above 79% while the castle is built.
 
-![Castle: four round towers, curtain walls of 2×1 stones and an arched gate; front view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-castle.png)
+![Castle: four round towers, walls 2 m thick with a wall walk behind a parapet, and an arched gate; front view, top view, wall section, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-castle.png)
 
 ## Stone bridges
 
