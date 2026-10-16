@@ -174,6 +174,16 @@ on centering and take the poles away once the keystones are in: the closed arch 
 
 ![Castle: four round towers, walls 2 m thick with a wall walk behind a parapet, and an arched gate; front view, top view, wall section, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-castle.png)
 
+A second castle saves half the stone: the same towers and a gate under one ring of the 4 m arch,
+walls 1 m thick and 7 m high, and a wooden wall walk on the courtyard side. Every 2 m a 2 m core
+wood log stands out from the inside of the wall just below 6 m, a 45° wood beam braces its end
+against the wall, and 2×2 wood floors lie on top, the last ones running into the towers, which cut
+them to fit. The wall rises 1 m above the walk and its merlons another metre. The walls take 1109 t
+of stone and 24 t of wood, against 2192 t of stone for walls 2 m thick. Worst piece 67%, beside the
+gate arch; the wall walk reads 8%, and nothing goes above 80% while it is built.
+
+![Castle with a wooden wall walk: 1 m stone walls, the walk on core wood joists and 45° knee braces; front view, top view, wall section, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-castle-wooden-walk.png)
+
 ## Stone bridges
 
 A pair of stone arches (`stone_arch`) closes 4 m; wider arches are built of arch stones, the
