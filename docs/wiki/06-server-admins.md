@@ -56,7 +56,7 @@ that do not record a builder, count as world buildings.
 ## Big bases
 
 Structures of up to `Structure.MaxFrameBodies` pieces (2000 by default, 500 to 5000) get the full
-calculation, on a worker thread: about 0.5 s for 2000 pieces, 2 s for 5000. Larger ones use a
+calculation, on a worker thread: a base of 850 pieces takes about half a second. Larger ones use a
 simpler model that does not recognise arches; the hammer then adds *simplified model*. Raise the limit
 if your players build arches into big bases. A structure that reaches beyond every player's loaded
 area is never brought down.

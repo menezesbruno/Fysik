@@ -60,3 +60,9 @@ Aim at a piece of it with the hammer and press **Ctrl+F8**: it writes the whole 
 `BepInEx/fysik-dump.txt`. Open an issue at <https://github.com/menezesbruno/Fysik/issues> with that
 file, a screenshot and what you expected. Builds from players are how the materials get calibrated,
 so they are very welcome.
+
+If it is about something that happens while you play (a piece that falls when it should not, the
+game stuttering near a build), also turn on `Debug.DetailedLog` in
+`BepInEx/config/menezesbruno.fysik.cfg` (or in game with a configuration manager, F1), play until it
+happens and attach `BepInEx/LogOutput.log`: Fysik then writes there every structure it solves and
+every crack and fall. It is off by default to keep the log clean.

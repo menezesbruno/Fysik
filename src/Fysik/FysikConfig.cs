@@ -62,8 +62,7 @@ namespace Fysik
         internal static ConfigEntry<KeyboardShortcut> XRayRadiusKey { get; private set; }
 
         internal const float XRayRadiusMin = 40f, XRayRadiusMax = 80f, XRayRadiusStep = 10f;
-        internal static ConfigEntry<bool> LogSolves { get; private set; }
-        internal static ConfigEntry<bool> LogGeometry { get; private set; }
+        internal static ConfigEntry<bool> DetailedLog { get; private set; }
         internal static ConfigEntry<KeyboardShortcut> DumpKey { get; private set; }
 
         internal static readonly Dictionary<WearNTear.MaterialType, MaterialEntries> Materials =
@@ -213,17 +212,15 @@ namespace Fysik
                 "Display", "XRayRadiusKey", new KeyboardShortcut(KeyCode.F7, KeyCode.LeftControl),
                 "Widens the X-ray radius by 10 m, from 40 m up to 80 m, then back to 40 m.");
 
-            LogSolves = config.Bind(
-                "Debug", "LogSolves", true,
-                "Write to the log each structure solved (size, solver, time, worst piece) and each piece that cracks or falls.");
+            DetailedLog = config.Bind(
+                "Debug", "DetailedLog", false,
+                "Write to the log each structure solved (size, solver, time, worst piece), each piece that cracks or falls, " +
+                "each kind of piece the first time it is seen (colliders, box, volume, weight) and each ownership handover. " +
+                "For developers and bug reports; off keeps the log clean.");
 
             DumpKey = config.Bind(
                 "Debug", "DumpKey", new KeyboardShortcut(KeyCode.F8, KeyCode.LeftControl),
                 "Writes the structure under the hammer to BepInEx/fysik-dump.txt (same as the console command 'fysik dump').");
-
-            LogGeometry = config.Bind(
-                "Debug", "LogGeometry", true,
-                "Write one line to the log per kind of piece, the first time it is seen: colliders, box, volume and weight. For calibration.");
 
             BindMaterial(config, WearNTear.MaterialType.Wood, "Wood", 500, 4, 4, 1, 60);
             BindMaterial(config, WearNTear.MaterialType.HardWood, "HardWood", 600, 6, 6, 1.5f, 65);
