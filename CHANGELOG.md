@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.3: castles
+
+- Walls cut to fit a round tower no longer hang on it. Fysik solves each tower stone as a straight
+  block, and that block's outer face stuck out of the curve by up to 8 cm near the stone's ends: a
+  wall cut to the true curve rested on those corners, so the tower stones and the wall beside them
+  read up to 99%. The block now stays inside the curve, with the stone's full weight, and a cut
+  stone that only touches another stone corner to corner along an edge no longer holds on it, as
+  between any two stones. The guide's castle read 99% in its towers and walls; it now reads 19% and
+  71%.
+- Masonry: a joint that Fysik closes again to stop a loose stone from moving can still slip when it
+  is pushed sideways harder than friction holds. It stayed stuck before, and the stones beside it
+  could read up to 99%.
+- Numbers change a little where stone meets tower stones or stones cut to fit: towers read a few
+  points lower, the guide's lighthouse 35% (was 36%) and its Roman bridge 77% (was 71%).
+- A castle in the building guide: four round towers 24 m apart, curtain walls of 2×1 stones 7 m high
+  with merlons, and a gate under a 4 m arch, every stone around it cut to fit.
+
 ## 0.2.2: thin walls and round towers
 
 - Thin stone walls and floors: the 1x1, 2x1 and 4x2 stone walls and the 2x2 stone floor also come

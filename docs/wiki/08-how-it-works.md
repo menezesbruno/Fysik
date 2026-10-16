@@ -42,7 +42,8 @@ Fysik applies this to every joint between two stone, black marble or grausten pi
 - If some stones can then move freely, they fall (*Unstable*). To tell, Fysik solves once more with
   the open joints ten times softer still: a part that is really held moves the same, a part that is
   loose moves ten times more. Where the stones of a loose part would press into a neighbour as they
-  move, that contact is closed again before deciding, since it would catch them.
+  move, that contact is closed again before deciding, since it would catch them; it can still slip
+  if it is pushed sideways harder than friction holds.
 - The hammer shows, for each stone, how far the force in its worst joint has moved towards the edge
   of the contact (*Tipping*: 0% in the middle, 100% at the edge) and how close the joint is to
   slipping (*Sliding*), when either is higher than the stress inside the stone itself.
@@ -54,8 +55,10 @@ corner to corner along an edge do not hold each other at all.
 
 The arch stones and tower stones are wedges and curved stones, but Fysik solves each as a block of
 the same volume: an arch stone as wide as its middle, a tower stone as long as its arc halfway
-through the wall. A stone wall, block or floor laid into one is cut to fit it, mesh, collider and
-weight; it then rests on the special stone's own face rather than on a block's. Around a tower
+through the wall and no deeper than the chord of its outer face, so that the block never sticks out
+of the curve. A stone wall, block or floor laid into one is cut to fit it, mesh, collider and
+weight; where it reaches into the special stone it rests on that stone's own face rather than on a
+block's, and where it only touches a stone along an edge it does not hold on it. Around a tower
 stone, wooden floors, wall panels and roofs are cut too, while beams, poles and logs stay whole. The
 game saves every turn in half-degree steps, rounded down, so when these stones load they are turned
 back to the angle they were laid at, the same on every player's game.
