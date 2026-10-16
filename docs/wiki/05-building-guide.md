@@ -86,7 +86,8 @@ rocks on it, and when it is pushed sideways harder than friction holds, it slide
   one. Stones stacked straight up stand as separate columns.
 - **Floors upstairs** need walls, pillars, arches or wooden beams under them. The stone floor is a
   2 × 2 × 1 m block of 9.6 t: laid half on a 1 m wall and half over the room, its weight sits right
-  on the edge of the wall (close to 100%). Put a beam under its inner half, or use wooden floors.
+  on the edge of the wall (close to 100%). Put a beam under its inner half, or use the thin stone
+  floor (half the weight, see below) or wooden floors.
 - *Tipping* and *Sliding* on the hammer tell how close a stone's worst joint is to rocking or slipping.
 
 ## Building with arch stones
@@ -112,6 +113,54 @@ half circles 4 to 16 m wide inside and about half as high.
   one runs into an arch stone it is cut along the arch's curve, its look, its collider and its weight,
   the way masons cut the stones beside an arch. Blocks laid before the arch are cut when its stones go
   in, and become whole again if the arch stones are taken out.
+
+## Thin walls and floors
+
+Next to the stone walls and the stone floor in the hammer are thin versions of them, 0.5 m thick
+instead of a metre: thin stone walls 1x1, 2x1 and 4x2, and thin stone floors 2x2 and 1x1. They cost
+and weigh half as much (a thin 2x2 floor is 4.8 t instead of 9.6 t) and keep the grid: two thin
+walls make one, and they snap flush with either face of a 1 m wall or floor.
+
+- **Floors upstairs:** aim a thin floor at the top of a wall, pillar or beam and it lies on it,
+  covering its top flush with the far face and reaching towards you, lined up with the wall's end on
+  the metre grid. Elsewhere it snaps like any floor; to pick which corner of a floor you hold, press
+  Q or E.
+- **Thin walls are weaker:** as masonry, a wall half as thick tips over more easily under a load
+  that leans on one side, such as a floor resting only on its edge, and carries less on top.
+
+## Round towers
+
+Tower stones are curved stones, 1 m high: sixteen close a ring 4, 6, 8 or 10 m across outside, in
+two thicknesses, 1 m and 0.5 m, and four of them make a rounded corner between two straight walls.
+A 4 m tower with 1 m walls is barely 2 m wide inside and its stones are strongly tapered: it stands,
+but reads higher on the hammer than the wider ones.
+
+- **The first stone** goes anywhere, turned with the mouse wheel like any piece.
+- **Aim at the side of a tower stone** to lay the next one along the ring, or **at its top** to
+  start the course above: each stone of the new course sits across a joint below, so the courses
+  bind like a running-bond wall. Aiming at the floor or anything else within 1 m of the end of a
+  tower stone also carries on its ring.
+- **Half stones** end a course flush: at a doorway, start and end every second course with a half
+  stone so both sides of the opening run straight, and span the top with a lintel.
+- **A rounded corner:** four stones from one straight wall to the other; their ends meet the walls
+  on the grid, and half stones finish the courses that are offset.
+- **Thinner higher up:** a thin course laid on a thick one keeps the outside of the tower flush.
+- **Walls and floors fit the tower:** a stone wall, block or floor that runs into a tower stone is
+  cut along the curve, flush with the outside, or with the inside for a wall or floor within the
+  tower, even if it reaches past the tower's wall. A floor is cut only where it sits within a
+  course, not when it lies on top of one.
+- **Wood fits too:** wooden floors, wall panels and roofs are cut the same way, so a wooden floor
+  inside the tower closes up to the wall. Beams, poles and logs are never cut: a joist or a lintel
+  can rest in the wall, and a beam can run through it to carry a balcony outside.
+- **Lay the first course on level ground** or on a floor: a tower stone with nothing under its
+  weight falls, like any stone.
+
+A lighthouse 8 m across and 24 m high: tower stones with a 1 m wall up to 12 m, thin ones above,
+a doorway one stone wide under a lintel of core wood logs, and two wooden platforms on joists laid
+into the wall. Its worst stone, beside the door, reads 36%, and nothing goes above 54% while it is
+built.
+
+![Lighthouse: a round tower of tower stones 8 m across and 24 m high; side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-lighthouse.png)
 
 ## Stone bridges
 

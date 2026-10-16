@@ -62,6 +62,26 @@ namespace Fysik.Game
                     $"{stone.Span / 2} m high inside, standing on supports 1 m wide. Aim at the top of a wall or pillar to " +
                     "set the first one, then aim at a stone to lay the next one along the curve.";
             }
+            foreach (ThinStone stone in ThinStones.All)
+            {
+                texts[stone.Token] = $"Thin stone {(stone.Floor ? "floor" : "wall")} {stone.Size}";
+                texts[stone.Token + "_description"] = stone.Floor
+                    ? $"A stone floor {stone.Size} only 0.5 m thick, half the usual metre, so it weighs half as much: light enough " +
+                      "for upper storeys. Inside a round tower it is cut to fit the tower's inner face."
+                    : $"A stone wall {stone.Size} half as thick as the usual one: 0.5 m. It snaps flush with either face of a " +
+                      "1 m wall or floor. Thinner walls carry less and tip over more easily.";
+            }
+            foreach (TowerStone stone in TowerStones.All)
+            {
+                string thickness = stone.Thin ? "0.5 m" : "1 m";
+                texts[stone.Token] = $"{(stone.Thin ? "Thin tower" : "Tower")} {(stone.Half ? "half stone" : "stone")}, {stone.Diameter} m";
+                texts[stone.Token + "_description"] = stone.Half
+                    ? $"Half a curved tower stone, {thickness} thick, for a tower {stone.Diameter} m across. It ends a course " +
+                      "flush, where a rounded corner meets a straight wall. Aim at the top of a tower stone, near its end, to set it there."
+                    : $"A curved stone {thickness} thick: {TowerStone.PerRing} make a round tower {stone.Diameter} m across outside, " +
+                      "4 make a rounded corner between two walls. Aim at the side of a tower stone to lay the next one along the " +
+                      "ring, or at its top to lay the course above across the joint below.";
+            }
             localization.AddTranslation("English", texts);
         }
     }

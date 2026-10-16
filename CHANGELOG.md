@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.2.2: thin walls and round towers
+
+- Thin stone walls and floors: the 1x1, 2x1 and 4x2 stone walls and the 2x2 stone floor also come
+  0.5 m thick, half the usual metre, plus a thin 1x1 floor. They cost and weigh half as much (a thin
+  2x2 floor is 4.8 t instead of 9.6 t), light enough for upper storeys, and keep the grid: two make
+  one, and they snap flush with either face of a 1 m wall or floor. Aim a thin floor at the top of
+  a wall, pillar or beam and it lies on it, covering the top flush with the far face and reaching
+  towards you, lined up with the wall's end on the metre grid. Being masonry, a thin wall carries
+  less and tips over more easily than a thick one.
+- Tower stones: curved stones for round towers and rounded corners. Sixteen close a ring 4, 6, 8 or
+  10 m across outside, 1 m or 0.5 m thick, and four make a rounded corner whose ends meet straight
+  walls on the grid. Aim at the side of a tower stone to lay the next one along the ring, or at its
+  top to lay the course above across the joint below; half stones end a course flush against a wall.
+  A thin course on a thick one keeps the outside of the tower flush. Aiming at the floor or anything
+  else within 1 m of the end of a tower stone also carries on its ring. Like the arch stones, worlds
+  keep them only while Fysik is installed.
+- Walls and floors fit round towers: a stone wall, block or floor that runs into a tower stone is
+  cut along the tower's curve, flush with its outside, or with its inside for a wall or floor within
+  the tower, as blocks already are around arch stones, even when it reaches past the tower's wall.
+  Wooden floors, wall panels and roofs are cut the same way; beams, poles and logs are left whole,
+  so they can rest in the wall or run through it, as joists, lintels or the beams of a balcony. The
+  tower stones stay whole, and a cut piece weighs what is left of it.
+- Arch stones and tower stones keep their exact angles: the game saves every turn in half-degree
+  steps, rounded down, so after a reload arches and towers came back slightly crooked, up to half a
+  degree per stone. They now return to the angle they were laid at when they load, in worlds
+  already built too.
+- A lighthouse in the building guide: a round tower 8 m across and 24 m high, with a doorway under
+  a lintel and two wooden platforms, its pieces and the order to build it in.
+- Clearer hammer icons: arch stones show their wedge exaggerated (the narrower at the bottom, the
+  smaller the arch), tower stones are seen from above with their curve exaggerated (the more curved,
+  the smaller the tower), and thin walls and floors are shown from the side so their thickness
+  shows.
+
 ## 0.2.1: smoother big bases
 
 - Less stutter in big bases. A structure is solved again each time someone walks onto another piece

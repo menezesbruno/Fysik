@@ -50,6 +50,16 @@ Fysik applies this to every joint between two stone, black marble or grausten pi
 Stone resting on wood, iron or the ground is still joined rigidly, and two stones that only touch
 corner to corner along an edge do not hold each other at all.
 
+## Fysik's stones
+
+The arch stones and tower stones are wedges and curved stones, but Fysik solves each as a block of
+the same volume: an arch stone as wide as its middle, a tower stone as long as its arc halfway
+through the wall. A stone wall, block or floor laid into one is cut to fit it, mesh, collider and
+weight; it then rests on the special stone's own face rather than on a block's. Around a tower
+stone, wooden floors, wall panels and roofs are cut too, while beams, poles and logs stay whole. The
+game saves every turn in half-degree steps, rounded down, so when these stones load they are turned
+back to the angle they were laid at, the same on every player's game.
+
 ## The calculation
 
 Each connected structure is solved as a 3D frame. The weight of every piece, and of whatever rests on

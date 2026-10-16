@@ -52,8 +52,8 @@ The stress line names what is closest to breaking the piece:
 
 A piece is much stronger squeezed or pulled than bent, which is why braces, trusses and arches
 work. Stone, black marble and grausten rest on each other like masonry: their joints never pull, so
-a stone needs something under its weight (see **How it works**). Long, thin pieces buckle, so a slender post carries less in compression than its material
-alone would allow.
+a stone needs something under its weight (see **How it works**). Long, thin pieces buckle, so a
+slender post carries less in compression than its material alone would allow.
 
 Aiming at a chest, a torch, a pile or another object that holds nothing up shows its name and
 weight, for a chest what is inside it (*Holds 240 kg*), and *Rests on the ground* when it stands on
