@@ -56,7 +56,7 @@ namespace Fysik.Game
                 zdo.SetOwner(nearest);
                 handed++;
             }
-            if (handed > 0)
+            if (handed > 0 && FysikConfig.DetailedLog.Value)
                 Plugin.Log.LogInfo($"Handed {handed} building pieces near the world centre to the nearest players.");
         }
 

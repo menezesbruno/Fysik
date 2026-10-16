@@ -110,12 +110,12 @@ namespace Fysik.Game
                 {
                     case CrackAction.StartCrack:
                         SetCrack(zdo, node, nowTicks);
-                        if (FysikConfig.LogSolves.Value)
+                        if (FysikConfig.DetailedLog.Value)
                             Plugin.Log.LogInfo($"{node.Name} is cracking ({StructureManager.Describe(node.Result)})");
                         break;
                     case CrackAction.StopCrack:
                         SetCrack(zdo, node, 0);
-                        if (FysikConfig.LogSolves.Value)
+                        if (FysikConfig.DetailedLog.Value)
                             Plugin.Log.LogInfo($"{node.Name} stopped cracking ({StructureManager.Describe(node.Result)})");
                         break;
                     case CrackAction.Fall:
@@ -136,7 +136,7 @@ namespace Fysik.Game
                 if (!node.Alive)
                     continue;
                 node.FellByFysik = true;
-                if (FysikConfig.LogSolves.Value)
+                if (FysikConfig.DetailedLog.Value)
                     Plugin.Log.LogInfo($"{node.Name} gave way (" +
                                        (i < failed && !node.Attachment
                                            ? StructureManager.Describe(node.Result) + (node.Island.Cascading ? ", cascade" : "")

@@ -133,7 +133,7 @@ synced to every client; they can also be edited in game with a configuration man
 | Failure | DamageWeakens (*server*) | on | | Pieces below half health are weaker, down to 25% strength at the brink of breaking; rain wear alone never weakens them. Off: damage never changes strength. |
 | Structure | Difficulty (*server*) | Normal | Relaxed, Normal, Strict | Relaxed: materials 50% stronger (longer spans and cantilevers). Strict: 30% weaker. |
 | Structure | MasonryJoints (*server*) | on | | Stone, black marble and grausten rest on each other like real masonry: their joints cannot pull, they open or rock on an edge when the weight above is off-centre and slip when pushed sideways harder than friction holds; a stone needs something under its weight. Off: these joints are glued, as up to 0.1.5. |
-| Structure | MaxFrameBodies (*server*) | 2000 | 500–5000 | Largest structure solved with the full frame analysis; bigger ones use a simplified model that does not recognise arches or masonry. Higher values take longer to update (about 0.5 s for 2000 pieces, 2 s for 5000). |
+| Structure | MaxFrameBodies (*server*) | 2000 | 500–5000 | Largest structure solved with the full frame analysis; bigger ones use a simplified model that does not recognise arches or masonry. Higher values take longer to update (a base of 850 pieces takes about half a second). |
 | Material.\<type\> | Density, CompressiveStrength, TensileStrength, ShearStrength, BucklingSlenderness (*server*) | per material | | Density (kg/m³) gives structural pieces their weight; strengths in MPa. Stone is strong in compression and weak in tension. Objects weigh their materials instead (see Weight). |
 | Weight | Wood, Stone, MetalBar, Nail (*server*) | 4, 10, 4, 0.1 | 0–1000 | Kilograms per item used to build an object (furniture, crafting stations, chests, torches); objects weigh their materials, not their volume. |
 | Weight | PerItemWeight (*server*) | 2 | 0–100 | Kilograms per unit of the game's item weight, for every other material in an object's recipe. |
@@ -149,8 +149,7 @@ synced to every client; they can also be edited in game with a configuration man
 | Display | XRayRadiusKey | Ctrl+F7 | | Widens the X-ray radius by 10 m (after 80 m, back to 40 m). |
 | Performance | FrameBudgetMs | 1.5 | 0.25–10 | Time per frame spent on calculations. |
 | Performance | BackgroundSolver | on | | Solve structures on a worker thread, without taking frame time. |
-| Debug | LogSolves | on | | One log line per structure solved. |
-| Debug | LogGeometry | on | | One log line per kind of piece: colliders, size, weight. |
+| Debug | DetailedLog | off | | Writes every structure solved, every crack and fall, each kind of piece (colliders, size, weight) and each ownership handover to `BepInEx/LogOutput.log`. For bug reports and development; off keeps the log clean. |
 | Debug | DumpKey | Ctrl+F8 | | Writes the structure under the hammer to `BepInEx/fysik-dump.txt`. |
 
 The console command `fysik stats`, `fysik recalc`, `fysik dump` or `fysik hash` (F5; the game must be

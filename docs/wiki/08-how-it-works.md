@@ -72,7 +72,8 @@ as a percentage of what the piece can take.
 A structure is recalculated only when something changes: a piece placed, removed or damaged, an
 object placed on it or taken away, a chest's contents, a player or a cart moving onto another piece,
 snow building up or shoveled off, a setting. Only the affected structure is solved, on a worker
-thread, so it takes no frame time: about half a second for 2000 pieces. Above
+thread; reading its pieces takes at most `Performance.FrameBudgetMs` (1.5 ms) of each frame. A base
+of 850 pieces takes about half a second. Above
 `Structure.MaxFrameBodies` pieces a simpler model passes the weight down to the ground without
 recognising arches.
 
