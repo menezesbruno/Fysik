@@ -491,7 +491,7 @@ namespace Fysik.Game
                 return null;
             node = new PieceNode(wnt);
             _nodes[wnt] = node;
-            if (FysikConfig.LogGeometry.Value && s_describedPrefabs.Add(node.Name))
+            if (FysikConfig.DetailedLog.Value && s_describedPrefabs.Add(node.Name))
             {
                 MaterialProps material = MaterialTable.For(wnt);
                 Plugin.Log.LogInfo(node.Structural
@@ -709,7 +709,7 @@ namespace Fysik.Game
             LastSolve = $"{job.Members.Count} pieces, {island.Solver}" +
                         (island.Solver == SolverKind.Frame ? $" ({job.Analysis.Iterations} iterations{(job.Analysis.MasonryRounds > 0 ? $", {job.Analysis.MasonryRounds} masonry rounds" : "")}{(job.Analysis.MasonrySettled ? "" : ", masonry not settled")}{(job.Analysis.Converged ? "" : ", not converged")})" : "") +
                         $", {ms:0.0} ms of frame time over {job.Frames} frames (longest {longest:0.0} ms), {wall:0} ms in all{worstText}";
-            if (FysikConfig.LogSolves.Value)
+            if (FysikConfig.DetailedLog.Value)
                 Plugin.Log.LogInfo("Solved " + LastSolve);
         }
 

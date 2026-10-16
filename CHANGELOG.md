@@ -7,6 +7,10 @@
   pieces took 5 to 17 ms of it each time, most of that in a single frame. Reading the pieces is now
   spread over frames within `Performance.FrameBudgetMs`, and the solver is set up on the worker
   thread with the rest of the calculation. Results are the same.
+- Fysik's detailed log is off by default. The settings `Debug.LogSolves` and `Debug.LogGeometry`
+  are replaced by one, `Debug.DetailedLog`: on, Fysik writes every structure solved, every crack and
+  fall, each kind of piece and each ownership handover to `BepInEx/LogOutput.log`, as before. Turn it
+  on when reporting a bug. Startup lines, warnings and the dump (Ctrl+F8) do not depend on it.
 - The documented solve times were measured on simple walls; they now give a real base: 850 pieces in
   about half a second.
 

@@ -149,8 +149,7 @@ synced to every client; they can also be edited in game with a configuration man
 | Display | XRayRadiusKey | Ctrl+F7 | | Widens the X-ray radius by 10 m (after 80 m, back to 40 m). |
 | Performance | FrameBudgetMs | 1.5 | 0.25–10 | Time per frame spent on calculations. |
 | Performance | BackgroundSolver | on | | Solve structures on a worker thread, without taking frame time. |
-| Debug | LogSolves | on | | One log line per structure solved. |
-| Debug | LogGeometry | on | | One log line per kind of piece: colliders, size, weight. |
+| Debug | DetailedLog | off | | Writes every structure solved, every crack and fall, each kind of piece (colliders, size, weight) and each ownership handover to `BepInEx/LogOutput.log`. For bug reports and development; off keeps the log clean. |
 | Debug | DumpKey | Ctrl+F8 | | Writes the structure under the hammer to `BepInEx/fysik-dump.txt`. |
 
 The console command `fysik stats`, `fysik recalc`, `fysik dump` or `fysik hash` (F5; the game must be
