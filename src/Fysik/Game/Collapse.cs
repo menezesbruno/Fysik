@@ -82,6 +82,8 @@ namespace Fysik.Game
                 }
                 if (node.Attachment)
                 {
+                    if (crack != 0)
+                        SetCrack(zdo, node, 0);
                     if (node.ContactsValid && !node.HasSupport && AttachmentReady(node) && CanFall(wnt, worldAllowsFalls))
                         _falling.Add(node);
                     continue;

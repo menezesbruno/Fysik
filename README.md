@@ -48,7 +48,7 @@ are in the [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/) 
   item weight for anything else (server settings in the `Weight` section). Piles and stacks weigh
   their items as stored items do, 1 kg per unit of item weight (`Weight.Contents`). Simple buckling:
   slender pieces get a lower compression limit. Pieces that hold nothing up (chests, workbenches,
-  torches, most piles) weigh by the same rules, as a load shared among the pieces they rest on (the
+  torches, portals, most piles) weigh by the same rules, as a load shared among the pieces they rest on (the
   ground takes its share when they also touch it) and spread over each of those pieces; as in vanilla,
   they need a structural piece or the ground to rest on, and fall without one.
 - **Loads beyond the pieces:** what is inside a chest, a cart or a player's inventory weighs 1 kg per
