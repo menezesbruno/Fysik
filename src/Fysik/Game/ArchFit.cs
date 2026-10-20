@@ -230,7 +230,7 @@ namespace Fysik.Game
             }
         }
 
-        private static bool Fits(WearNTear wnt) => wnt.m_supports && (Masonry(wnt) || Timber(wnt)) && !Shaped(wnt);
+        private static bool Fits(WearNTear wnt) => PieceNode.HoldsUp(wnt) && (Masonry(wnt) || Timber(wnt)) && !Shaped(wnt);
 
         private static bool Masonry(WearNTear wnt) => wnt.m_materialType == WearNTear.MaterialType.Stone;
 

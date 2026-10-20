@@ -55,9 +55,9 @@ work. Stone, black marble and grausten rest on each other like masonry: their jo
 a stone needs something under its weight (see **How it works**). Long, thin pieces buckle, so a
 slender post carries less in compression than its material alone would allow.
 
-Aiming at a chest, a torch, a pile or another object that holds nothing up shows its name and
-weight, for a chest what is inside it (*Holds 240 kg*), and *Rests on the ground* when it stands on
-the ground.
+Aiming at a chest, a torch, a portal, a pile or another object that holds nothing up shows its name
+and weight, for a chest what is inside it (*Holds 240 kg*), and *Rests on the ground* when it stands
+on the ground.
 
 ## Placing a piece
 

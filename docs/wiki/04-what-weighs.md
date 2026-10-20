@@ -39,9 +39,9 @@ game tags as objects are not solid blocks, so they weigh the materials they are 
 | Anything else | 2 per unit of item weight |
 
 A smelter weighs about 250 kg, a forge 120 kg, a bed 32 kg, a chair 16 kg, an empty chest 40 to
-113 kg and a standing torch about 9 kg. Objects that hold nothing up (chests, workbenches, torches,
-some benches) share their weight among the pieces they rest on, the ground taking its share when
-they also touch it.
+113 kg, a standing torch about 9 kg and a wooden portal about 100 kg. Objects that hold nothing up
+(chests, workbenches, torches, portals, some benches) share their weight among the pieces they rest
+on, the ground taking its share when they also touch it.
 
 ## Piles and stacks
 

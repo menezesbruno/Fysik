@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.4: portal bugfix
+
+A bugfix release for portals; nothing else changes.
+
+- Fixed portals cracking and falling beside a building. The only solid part the game gives a portal
+  is its floor board, 10 cm thick, and Fysik solved it as that board, yet joined it to anything
+  built within 30 cm of its arch: a wall behind a portal leaned its weight on the board, which read
+  *Bending* and gave way (118% beside a stone wall 4 m high). Portals now hold nothing up, like
+  chests and workbenches: they weigh their materials (a wooden portal about 100 kg) on the pieces or
+  the ground under them, and fall when those are gone.
+- A portal that was cracking when the world was last saved stops cracking once it loads.
+- Fixed stone portals being cut to fit beside arch and tower stones.
+
 ## 0.2.3: castles
 
 - Walls cut to fit a round tower no longer hang on it. Fysik solves each tower stone as a straight
