@@ -6,7 +6,8 @@ the backup, set `Structure.Mode = Sandbox` to see the forces without anything fa
 is red, then switch back to `Physics`.
 
 **Why is a piece light blue?**
-Its structure is still being calculated. A big base takes up to a couple of seconds after a change.
+Its structure is still being calculated. A base of 850 pieces takes about half a second after a
+change, a bigger one longer.
 
 **Why is a piece magenta?**
 It has no path to the ground at all. In Physics mode it falls at once.

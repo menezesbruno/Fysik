@@ -40,7 +40,8 @@ are in the [wiki](https://thunderstore.io/c/valheim/p/menezesbruno/Fysik/wiki/) 
   that can then move freely (detected by solving again with the released joints ten times softer:
   only a mechanism moves ten times more) is unstable and falls, while the rest is solved without it.
   Stone on other materials and on the ground stays rigid. Walls and floors are approximated
-  as equivalent beams. Loads: self-weight, plus what rests on a piece. Pieces the game tags as
+  as equivalent beams and checked as plates, so twisting between uneven supports reads as bending.
+  Loads: self-weight, plus what rests on a piece. Pieces the game tags as
   structure (building, floor, wall, roof, architecture, stairs, doors) weigh their volume times their
   material's density; pieces it tags as objects (furniture, crafting, lighting, decor, storage,
   transport, defense, food) weigh what they are made of, since their colliders are not solid material:

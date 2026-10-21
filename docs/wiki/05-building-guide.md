@@ -241,9 +241,9 @@ floors on top unless the row says otherwise:
 | Floors on 2 m wood beams, posts every 4 m | 8% | 24% | 54% | 63% |
 | 12 m span, posts only at the ends | 29% | 40% | 62% | 69% |
 | 16 m span, posts only at the ends | 49% | 63% | 101% | 113% |
-| Tied arch, 24 m (above) | 14% | 18% | 37% | 44% |
+| Tied arch, 24 m (above) | 42% | 48% | 60% | 63% |
 | Truss, 24 m (above) | 58% | 61% | 75% | 78% |
-| Arch under the deck, 40 m (above) | 54% | 71% | 85% | 85% |
+| Arch under the deck, 40 m (above) | 54% | 71% | 86% | 87% |
 
 - A bridge with posts every 4 to 8 m, or any of the bridges above, carries any cart.
 - Long spans resting only on their ends are where carts matter: wood crosses a 16 m span easily, ore

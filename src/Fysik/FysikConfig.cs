@@ -98,8 +98,8 @@ namespace Fysik
                 "Failure", "CrackWarningSeconds", 5f,
                 Server("Seconds an overloaded piece stays cracked (red, shaking) before it falls, giving time to shore " +
                        "it up or take the load off. That is for a piece just past its limit (up to 110%): the further " +
-                       "past, the shorter the warning, down to none at twice its limit. Once the first piece falls, the " +
-                       "rest of the collapse is instant.",
+                       "past, the shorter the warning, down to none at twice its limit. For 3 s after a piece falls, " +
+                       "overloaded pieces of the same structure fall without warning.",
                        new AcceptableValueRange<float>(0f, 60f)));
 
             DamageWeakens = config.Bind(
@@ -111,8 +111,9 @@ namespace Fysik
             MaxFrameBodies = config.Bind(
                 "Structure", "MaxFrameBodies", 2000,
                 Server("Largest connected structure (pieces) solved with the full frame analysis. Bigger ones use a " +
-                       "simplified load-path model, which does not recognise arches. Higher values recognise arches in big " +
-                       "bases but take longer to update (about 0.5 s for 2000 pieces, 2 s for 5000, on a worker thread).",
+                       "simplified load-path model, which does not recognise arches or masonry. Higher values recognise " +
+                       "them in big bases but take longer to update (a base of 850 pieces takes about half a second, on a " +
+                       "worker thread).",
                        new AcceptableValueRange<int>(500, 5000)));
 
             StructureDifficulty = config.Bind(
@@ -183,7 +184,8 @@ namespace Fysik
 
             BackgroundSolver = config.Bind(
                 "Performance", "BackgroundSolver", true,
-                "Solve structures on a worker thread, so big bases update in about a second without taking frame time. " +
+                "Solve structures on a worker thread, without taking frame time: a base of 850 pieces updates in about " +
+                "half a second. " +
                 "Off: the solver shares the per-frame budget (slower for big structures).");
 
             HammerInfo = config.Bind(
