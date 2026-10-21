@@ -4,6 +4,9 @@
 from the ground. With Fysik, the **shape** of your build matters, in the spirit of Poly Bridge and
 Bridge Constructor.
 
+**Found a bug or have a suggestion?** Open an issue on
+[GitHub](https://github.com/menezesbruno/Fysik/issues).
+
 ![A 24 m tied-arch bridge with braced ends, every piece colored by its computed stress: side view, top view, parts list and building order](https://raw.githubusercontent.com/menezesbruno/Fysik/main/docs/images/guide-tied-arch-braced.png)
 
 *A 24 m bridge from the building guide, every piece colored by the stress Fysik computes: the worst
@@ -146,7 +149,7 @@ synced to every client; they can also be edited in game with a configuration man
 | Structure | Difficulty (*server*) | Normal | Relaxed, Normal, Strict | Relaxed: materials 50% stronger (longer spans and cantilevers). Strict: 30% weaker. |
 | Structure | MasonryJoints (*server*) | on | | Stone, black marble and grausten rest on each other like real masonry: their joints cannot pull, they open or rock on an edge when the weight above is off-centre and slip when pushed sideways harder than friction holds; a stone needs something under its weight. Off: these joints are glued, as up to 0.1.5. |
 | Structure | MaxFrameBodies (*server*) | 2000 | 500–5000 | Largest structure solved with the full frame analysis; bigger ones use a simplified model that does not recognise arches or masonry. Higher values take longer to update (a base of 850 pieces takes about half a second). |
-| Material.\<type\> | Density, CompressiveStrength, TensileStrength, ShearStrength, BucklingSlenderness (*server*) | per material | | Density (kg/m³) gives structural pieces their weight; strengths in MPa. Stone is strong in compression and weak in tension. Objects weigh their materials instead (see Weight). |
+| Material.\<type\> | Density, CompressiveStrength, TensileStrength, ShearStrength, BucklingSlenderness (*server*) | per material | 10–20000, 0.01–1000, 5–500 | One section per material: Wood, HardWood (core wood), Timberwood, Ancient, Stone, Marble (black marble), Ashstone (grausten), Iron, Ice, and Unknown for pieces of other mods. Density (kg/m³) gives structural pieces their weight; strengths in MPa; buckling slenderness is where a slender piece's compressive limit halves. Stone is strong in compression and weak in tension. Objects weigh their materials instead (see Weight). |
 | Weight | Wood, Stone, MetalBar, Nail (*server*) | 4, 10, 4, 0.1 | 0–1000 | Kilograms per item used to build an object (furniture, crafting stations, chests, torches); objects weigh their materials, not their volume. |
 | Weight | PerItemWeight (*server*) | 2 | 0–100 | Kilograms per unit of the game's item weight, for every other material in an object's recipe. |
 | Weight | LiveLoads (*server*) | on | | Chest contents, players, carts and Deep North snow weigh on the structure. Off: only the pieces and the objects built on them (piles and stacks included) weigh. |

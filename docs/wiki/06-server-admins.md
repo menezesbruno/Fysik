@@ -45,7 +45,10 @@ a structure, weight or material setting recalculates every structure. The ones w
 - `Weight.Contents`, `Weight.Player`, `Weight.Snow`: how much stored items, players and a full layer
   of snow weigh. `Weight.Snow = 0` turns only the snow off.
 - `Weight.Wood`, `Stone`, `MetalBar`, `Nail`, `PerItemWeight`: what objects weigh per material.
-- `Material.<type>`: density and strengths of each material, for fine calibration.
+- `Material.<type>`: density and strengths of each material, for fine calibration. The types are
+  `Wood`, `HardWood` (core wood), `Timberwood`, `Ancient`, `Stone`, `Marble` (black marble),
+  `Ashstone` (grausten), `Iron`, `Ice`, and `Unknown` for pieces of other mods whose material Fysik
+  does not know.
 
 ## World buildings
 
@@ -60,7 +63,7 @@ that do not record a builder, count as world buildings.
 
 Structures of up to `Structure.MaxFrameBodies` pieces (2000 by default, 500 to 5000) get the full
 calculation, on a worker thread: a base of 850 pieces takes about half a second. Larger ones use a
-simpler model that does not recognise arches; the hammer then adds *simplified model*. Raise the limit
+simpler model that does not recognise arches or masonry; the hammer then adds *simplified model*. Raise the limit
 if your players build arches into big bases. A structure that reaches beyond every player's loaded
 area is never brought down.
 
