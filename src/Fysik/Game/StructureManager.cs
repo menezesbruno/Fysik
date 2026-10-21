@@ -114,10 +114,11 @@ namespace Fysik.Game
             Id = wnt.m_nview.GetZDO().m_uid;
             Name = wnt.gameObject.name.Replace("(Clone)", "");
             Geometry = PieceGeometry.Of(wnt);
-            Structural = wnt.m_supports && Geometry.IsValid;
+            bool holdsUp = HoldsUp(wnt);
+            Structural = holdsUp && Geometry.IsValid;
             WorldBuilt = IsWorldBuilt(wnt);
             Container = wnt.GetComponentInChildren<Container>();
-            if (!wnt.m_supports && wnt.m_noSupportWear)
+            if (!holdsUp && wnt.m_noSupportWear)
             {
                 OwnColliders = wnt.GetComponentsInChildren<Collider>(true);
                 SupportBoxes = PieceGeometry.VanillaSupportBoxes(OwnColliders);
@@ -132,6 +133,8 @@ namespace Fysik.Game
         public bool Anchored => WorldBuilt && FysikConfig.WorldBuildings.Value == WorldBuildingMode.Vanilla;
 
         public static bool IsWorldBuilt(WearNTear wnt) => wnt.m_piece == null || wnt.m_piece.GetCreator() == 0;
+
+        public static bool HoldsUp(WearNTear wnt) => wnt.m_supports && wnt.GetComponent<TeleportWorld>() == null;
 
         public static bool KeepsVanilla(WearNTear wnt) =>
             FysikConfig.WorldBuildings.Value == WorldBuildingMode.Vanilla && IsWorldBuilt(wnt);
@@ -582,7 +585,7 @@ namespace Fysik.Game
 
         private void ProcessAppeared(WearNTear wnt)
         {
-            if (wnt == null || !wnt.m_supports || _nodes.Count == 0 || wnt.m_nview == null || wnt.m_nview.GetZDO() == null)
+            if (wnt == null || !PieceNode.HoldsUp(wnt) || _nodes.Count == 0 || wnt.m_nview == null || wnt.m_nview.GetZDO() == null)
                 return;
             PieceGeometry geometry = PieceGeometry.Of(wnt);
             EnsureMasks();
@@ -608,7 +611,7 @@ namespace Fysik.Game
             Preview = null;
             _previewJob?.Cancel();
             _previewJob = null;
-            if (!ghost.m_supports)
+            if (!PieceNode.HoldsUp(ghost))
                 return;
             PieceGeometry geometry = PieceGeometry.Of(ghost);
             if (!geometry.IsValid)
@@ -791,7 +794,7 @@ namespace Fysik.Game
                         node.GroundKinds |= terrain ? GroundKind.Terrain : KindOf(c);
                         continue;
                     }
-                    if (other == node.Wnt || !other.m_supports)
+                    if (other == node.Wnt || !PieceNode.HoldsUp(other))
                         continue;
                     PieceNode supporter = GetNode(other);
                     if (supporter == null || node.Contacts.Exists(k => k.Other == supporter))
