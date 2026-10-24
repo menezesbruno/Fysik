@@ -238,6 +238,7 @@ namespace Fysik.Game
     internal sealed class StructureManager
     {
         private const float ContactMargin = 0.15f;
+        private const float ReachMargin = 0.5f;
         private const int MaxIslandScan = 20000;
 
         private const float CascadeSeconds = 3f;
@@ -270,6 +271,9 @@ namespace Fysik.Game
         public bool PreviewPending => _previewJob != null;
 
         private static readonly Collider[] s_hits = new Collider[128];
+        private static readonly Collider[] s_near = new Collider[256];
+        private static readonly Collider[] s_back = new Collider[128];
+        private static readonly HashSet<PieceNode> s_reached = new HashSet<PieceNode>();
 
         private const float BuriedDepth = 2f;
 
@@ -600,11 +604,11 @@ namespace Fysik.Game
             EnsureMasks();
             foreach (Obb box in geometry.Boxes)
             {
-                int count = Physics.OverlapBoxNonAlloc(box.Center, box.Size * 0.5f + Vector3.one * ContactMargin,
-                                                       s_hits, box.Rotation, s_rayMask);
+                int count = Physics.OverlapBoxNonAlloc(box.Center, box.Size * 0.5f + Vector3.one * ReachMargin,
+                                                       s_near, box.Rotation, s_rayMask);
                 for (int i = 0; i < count; i++)
                 {
-                    WearNTear other = s_hits[i].GetComponentInParent<WearNTear>();
+                    WearNTear other = s_near[i].GetComponentInParent<WearNTear>();
                     if (other != null && other != wnt && _nodes.TryGetValue(other, out PieceNode node))
                         Invalidate(node);
                 }
@@ -947,6 +951,7 @@ namespace Fysik.Game
                     ContactSpan.Include(touch.OtherSpan, otherNode.Geometry.Main.Grown(0), s_region);
                 }
             }
+            AddReachingTouches(geometry, self, frame);
 
             contacts.Clear();
             foreach (KeyValuePair<PieceNode, Touch> kv in _touches)
@@ -968,6 +973,54 @@ namespace Fysik.Game
                 ground.RemoveRange(MaxGroundPoints, ground.Count - MaxGroundPoints);
             }
             return kinds;
+        }
+
+        private void AddReachingTouches(PieceGeometry geometry, WearNTear self, OrientedBox frame)
+        {
+            s_reached.Clear();
+            foreach (Obb box in geometry.Boxes)
+            {
+                int count = Physics.OverlapBoxNonAlloc(box.Center, box.Size * 0.5f + Vector3.one * ReachMargin,
+                                                       s_near, box.Rotation, s_rayMask);
+                for (int i = 0; i < count; i++)
+                {
+                    Collider c = s_near[i];
+                    if (c.isTrigger || c.attachedRigidbody != null || geometry.Colliders.Contains(c) ||
+                        c.gameObject.layer == s_terrainLayer)
+                        continue;
+                    WearNTear other = c.GetComponentInParent<WearNTear>();
+                    if (other == null || other == self || !other.m_supports)
+                        continue;
+                    PieceNode otherNode = GetNode(other);
+                    if (otherNode == null || !otherNode.Structural || _touches.ContainsKey(otherNode) || !s_reached.Add(otherNode))
+                        continue;
+                    AddReachingTouch(geometry, frame, otherNode);
+                }
+            }
+            s_reached.Clear();
+        }
+
+        private void AddReachingTouch(PieceGeometry geometry, OrientedBox frame, PieceNode other)
+        {
+            OrientedBox otherFrame = other.Geometry.Main.Grown(0);
+            Touch touch = null;
+            foreach (Obb theirs in other.Geometry.Boxes)
+            {
+                OrientedBox grown = theirs.Grown(ContactMargin);
+                int count = Physics.OverlapBoxNonAlloc(theirs.Center, theirs.Size * 0.5f + Vector3.one * ContactMargin,
+                                                       s_back, theirs.Rotation, s_rayMask);
+                for (int i = 0; i < count; i++)
+                {
+                    int k = geometry.Colliders.IndexOf(s_back[i]);
+                    if (k < 0 || !Overlap.Of(geometry.Boxes[k].Grown(ContactMargin), grown, out Vec3 centroid, out double volume, s_region))
+                        continue;
+                    if (touch == null)
+                        _touches[other] = touch = new Touch();
+                    touch.Points.Add(new WeightedPoint { Point = centroid, Weight = volume });
+                    ContactSpan.Include(touch.Span, frame, s_region);
+                    ContactSpan.Include(touch.OtherSpan, otherFrame, s_region);
+                }
+            }
         }
 
         private static GroundKind KindOf(Collider c)
