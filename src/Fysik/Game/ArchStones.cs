@@ -171,6 +171,7 @@ namespace Fysik.Game
         {
             Matrix4x4 toRoot = root.worldToLocalMatrix * part.localToWorldMatrix;
             Matrix4x4 fromRoot = toRoot.inverse;
+            Matrix4x4 normalToRoot = fromRoot.transpose, normalFromRoot = toRoot.transpose;
             Mesh mesh = UnityEngine.Object.Instantiate(source);
             mesh.name = stone.Prefab + "_" + source.name;
 
@@ -187,9 +188,9 @@ namespace Fysik.Game
                 vertices[i] = fromRoot.MultiplyPoint3x4(w);
                 if (normals.Length == vertices.Length)
                 {
-                    Vector3 n = toRoot.MultiplyVector(normals[i]);
+                    Vector3 n = normalToRoot.MultiplyVector(normals[i]);
                     n = new Vector3(n.x / a, n.y / b - c * n.x / (a * b), n.z / d);
-                    normals[i] = fromRoot.MultiplyVector(n).normalized;
+                    normals[i] = normalFromRoot.MultiplyVector(n).normalized;
                 }
                 if (tangents.Length == vertices.Length)
                 {
