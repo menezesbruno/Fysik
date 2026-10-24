@@ -550,11 +550,8 @@ namespace Fysik.Game
                     ScanAttachment(attachment);
             }
 
-            if (_previewJob != null && Stopwatch.GetTimestamp() < deadline && _previewJob.Run(this, deadline))
-            {
-                FinishPreview(_previewJob);
-                _previewJob = null;
-            }
+            if (_previewJob != null && Stopwatch.GetTimestamp() < deadline)
+                RunPreview(deadline);
 
             long watchDeadline = Math.Min(deadline, Stopwatch.GetTimestamp() + (long)(WatchBudgetMs * Stopwatch.Frequency / 1000.0));
             WatchGround(watchDeadline);
@@ -578,6 +575,24 @@ namespace Fysik.Game
                 {
                     break;
                 }
+            }
+        }
+
+        private void RunPreview(long deadline)
+        {
+            try
+            {
+                if (!_previewJob.Run(this, deadline))
+                    return;
+                FinishPreview(_previewJob);
+                _previewJob = null;
+            }
+            catch (Exception e)
+            {
+                Guard.Report("Placement preview", e);
+                _previewJob?.Cancel();
+                _previewJob = null;
+                Preview = null;
             }
         }
 
