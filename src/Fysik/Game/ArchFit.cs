@@ -413,7 +413,7 @@ namespace Fysik.Game
                     };
                     if (arch)
                     {
-                        Vec3 local = ToVec(toLocal.MultiplyPoint3x4(centre));
+                        Vec3 local = ToVec(toLocal.MultiplyPoint3x4(middle));
                         wedge.Outward = stone.Shape.Beyond(local);
                         wedge.Open = stone.Shape.InSector(local);
                         wedge.Deep = Voussoir.InDepth(local, stone.Depth);
@@ -425,14 +425,22 @@ namespace Fysik.Game
                         wedge.Outward = tower.Ring.Beyond(local);
                         wedge.Open = tower.Ring.Opens(local, locals);
                         wedge.Deep = tower.Ring.Reaches(locals);
-                        Vector3 size = Abs(Vector3.Scale(box.size, box.transform.lossyScale));
+                        Vector3 ax = box.transform.right, ay = box.transform.up, az = box.transform.forward;
+                        Vector3 lo = Vector3.one * float.MaxValue, hi = Vector3.one * float.MinValue;
+                        foreach (Vector3 c in corners)
+                        {
+                            var along = new Vector3(Vector3.Dot(c, ax), Vector3.Dot(c, ay), Vector3.Dot(c, az));
+                            lo = Vector3.Min(lo, along);
+                            hi = Vector3.Max(hi, along);
+                        }
+                        Vector3 mid = (lo + hi) * 0.5f;
                         wedge.Block = new OrientedBox
                         {
-                            Center = local,
-                            AxisX = ToVec(toLocal.MultiplyVector(box.transform.right)),
-                            AxisY = ToVec(toLocal.MultiplyVector(box.transform.up)),
-                            AxisZ = ToVec(toLocal.MultiplyVector(box.transform.forward)),
-                            Half = ToVec(size * 0.5f),
+                            Center = ToVec(toLocal.MultiplyPoint3x4(ax * mid.x + ay * mid.y + az * mid.z)),
+                            AxisX = ToVec(toLocal.MultiplyVector(ax)),
+                            AxisY = ToVec(toLocal.MultiplyVector(ay)),
+                            AxisZ = ToVec(toLocal.MultiplyVector(az)),
+                            Half = ToVec((hi - lo) * 0.5f),
                         };
                     }
                     s_wedges.Add(wedge);
