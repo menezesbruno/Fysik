@@ -132,7 +132,7 @@ namespace Fysik.Structure
         public Vec3 ToFaceWithin(Vec3 p, OrientedBox block, bool outward, double offset, double slack)
         {
             Vec3 radial = ToFace(p, outward, offset);
-            if (Inside(radial, block, slack))
+            if (Inside(radial, block, slack) && Math.Abs(Vec3.Dot(radial - p, block.AxisY)) <= slack)
                 return radial;
             double target = outward ? OuterRadius + offset : InnerRadius - offset;
             double dx = p.X - Centre.X, dz = p.Z - Centre.Z;
@@ -142,20 +142,19 @@ namespace Fysik.Structure
             {
                 Vec3 axis = k == 0 ? block.AxisX : block.AxisZ;
                 double half = (k == 0 ? block.Half.X : block.Half.Z) + slack;
-                double length = Math.Sqrt(axis.X * axis.X + axis.Z * axis.Z);
-                if (length < 1e-9)
+                double flat = axis.X * axis.X + axis.Z * axis.Z;
+                if (flat < 1e-12)
                     continue;
-                double ux = axis.X / length, uz = axis.Z / length;
-                double along = dx * ux + dz * uz;
-                double disc = along * along - (dx * dx + dz * dz) + target * target;
+                double along = dx * axis.X + dz * axis.Z;
+                double disc = along * along - flat * (dx * dx + dz * dz - target * target);
                 if (disc < 0)
                     continue;
-                foreach (double t in new[] { -along - Math.Sqrt(disc), -along + Math.Sqrt(disc) })
+                foreach (double t in new[] { (-along - Math.Sqrt(disc)) / flat, (-along + Math.Sqrt(disc)) / flat })
                 {
                     if (Math.Abs(t) >= shortest)
                         continue;
-                    var q = new Vec3(p.X + ux * t, p.Y, p.Z + uz * t);
-                    if (Math.Abs(Vec3.Dot(q - block.Center, axis) / axis.Length) > half)
+                    Vec3 q = p + axis * t;
+                    if (Math.Abs(Vec3.Dot(q - block.Center, axis)) > half)
                         continue;
                     shortest = Math.Abs(t);
                     best = q;

@@ -198,6 +198,28 @@ namespace Fysik.Tests
             Assert.True(Math.Abs(volume - exact) < 0.015, $"carved {volume:0.000} m³, exact {exact:0.000} m³");
         }
 
+        [Theory]
+        [InlineData(0)]
+        [InlineData(26)]
+        [InlineData(45)]
+        public void A_sloped_roof_running_into_a_tower_stays_within_its_own_thickness(double slope)
+        {
+            double a = slope * Math.PI / 180, middle = Ring.Angle / 2;
+            Vec3 radial = Ring.Point(middle, 1, 0) - Ring.Point(middle, 0, 0);
+            Vec3 tangent = Vec3.Cross(Vec3.UnitY, radial).Normalized();
+            Vec3 down = radial * Math.Cos(a) - Vec3.UnitY * Math.Sin(a);
+            Vec3 normal = Vec3.Cross(down, tangent).Normalized();
+            Vec3 p = Ring.Point(middle, Ring.OuterRadius - 0.3, 0);
+            var roof = new OrientedBox
+            {
+                Center = p + down * 1.4, AxisX = tangent, AxisY = normal, AxisZ = down, Half = new Vec3(1, 0.07, 1.415),
+            };
+            Vec3 q = Ring.ToFaceWithin(p, roof, true, 0.005, 0.02);
+            Assert.Equal(Ring.OuterRadius + 0.005, Ring.RadiusOf(q), 6);
+            Assert.True(Math.Abs(Vec3.Dot(q - roof.Center, normal)) <= 0.07 + 0.02,
+                        $"{Vec3.Dot(q - roof.Center, normal):0.000} m off the roof's middle plane");
+        }
+
         [Fact]
         public void A_long_thin_wall_barely_inside_a_tower_is_cut_although_no_corner_reaches_the_stones()
         {
