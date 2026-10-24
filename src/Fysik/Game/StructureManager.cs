@@ -128,7 +128,9 @@ namespace Fysik.Game
             }
         }
 
-        public bool Alive => Wnt != null;
+        public bool Replaced;
+
+        public bool Alive => Wnt != null && !Replaced;
 
         public bool Anchored => WorldBuilt && FysikConfig.WorldBuildings.Value == WorldBuildingMode.Vanilla;
 
@@ -385,10 +387,15 @@ namespace Fysik.Game
             if (_nodes.TryGetValue(wnt, out PieceNode node))
             {
                 foreach (Contact c in node.Contacts)
+                {
                     Invalidate(c.Other);
+                    if (node.Attachment)
+                        c.Other.Attached.Remove(node);
+                }
                 foreach (PieceNode attachment in node.Attached)
                     Invalidate(attachment);
                 Invalidate(node);
+                node.Replaced = true;
                 _nodes.Remove(wnt);
             }
             _appeared.Enqueue(wnt);
