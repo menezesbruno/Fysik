@@ -92,9 +92,10 @@ namespace Fysik.Structure
             return s.X >= s.Y && s.X >= s.Z ? 0 : s.Y >= s.Z ? 1 : 2;
         }
 
-        public static double BucklingFactor(Body body)
+        public static double BucklingFactor(Body body) => BucklingFactor(body, LongestAxis(body));
+
+        public static double BucklingFactor(Body body, int axis)
         {
-            int axis = LongestAxis(body);
             double length = body.Size[axis];
             double thickness = Math.Min(body.Size[(axis + 1) % 3], body.Size[(axis + 2) % 3]);
             double gyration = thickness / Math.Sqrt(12);
@@ -107,7 +108,6 @@ namespace Fysik.Structure
         {
             Vec3 weight = gravity * body.Mass;
             int longest = LongestAxis(body);
-            double buckling = BucklingFactor(body);
             var worst = new BodyResult { Mode = StressMode.None };
             var cuts = new List<double>(contacts.Count * 2 + 1);
 
@@ -142,7 +142,7 @@ namespace Fysik.Structure
                 int i1 = (axis + 1) % 3, i2 = (axis + 2) % 3;
                 Vec3 e1 = body.Axis(i1), e2 = body.Axis(i2);
                 double s1 = body.Size[i1], s2 = body.Size[i2];
-                double phi = axis == longest ? buckling : 1;
+                double phi = BucklingFactor(body, axis);
 
                 foreach (double t in cuts)
                 {
