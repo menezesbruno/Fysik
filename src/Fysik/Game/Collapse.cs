@@ -29,7 +29,7 @@ namespace Fysik.Game
             if (physics && now >= _nextRequest)
             {
                 _nextRequest = now + RequestInterval;
-                RequestOwnedStructures();
+                RequestStructures();
             }
             if (now >= _nextEvaluate)
             {
@@ -38,13 +38,13 @@ namespace Fysik.Game
             }
         }
 
-        private static void RequestOwnedStructures()
+        private static void RequestStructures()
         {
             StructureManager manager = StructureManager.Instance;
             int created = 0;
             foreach (WearNTear wnt in WearNTear.GetAllInstances())
             {
-                if (!Owned(wnt) || PieceNode.KeepsVanilla(wnt))
+                if (!Owned(wnt) && !IsAttachment(manager, wnt) || PieceNode.KeepsVanilla(wnt))
                     continue;
                 if (!manager.Knows(wnt) && created++ >= MaxNewPiecesPerPass)
                     continue;
@@ -225,6 +225,10 @@ namespace Fysik.Game
 
         private static bool Owned(WearNTear wnt) =>
             wnt != null && wnt.m_nview != null && wnt.m_nview.IsValid() && wnt.m_nview.IsOwner();
+
+        private static bool IsAttachment(StructureManager manager, WearNTear wnt) =>
+            wnt != null && wnt.m_nview != null && wnt.m_nview.IsValid() &&
+            (manager.TryGetNode(wnt, out PieceNode node) ? node.Attachment : PieceNode.CouldAttach(wnt));
 
         private static void SetCrack(ZDO zdo, PieceNode node, long ticks)
         {
