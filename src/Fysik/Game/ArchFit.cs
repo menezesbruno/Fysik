@@ -78,6 +78,7 @@ namespace Fysik.Game
         private const int MaxJobs = 2;
         private const double RoughSlack = 0.15;
         private const double ExactSlack = 0.02;
+        private const double ReachSlack = 0.15;
 
         private struct Wedge
         {
@@ -86,6 +87,7 @@ namespace Fysik.Game
             public ArchStone Stone;
             public TowerStone Tower;
             public OrientedBox Block;
+            public Vec3 ReachMin, ReachMax;
             public bool Outward;
             public bool Open;
             public bool Deep;
@@ -403,7 +405,12 @@ namespace Fysik.Game
                     if (owner == null || owner == wnt)
                         continue;
                     Matrix4x4 toLocal = hit.transform.worldToLocalMatrix;
-                    var wedge = new Wedge { ToLocal = toLocal, ToWorld = hit.transform.localToWorldMatrix, Stone = stone, Tower = tower };
+                    var slack = new Vec3(ReachSlack, ReachSlack, ReachSlack);
+                    var wedge = new Wedge
+                    {
+                        ToLocal = toLocal, ToWorld = hit.transform.localToWorldMatrix, Stone = stone, Tower = tower,
+                        ReachMin = ToVec(hit.bounds.min) - slack, ReachMax = ToVec(hit.bounds.max) + slack,
+                    };
                     if (arch)
                     {
                         Vec3 local = ToVec(toLocal.MultiplyPoint3x4(centre));
@@ -541,7 +548,16 @@ namespace Fysik.Game
                 Vec3 q = w.ToFace(ToVec(w.ToLocal.MultiplyPoint3x4(ToVector(p))), visual);
                 return ToVec(w.ToWorld.MultiplyPoint3x4(ToVector(q)));
             }
-            var carver = new MeshCarver(world, WedgeOf, MaxDepth, w => wedges[w].Tower != null ? CurvedEdge : 0, CapEdge);
+            bool Reaches(Vec3 a, Vec3 b, Vec3 c)
+            {
+                if (visual)
+                    return false;
+                foreach (Wedge w in wedges)
+                    if (Overlaps(a, b, c, w.ReachMin, w.ReachMax))
+                        return true;
+                return false;
+            }
+            var carver = new MeshCarver(world, WedgeOf, MaxDepth, w => wedges[w].Tower != null ? CurvedEdge : 0, CapEdge, Reaches);
             shape.CutTriangles = new List<int>[shape.Triangles.Length];
             for (int k = 0; k < shape.Triangles.Length; k++)
                 shape.CutTriangles[k] = carver.Split(shape.Triangles[k]);
@@ -566,6 +582,14 @@ namespace Fysik.Game
             foreach (Vector3 v in shape.CutVertices)
                 points.Add(new Vec3(v.x * shape.Scale.x, v.y * shape.Scale.y, v.z * shape.Scale.z));
             shape.Volume = (float)MeshVolume.Of(points, shape.CutTriangles[0]);
+        }
+
+        private static bool Overlaps(Vec3 a, Vec3 b, Vec3 c, Vec3 min, Vec3 max)
+        {
+            for (int k = 0; k < 3; k++)
+                if (Math.Max(a[k], Math.Max(b[k], c[k])) < min[k] || Math.Min(a[k], Math.Min(b[k], c[k])) > max[k])
+                    return false;
+            return true;
         }
 
         private static Mesh Build(Shape shape)

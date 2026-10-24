@@ -14,10 +14,11 @@ namespace Fysik.Structure
         private readonly int _maxDepth;
         private readonly Func<int, double> _longest;
         private readonly double _inside;
+        private readonly Func<Vec3, Vec3, Vec3, bool> _reaches;
         private readonly Dictionary<long, int> _middles = new Dictionary<long, int>();
 
         public MeshCarver(IEnumerable<Vec3> points, Func<Vec3, int> wedgeOf, int maxDepth, Func<int, double> longest = null,
-                          double inside = 1)
+                          double inside = 1, Func<Vec3, Vec3, Vec3, bool> reaches = null)
         {
             Points = new List<Vec3>(points);
             OriginalCount = Points.Count;
@@ -25,6 +26,7 @@ namespace Fysik.Structure
             _maxDepth = maxDepth;
             _longest = longest;
             _inside = inside;
+            _reaches = reaches;
         }
 
         public List<int> Split(IReadOnlyList<int> triangles)
@@ -92,6 +94,7 @@ namespace Fysik.Structure
         }
 
         private const int DeepestSplit = 8;
+        private const double CoarseEdge = 0.25;
 
         private void Split(int a, int b, int c, int depth, List<int> output)
         {
@@ -125,6 +128,9 @@ namespace Fysik.Structure
                 straddles |= _samples[i] != _samples[0];
             if (straddles && depth < _maxDepth)
                 return true;
+            if (!straddles && _samples[0] < 0 && depth < _maxDepth && _reaches != null && LongestEdge(a, b, c) > CoarseEdge &&
+                _reaches(a, b, c))
+                return true;
             if (_longest == null || depth >= DeepestSplit)
                 return false;
             double limit = 0;
@@ -138,8 +144,11 @@ namespace Fysik.Structure
                 return false;
             if (!straddles)
                 limit *= _inside;
-            return Math.Max((a - b).Length, Math.Max((b - c).Length, (c - a).Length)) > limit;
+            return LongestEdge(a, b, c) > limit;
         }
+
+        private static double LongestEdge(Vec3 a, Vec3 b, Vec3 c) =>
+            Math.Max((a - b).Length, Math.Max((b - c).Length, (c - a).Length));
 
         private int Middle(int a, int b)
         {
