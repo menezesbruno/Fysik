@@ -887,8 +887,13 @@ namespace Fysik.Game
                 if (_snowNext >= _watch.Count)
                     _snowNext = 0;
                 PieceNode node = _watch[_snowNext++];
-                if (node.Alive && node.Structural && node.HasResult && ExtraLoads.SnowLevel(node.Wnt) != node.SnowLevel)
-                    ReloadLoads(node);
+                if (!node.Alive || !node.Structural || !node.HasResult)
+                    continue;
+                int level = ExtraLoads.SnowLevel(node.Wnt);
+                if (level == node.SnowLevel)
+                    continue;
+                node.SnowLevel = level;
+                ReloadLoads(node);
             }
         }
 
