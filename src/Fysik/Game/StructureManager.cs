@@ -184,6 +184,7 @@ namespace Fysik.Game
         public readonly List<PieceNode> Members;
         public bool Stale;
         public bool LoadsChanged;
+        public bool Capped;
         public SolverKind Solver;
 
         public float CascadeUntil;
@@ -701,7 +702,7 @@ namespace Fysik.Game
                 return;
             }
 
-            var island = new Island(job.Members) { Solver = job.Analysis.Solver };
+            var island = new Island(job.Members) { Solver = job.Analysis.Solver, Capped = job.Capped };
             foreach (PieceNode node in job.Members)
                 if (node.Island != null)
                     island.LastFall = Mathf.Max(island.LastFall, node.Island.LastFall);
@@ -738,7 +739,7 @@ namespace Fysik.Game
             double wall = (Stopwatch.GetTimestamp() - job.Started) * 1000.0 / Stopwatch.Frequency;
             string worstText = worst < 0 ? "" :
                 $"; worst {job.Members[worst].Name} {Describe(results[worst])}";
-            LastSolve = $"{job.Members.Count} pieces, {island.Solver}" +
+            LastSolve = $"{job.Members.Count} pieces{(job.Capped ? $" (cut at {MaxIslandScan}, nothing decided)" : "")}, {island.Solver}" +
                         (island.Solver == SolverKind.Frame ? $" ({job.Analysis.Iterations} iterations{(job.Analysis.MasonryRounds > 0 ? $", {job.Analysis.MasonryRounds} masonry rounds" : "")}{(job.Analysis.MasonrySettled ? "" : ", masonry not settled")}{(job.Analysis.Converged ? "" : ", not converged")})" : "") +
                         $", {ms:0.0} ms of frame time over {job.Frames} frames (longest {longest:0.0} ms), {wall:0} ms in all{worstText}";
             if (FysikConfig.DetailedLog.Value)
@@ -1186,6 +1187,7 @@ namespace Fysik.Game
             public GroundKind GhostRestsOn;
             public bool Dirty;
             public bool LoadsChanged;
+            public bool Capped;
             public long ComputeTicks;
             public long LongestTicks;
             public int Frames;
@@ -1237,8 +1239,19 @@ namespace Fysik.Game
                     if (!node.ContactsValid)
                         manager.ScanContacts(node);
                     foreach (Contact c in node.Contacts)
-                        if (c.Other.Alive && !c.Other.Anchored && Visited.Count < MaxIslandScan && Visited.Add(c.Other))
+                    {
+                        if (!c.Other.Alive || c.Other.Anchored || Visited.Contains(c.Other))
+                            continue;
+                        if (Visited.Count < MaxIslandScan)
+                        {
+                            Visited.Add(c.Other);
                             _frontier.Enqueue(c.Other);
+                        }
+                        else
+                        {
+                            Capped = true;
+                        }
+                    }
                 }
 
                 if (!_built && !Build(deadline))

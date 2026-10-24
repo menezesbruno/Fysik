@@ -243,6 +243,8 @@ namespace Fysik.Game
 
         private bool ComputeReady(Island island)
         {
+            if (island.Capped)
+                return false;
             var bounds = new Bounds();
             bool first = true;
             foreach (PieceNode m in island.Members)
