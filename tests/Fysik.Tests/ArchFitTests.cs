@@ -46,6 +46,13 @@ namespace Fysik.Tests
             Assert.False(Stone.Beyond(new Vec3(0, -0.1, 0)));
         }
 
+        [Fact]
+        public void A_block_in_front_of_the_arch_is_pushed_by_where_it_lies_in_the_arch_plane()
+        {
+            Assert.False(Stone.Beyond(new Vec3(0, -0.02, 0.6)));
+            Assert.True(Stone.Beyond(new Vec3(0, 0.02, 0.6)));
+        }
+
         private sealed class Arch
         {
             private const double Margin = 0.002, Gap = 0.005;

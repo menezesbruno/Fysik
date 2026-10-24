@@ -58,7 +58,7 @@ namespace Fysik.Structure
 
         public static bool InDepth(Vec3 p, double depth) => Math.Abs(p.Z) < depth / 2;
 
-        public bool Beyond(Vec3 p) => (p - new Vec3(0, Centre, 0)).Length > OuterRadius - Height / 2;
+        public bool Beyond(Vec3 p) => new Vec3(p.X, p.Y - Centre, 0).Length > OuterRadius - Height / 2;
 
         public Vec3 ToFace(Vec3 p, bool outward, double offset)
         {
