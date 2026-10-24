@@ -93,10 +93,7 @@ namespace Fysik.Game
 
                 bool ready = IsReady(node.Island);
                 if (!ready)
-                {
-                    node.Watched = false;
                     continue;
-                }
                 if (!node.Watched)
                 {
                     node.Watched = true;
