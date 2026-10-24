@@ -45,6 +45,7 @@ namespace Fysik.Tests
             private readonly List<double> _yaws = new List<double>();
             private readonly List<bool> _outward = new List<bool>(), _open = new List<bool>(), _deep = new List<bool>();
             private readonly List<OrientedBox> _blocks = new List<OrientedBox>();
+            private readonly List<Vec3> _reachMin = new List<Vec3>(), _reachMax = new List<Vec3>();
             public List<Vec3> Carved = new List<Vec3>();
 
             public Tower(double outerGrow = 0, double innerGrow = 0, double depthGrow = 0)
@@ -59,7 +60,40 @@ namespace Fysik.Tests
                 _rings.Add(ring);
                 _origins.Add(TowerRing.Turn(-ring.Centre, start) + new Vec3(0, course + ring.Height / 2, 0));
                 _yaws.Add(start);
+                int k = _rings.Count - 1;
+                double x0 = double.MaxValue, y0 = double.MaxValue, z0 = double.MaxValue;
+                double x1 = double.MinValue, y1 = double.MinValue, z1 = double.MinValue;
+                for (int a = 0; a <= 4; a++)
+                    foreach (double radius in new[] { ring.InnerRadius, ring.OuterRadius })
+                        foreach (double y in new[] { -ring.Height / 2, ring.Height / 2 })
+                        {
+                            Vec3 w = ToWorld(k, ring.Point(ring.Angle * a / 4, radius, y));
+                            x0 = Math.Min(x0, w.X);
+                            y0 = Math.Min(y0, w.Y);
+                            z0 = Math.Min(z0, w.Z);
+                            x1 = Math.Max(x1, w.X);
+                            y1 = Math.Max(y1, w.Y);
+                            z1 = Math.Max(z1, w.Z);
+                        }
+                _reachMin.Add(new Vec3(x0 - Reach, y0 - Reach, z0 - Reach));
+                _reachMax.Add(new Vec3(x1 + Reach, y1 + Reach, z1 + Reach));
                 return this;
+            }
+
+            private const double Reach = 0.15;
+
+            private bool Reaches(Vec3 a, Vec3 b, Vec3 c)
+            {
+                for (int k = 0; k < _rings.Count; k++)
+                {
+                    bool apart = false;
+                    for (int i = 0; i < 3 && !apart; i++)
+                        apart = Math.Max(a[i], Math.Max(b[i], c[i])) < _reachMin[k][i] ||
+                                Math.Min(a[i], Math.Min(b[i], c[i])) > _reachMax[k][i];
+                    if (!apart)
+                        return true;
+                }
+                return false;
             }
 
             public Tower Course(int course, double offset = 0, int stones = 16, TowerRing? ring = null)
@@ -112,7 +146,7 @@ namespace Fysik.Tests
                         AxisZ = TowerRing.Turn(Vec3.UnitZ, -_yaws[k]), Half = (max - min) * 0.5,
                     });
                 }
-                var carver = new MeshCarver(corners, WedgeOf, 4, w => Curved, Inside);
+                var carver = new MeshCarver(corners, WedgeOf, 4, w => Curved, Inside, Reaches);
                 List<int> triangles = carver.Split(Box);
                 bool moved = carver.Push((p, k) =>
                     ToWorld(k, _rings[k].ToFaceWithin(ToLocal(k, p), _blocks[k], _outward[k], Gap + (_outward[k] ? _outerGrow : _innerGrow),
@@ -161,6 +195,20 @@ namespace Fysik.Tests
             Assert.True(moved);
             LeavesNothingInside(tower);
             double exact = Outside(min, max, r => r > Ring.OuterRadius);
+            Assert.True(Math.Abs(volume - exact) < 0.015, $"carved {volume:0.000} m³, exact {exact:0.000} m³");
+        }
+
+        [Fact]
+        public void A_long_thin_wall_barely_inside_a_tower_is_cut_although_no_corner_reaches_the_stones()
+        {
+            var ring = new TowerRing(4, 1, Step);
+            var tower = new Tower().Course(0, 0, 16, ring).Course(1, Step / 2, 16, ring);
+            var min = new Vec3(-0.75, 0, 3.96);
+            var max = new Vec3(3.25, 2, 4.46);
+            (double volume, bool moved) = tower.Carve(min, max);
+            Assert.True(moved);
+            LeavesNothingInside(tower);
+            double exact = Outside(min, max, r => r > ring.OuterRadius);
             Assert.True(Math.Abs(volume - exact) < 0.015, $"carved {volume:0.000} m³, exact {exact:0.000} m³");
         }
 

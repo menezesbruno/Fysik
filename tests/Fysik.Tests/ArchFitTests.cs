@@ -53,6 +53,7 @@ namespace Fysik.Tests
             private readonly List<Vec3> _centres = new List<Vec3>();
             private readonly List<double> _turns = new List<double>();
             private readonly List<bool> _outward = new List<bool>(), _open = new List<bool>(), _deep = new List<bool>();
+            private readonly List<Vec3> _reachMin = new List<Vec3>(), _reachMax = new List<Vec3>();
 
             public Arch(double outerGrow = 0, double depthGrow = 0)
             {
@@ -64,7 +65,39 @@ namespace Fysik.Tests
                     double phi = 90 - Stone.Angle / 2 - k * Stone.Angle, a = phi * Math.PI / 180;
                     _centres.Add(new Vec3(-r * Math.Sin(a), r * Math.Cos(a), 0));
                     _turns.Add(phi);
+                    double x0 = double.MaxValue, y0 = double.MaxValue, z0 = double.MaxValue;
+                    double x1 = double.MinValue, y1 = double.MinValue, z1 = double.MinValue;
+                    for (int q = 0; q < 8; q++)
+                    {
+                        Vec3 w = ToWorld(k, new Vec3((q & 1) == 0 ? -Stone.Width / 2 : Stone.Width / 2,
+                                                     (q & 2) == 0 ? -Stone.Height / 2 : Stone.Height / 2 + outerGrow,
+                                                     (q & 4) == 0 ? -0.5 - depthGrow : 0.5 + depthGrow));
+                        x0 = Math.Min(x0, w.X);
+                        y0 = Math.Min(y0, w.Y);
+                        z0 = Math.Min(z0, w.Z);
+                        x1 = Math.Max(x1, w.X);
+                        y1 = Math.Max(y1, w.Y);
+                        z1 = Math.Max(z1, w.Z);
+                    }
+                    _reachMin.Add(new Vec3(x0 - Reach, y0 - Reach, z0 - Reach));
+                    _reachMax.Add(new Vec3(x1 + Reach, y1 + Reach, z1 + Reach));
                 }
+            }
+
+            private const double Reach = 0.15;
+
+            private bool Reaches(Vec3 a, Vec3 b, Vec3 c)
+            {
+                for (int k = 0; k < _centres.Count; k++)
+                {
+                    bool apart = false;
+                    for (int i = 0; i < 3 && !apart; i++)
+                        apart = Math.Max(a[i], Math.Max(b[i], c[i])) < _reachMin[k][i] ||
+                                Math.Min(a[i], Math.Min(b[i], c[i])) > _reachMax[k][i];
+                    if (!apart)
+                        return true;
+                }
+                return false;
             }
 
             private Vec3 ToLocal(int k, Vec3 p)
@@ -114,7 +147,7 @@ namespace Fysik.Tests
                 var corners = new List<Vec3>();
                 for (int q = 0; q < 8; q++)
                     corners.Add(new Vec3((q & 1) == 0 ? min.X : max.X, (q & 2) == 0 ? min.Y : max.Y, (q & 4) == 0 ? min.Z : max.Z));
-                var carver = new MeshCarver(corners, WedgeOf, 4);
+                var carver = new MeshCarver(corners, WedgeOf, 4, null, 1, Reaches);
                 List<int> triangles = carver.Split(Box);
                 bool moved = carver.Push((p, k) => ToWorld(k, Stone.ToFace(ToLocal(k, p), _outward[k], Gap + (_outward[k] ? _outerGrow : 0))));
                 if (clamp)
@@ -218,6 +251,25 @@ namespace Fysik.Tests
                 Assert.InRange(p.Y, min.Y - 1e-9, max.Y + 1e-9);
                 Assert.InRange(p.Z, min.Z - 1e-9, max.Z + 1e-9);
             }
+        }
+
+        [Fact]
+        public void A_long_wall_laid_on_the_crown_is_cut_where_the_keystone_reaches_into_it()
+        {
+            var arch = new Arch();
+            double left = -0.8, bottom = 4.94;
+            int inside = 0, samples = 0;
+            for (int u = 0; u < 2000; u++)
+                for (int v = 0; v < 100; v++)
+                {
+                    samples++;
+                    if (InsideExtrados(left + 4 * (u + 0.5) / 2000, bottom + 0.05 * (v + 0.5) / 100))
+                        inside++;
+                }
+            double exact = 8 - 4 * 0.05 * inside / samples;
+            (double volume, bool moved) = arch.Carve(new Vec3(left, bottom, -0.5), new Vec3(left + 4, bottom + 2, 0.5));
+            Assert.True(moved);
+            Assert.True(Math.Abs(volume - exact) < 0.012, $"carved {volume:0.0000} m³, exact {exact:0.0000} m³");
         }
 
         [Fact]
