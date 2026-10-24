@@ -19,6 +19,7 @@ namespace Fysik.Game
         private static readonly List<Collider> s_colliders = new List<Collider>();
 
         private readonly Dictionary<ZDOID, float> _expected = new Dictionary<ZDOID, float>();
+        private readonly Dictionary<ZDOID, float> _announced = new Dictionary<ZDOID, float>();
         private readonly List<ZDOID> _expired = new List<ZDOID>();
         private int _live;
         private float _effectWindow;
@@ -39,22 +40,36 @@ namespace Fysik.Game
 
         private void OnFallRpc(long sender, ZPackage package)
         {
+            if (ZNet.instance != null && ZNet.instance.IsDedicated())
+                return;
             int count = package.ReadInt();
             float until = Time.time + ExpectSeconds;
             for (int i = 0; i < count; i++)
-                _expected[package.ReadZDOID()] = until;
+            {
+                ZDOID id = package.ReadZDOID();
+                _expected[id] = until;
+                _announced[id] = until;
+            }
         }
+
+        public bool Announced(ZDOID id) => _announced.ContainsKey(id);
 
         public void Tick()
         {
-            if (_expected.Count == 0)
+            Expire(_expected);
+            Expire(_announced);
+        }
+
+        private void Expire(Dictionary<ZDOID, float> entries)
+        {
+            if (entries.Count == 0)
                 return;
             _expired.Clear();
-            foreach (KeyValuePair<ZDOID, float> kv in _expected)
+            foreach (KeyValuePair<ZDOID, float> kv in entries)
                 if (Time.time > kv.Value)
                     _expired.Add(kv.Key);
             foreach (ZDOID id in _expired)
-                _expected.Remove(id);
+                entries.Remove(id);
         }
 
         public bool TryTakeOver(WearNTear wnt)
