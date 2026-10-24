@@ -118,7 +118,7 @@ namespace Fysik.Game
             Structural = holdsUp && Geometry.IsValid;
             WorldBuilt = IsWorldBuilt(wnt);
             Container = wnt.GetComponentInChildren<Container>();
-            if (!holdsUp && wnt.m_noSupportWear)
+            if (CouldAttach(wnt))
             {
                 OwnColliders = wnt.GetComponentsInChildren<Collider>(true);
                 SupportBoxes = PieceGeometry.VanillaSupportBoxes(OwnColliders);
@@ -135,6 +135,8 @@ namespace Fysik.Game
         public static bool IsWorldBuilt(WearNTear wnt) => wnt.m_piece == null || wnt.m_piece.GetCreator() == 0;
 
         public static bool HoldsUp(WearNTear wnt) => wnt.m_supports && wnt.GetComponent<TeleportWorld>() == null;
+
+        public static bool CouldAttach(WearNTear wnt) => !HoldsUp(wnt) && wnt.m_noSupportWear;
 
         public static bool KeepsVanilla(WearNTear wnt) =>
             FysikConfig.WorldBuildings.Value == WorldBuildingMode.Vanilla && IsWorldBuilt(wnt);
