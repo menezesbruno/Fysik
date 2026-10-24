@@ -79,6 +79,8 @@ namespace Fysik.Game
         private const double RoughSlack = 0.15;
         private const double ExactSlack = 0.02;
         private const double ReachSlack = 0.15;
+        private const float RingSlack = 0.2f;
+        private const float SameCentre = 0.02f;
 
         private struct Wedge
         {
@@ -88,6 +90,7 @@ namespace Fysik.Game
             public TowerStone Tower;
             public OrientedBox Block;
             public Vec3 ReachMin, ReachMax;
+            public ZDOID Id;
             public bool Outward;
             public bool Open;
             public bool Deep;
@@ -122,6 +125,8 @@ namespace Fysik.Game
         private static readonly Dictionary<Mesh, float> s_volumes = new Dictionary<Mesh, float>();
         private static readonly List<Wedge> s_wedges = new List<Wedge>();
         private static readonly HashSet<Transform> s_seen = new HashSet<Transform>();
+        private static readonly Collider[] s_ring = new Collider[256];
+        private static readonly List<KeyValuePair<Vector3, float>> s_rings = new List<KeyValuePair<Vector3, float>>();
         private static readonly Dictionary<WearNTear, Job> s_running = new Dictionary<WearNTear, Job>();
         private static readonly HashSet<WearNTear> s_again = new HashSet<WearNTear>();
         private static readonly List<WearNTear> s_done = new List<WearNTear>();
@@ -378,6 +383,7 @@ namespace Fysik.Game
             EnsureMask();
             s_wedges.Clear();
             s_seen.Clear();
+            s_rings.Clear();
             bool masonry = Masonry(wnt);
             var corners = new List<Vector3>();
             Vector3 middle = Vector3.zero;
@@ -393,60 +399,99 @@ namespace Fysik.Game
                 Vector3 half = Vector3.Scale(box.size, t.lossyScale) * 0.5f;
                 int count = Physics.OverlapBoxNonAlloc(centre, Abs(half), s_hits, t.rotation, s_mask);
                 for (int i = 0; i < count; i++)
-                {
-                    Collider hit = s_hits[i];
-                    TowerStone tower = null;
-                    bool arch = ArchStones.TryGet(hit, out ArchStone stone);
-                    if (arch && !masonry || !arch && !TowerStones.TryGet(hit, out tower))
-                        continue;
-                    if (!s_seen.Add(hit.transform))
-                        continue;
-                    WearNTear owner = hit.GetComponentInParent<WearNTear>();
-                    if (owner == null || owner == wnt)
-                        continue;
-                    Matrix4x4 toLocal = hit.transform.worldToLocalMatrix;
-                    var slack = new Vec3(ReachSlack, ReachSlack, ReachSlack);
-                    var wedge = new Wedge
-                    {
-                        ToLocal = toLocal, ToWorld = hit.transform.localToWorldMatrix, Stone = stone, Tower = tower,
-                        ReachMin = ToVec(hit.bounds.min) - slack, ReachMax = ToVec(hit.bounds.max) + slack,
-                    };
-                    if (arch)
-                    {
-                        Vec3 local = ToVec(toLocal.MultiplyPoint3x4(middle));
-                        wedge.Outward = stone.Shape.Beyond(local);
-                        wedge.Open = stone.Shape.InSector(local);
-                        wedge.Deep = Voussoir.InDepth(local, stone.Depth);
-                    }
-                    else
-                    {
-                        Vec3 local = ToVec(toLocal.MultiplyPoint3x4(middle));
-                        List<Vec3> locals = corners.Select(c => ToVec(toLocal.MultiplyPoint3x4(c))).ToList();
-                        wedge.Outward = tower.Ring.Beyond(local);
-                        wedge.Open = tower.Ring.Opens(local, locals);
-                        wedge.Deep = tower.Ring.Reaches(locals);
-                        Vector3 ax = box.transform.right, ay = box.transform.up, az = box.transform.forward;
-                        Vector3 lo = Vector3.one * float.MaxValue, hi = Vector3.one * float.MinValue;
-                        foreach (Vector3 c in corners)
-                        {
-                            var along = new Vector3(Vector3.Dot(c, ax), Vector3.Dot(c, ay), Vector3.Dot(c, az));
-                            lo = Vector3.Min(lo, along);
-                            hi = Vector3.Max(hi, along);
-                        }
-                        Vector3 mid = (lo + hi) * 0.5f;
-                        wedge.Block = new OrientedBox
-                        {
-                            Center = ToVec(toLocal.MultiplyPoint3x4(ax * mid.x + ay * mid.y + az * mid.z)),
-                            AxisX = ToVec(toLocal.MultiplyVector(ax)),
-                            AxisY = ToVec(toLocal.MultiplyVector(ay)),
-                            AxisZ = ToVec(toLocal.MultiplyVector(az)),
-                            Half = ToVec((hi - lo) * 0.5f),
-                        };
-                    }
-                    s_wedges.Add(wedge);
-                }
+                    AddWedge(wnt, s_hits[i], box, masonry, middle, corners);
             }
+            if (s_rings.Count > 0)
+                AddRings(wnt, boxes[0], masonry, middle, corners);
+            s_wedges.Sort((a, b) => a.Id.UserID != b.Id.UserID ? a.Id.UserID.CompareTo(b.Id.UserID) : a.Id.ID.CompareTo(b.Id.ID));
             return s_wedges.ToArray();
+        }
+
+        private static void AddRings(WearNTear wnt, BoxCollider box, bool masonry, Vector3 middle, List<Vector3> corners)
+        {
+            float low = float.MaxValue, high = float.MinValue;
+            foreach (Vector3 c in corners)
+            {
+                low = Mathf.Min(low, c.y);
+                high = Mathf.Max(high, c.y);
+            }
+            KeyValuePair<Vector3, float>[] rings = s_rings.ToArray();
+            for (int r = 0; r < rings.Length; r++)
+            {
+                Vector3 centre = rings[r].Key;
+                bool repeated = false;
+                for (int q = 0; q < r && !repeated; q++)
+                    repeated = Flat(rings[q].Key - centre) < SameCentre;
+                if (repeated)
+                    continue;
+                float reach = rings[r].Value + RingSlack;
+                int count = Physics.OverlapBoxNonAlloc(new Vector3(centre.x, (low + high) * 0.5f, centre.z),
+                                                       new Vector3(reach, (high - low) * 0.5f, reach), s_ring, Quaternion.identity, s_mask);
+                for (int i = 0; i < count; i++)
+                    if (TowerStones.TryGet(s_ring[i], out TowerStone tower) && Flat(RingCentre(s_ring[i].transform, tower) - centre) < SameCentre)
+                        AddWedge(wnt, s_ring[i], box, masonry, middle, corners);
+            }
+        }
+
+        private static Vector3 RingCentre(Transform stone, TowerStone tower) => stone.TransformPoint(ToVector(tower.Ring.Centre));
+
+        private static float Flat(Vector3 v) => Mathf.Sqrt(v.x * v.x + v.z * v.z);
+
+        private static void AddWedge(WearNTear wnt, Collider hit, BoxCollider box, bool masonry, Vector3 middle, List<Vector3> corners)
+        {
+            TowerStone tower = null;
+            bool arch = ArchStones.TryGet(hit, out ArchStone stone);
+            if (arch && !masonry || !arch && !TowerStones.TryGet(hit, out tower))
+                return;
+            if (!s_seen.Add(hit.transform))
+                return;
+            WearNTear owner = hit.GetComponentInParent<WearNTear>();
+            if (owner == null || owner == wnt)
+                return;
+            Matrix4x4 toLocal = hit.transform.worldToLocalMatrix;
+            var slack = new Vec3(ReachSlack, ReachSlack, ReachSlack);
+            var wedge = new Wedge
+            {
+                ToLocal = toLocal, ToWorld = hit.transform.localToWorldMatrix, Stone = stone, Tower = tower,
+                ReachMin = ToVec(hit.bounds.min) - slack, ReachMax = ToVec(hit.bounds.max) + slack,
+            };
+            if (arch)
+            {
+                Vec3 local = ToVec(toLocal.MultiplyPoint3x4(middle));
+                wedge.Outward = stone.Shape.Beyond(local);
+                wedge.Open = stone.Shape.InSector(local);
+                wedge.Deep = Voussoir.InDepth(local, stone.Depth);
+            }
+            else
+            {
+                Vec3 local = ToVec(toLocal.MultiplyPoint3x4(middle));
+                List<Vec3> locals = corners.Select(c => ToVec(toLocal.MultiplyPoint3x4(c))).ToList();
+                wedge.Outward = tower.Ring.Beyond(local);
+                wedge.Open = tower.Ring.Opens(local, locals);
+                wedge.Deep = tower.Ring.Reaches(locals);
+                Vector3 ax = box.transform.right, ay = box.transform.up, az = box.transform.forward;
+                Vector3 lo = Vector3.one * float.MaxValue, hi = Vector3.one * float.MinValue;
+                foreach (Vector3 c in corners)
+                {
+                    var along = new Vector3(Vector3.Dot(c, ax), Vector3.Dot(c, ay), Vector3.Dot(c, az));
+                    lo = Vector3.Min(lo, along);
+                    hi = Vector3.Max(hi, along);
+                }
+                Vector3 mid = (lo + hi) * 0.5f;
+                wedge.Block = new OrientedBox
+                {
+                    Center = ToVec(toLocal.MultiplyPoint3x4(ax * mid.x + ay * mid.y + az * mid.z)),
+                    AxisX = ToVec(toLocal.MultiplyVector(ax)),
+                    AxisY = ToVec(toLocal.MultiplyVector(ay)),
+                    AxisZ = ToVec(toLocal.MultiplyVector(az)),
+                    Half = ToVec((hi - lo) * 0.5f),
+                };
+            }
+            ZDO zdo = owner.m_nview != null ? owner.m_nview.GetZDO() : null;
+            wedge.Id = zdo != null ? zdo.m_uid : ZDOID.None;
+            s_wedges.Add(wedge);
+            if (tower != null)
+                s_rings.Add(new KeyValuePair<Vector3, float>(RingCentre(hit.transform, tower), (float)tower.Ring.OuterRadius));
         }
 
         private static IEnumerable<Vector3> Corners(BoxCollider box)
