@@ -316,7 +316,8 @@ namespace Fysik.Game
             foreach (PieceNode attachment in node.Attached)
                 Invalidate(attachment);
             node.Attached.Clear();
-            if (node.Island != null && (node.FellByFysik || node.CrackTicks != 0 || node.Island.Cascading))
+            if (node.Island != null && (node.FellByFysik || FallingDebris.Instance.Announced(node.Id) || node.CrackTicks != 0 ||
+                                        node.Island.Cascading))
             {
                 node.Island.LastFall = Time.time;
                 node.Island.CascadeUntil = Time.time + CascadeSeconds;
