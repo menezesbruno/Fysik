@@ -143,7 +143,7 @@ namespace Fysik.Structure
 
             int vertical = MostAligned(body, down);
             BodyResult worst = Section(body, vertical, force, Vec3.Zero,
-                                       vertical == Mechanics.LongestAxis(body) ? Mechanics.BucklingFactor(body) : 1);
+                                       Mechanics.BucklingFactor(body, vertical));
 
             Vec3 arm = Horizontal(centroid - supportPoint, down);
             double spread = 0;

@@ -236,8 +236,8 @@ floors on top unless the row says otherwise:
 
 | Bridge | Empty | Wood | Ore | Bars |
 |---|---|---|---|---|
-| Posts every 4 m | 6% | 17% | 39% | 46% |
-| Posts every 8 m | 13% | 22% | 43% | 50% |
+| Posts every 4 m | 6% | 17% | 40% | 47% |
+| Posts every 8 m | 13% | 22% | 43% | 51% |
 | Floors on 2 m wood beams, posts every 4 m | 8% | 24% | 54% | 63% |
 | 12 m span, posts only at the ends | 29% | 40% | 62% | 69% |
 | 16 m span, posts only at the ends | 49% | 63% | 101% | 113% |
